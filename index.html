@@ -1,0 +1,923 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<!-- title и h1 совпадают дословно — так Google надёжнее берёт их в заголовок выдачи -->
+<title>Artega Adelante — AI Video Engineer, 22 года опыта</title>
+<meta name="description" content="Монтаж, моушн-дизайн и AI-инструменты для брендов и авторов: Reels и Shorts, реклама, объясняющие ролики — от сценария до финального рендера.">
+<meta property="og:title" content="Artega Adelante — AI Video Engineer, 22 года опыта">
+<meta property="og:description" content="Видео, которое досматривают до конца. Монтаж, моушн и AI для брендов и авторов.">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="ru_RU">
+<!-- Адрес сайта на GitHub Pages. Сменится домен — поменять эти три строки. Путь картинки
+     обязательно полный: Telegram и соцсети не понимают относительный и покажут ссылку без картинки. -->
+<link rel="canonical" href="https://artega909-del.github.io/">
+<meta property="og:url" content="https://artega909-del.github.io/">
+<meta property="og:image" content="https://artega909-del.github.io/assets/showreel.jpg">
+<meta property="og:image:width" content="1280">
+<meta property="og:image:height" content="720">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#0B0D12">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230B0D12'/%3E%3Cpath d='M18 50 32 14l14 36' fill='none' stroke='%23F2F5FA' stroke-width='7' stroke-linejoin='round'/%3E%3Cpath d='M22 40h20' stroke='%23FF3B6B' stroke-width='7'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;700&display=swap">
+
+<style>
+/* Палитра унаследована от графики курса (course_landing / promo_motion):
+   страница намеренно однотемная — светлый вариант поссорил бы её с кадрами. */
+:root{
+  --ground:#0B0D12; --panel:#12151D; --panel-2:#171B25;
+  --line:#242A38; --line-soft:#1B2029;
+  --ink:#F2F5FA; --muted:#8B95AC; --dim:#5C667B;
+  --accent:#FF3B6B; --num:#4FD1FF; --ok:#3DDC97;
+  --display:"Unbounded","Trebuchet MS",system-ui,sans-serif;
+  --body:"Inter","Segoe UI",system-ui,sans-serif;
+  --mono:"JetBrains Mono","Consolas",ui-monospace,monospace;
+  --wrap:1180px; --r:14px;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--body);
+  font-size:17px;line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+img,video{max-width:100%;display:block}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--num);outline-offset:3px;border-radius:6px}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  *{animation-duration:.01ms!important;animation-iteration-count:1!important;
+    transition-duration:.01ms!important}
+}
+
+.wrap{width:100%;max-width:var(--wrap);margin-inline:auto;padding-inline:22px}
+section{padding-block:clamp(56px,8vw,104px);position:relative}
+.ruler{height:22px;border-top:1px solid var(--line-soft);position:relative;opacity:.5}
+.ruler::after{content:"";position:absolute;inset:0 0 auto 0;height:7px;
+  background-image:linear-gradient(to right,var(--line) 1px,transparent 1px);
+  background-size:28px 100%}
+
+h1,h2,h3,.display{font-family:var(--display);font-weight:800;text-wrap:balance;
+  line-height:1.04;letter-spacing:-.02em;margin:0}
+/* h1 — имя студии для поиска: самый верхний заголовок, визуально скромный.
+   Крупный слоган под ним — просто оформленный абзац (.display). */
+h1.brand-h1{font-family:var(--mono);font-size:13px;font-weight:700;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--num);line-height:1.4;display:flex;align-items:center;
+  gap:10px;margin-bottom:18px}
+h1.brand-h1::before{content:"";width:26px;height:1px;background:var(--num);opacity:.6;flex:none}
+.display{font-size:clamp(38px,6.4vw,74px)}
+h2{font-size:clamp(28px,3.8vw,44px)}
+h3{font-size:19px;font-weight:600;letter-spacing:-.01em;line-height:1.3}
+p{margin:0}
+.lead{color:var(--muted);font-size:clamp(17px,1.6vw,20px);max-width:62ch}
+.eyebrow{font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.22em;
+  text-transform:uppercase;color:var(--num);display:flex;align-items:center;gap:10px;margin-bottom:18px}
+.eyebrow::before{content:"";width:26px;height:1px;background:var(--num);opacity:.6}
+.tc{font-family:var(--mono);font-variant-numeric:tabular-nums}
+
+/* ---------- шапка ---------- */
+header.top{position:sticky;top:0;z-index:40;background:rgba(11,13,18,.86);
+  backdrop-filter:blur(14px);border-bottom:1px solid var(--line-soft)}
+.bar{display:flex;align-items:center;gap:18px;height:64px}
+.brand{font-family:var(--display);font-weight:800;font-size:16px;letter-spacing:.04em;
+  text-decoration:none;white-space:nowrap}
+.brand span{color:var(--accent)}
+.bar nav{margin-left:auto;display:flex;gap:24px;font-size:14px;color:var(--muted)}
+.bar nav a{text-decoration:none;transition:color .2s}
+.bar nav a:hover{color:var(--ink)}
+.lang{display:flex;border:1px solid var(--line);border-radius:99px;overflow:hidden;
+  font-family:var(--mono);font-size:12px;font-weight:700}
+.lang button{background:transparent;border:0;color:var(--dim);padding:7px 11px;cursor:pointer;font:inherit}
+.lang button[aria-pressed="true"]{background:var(--accent);color:#fff}
+@media(max-width:920px){.bar nav{display:none}.lang{margin-left:auto}}
+
+/* ---------- кнопки ---------- */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;
+  padding:14px 26px;border-radius:99px;text-decoration:none;font-weight:600;font-size:16px;
+  border:1px solid transparent;cursor:pointer;font-family:var(--body);transition:transform .18s,background .2s,border-color .2s}
+.btn:hover{transform:translateY(-2px)}
+.btn-main{background:var(--accent);color:#fff}
+.btn-ghost{border-color:var(--line);color:var(--ink);background:transparent}
+.btn-ghost:hover{border-color:var(--num)}
+.btn-sm{padding:10px 18px;font-size:14px;white-space:nowrap}
+
+/* ---------- хиро ---------- */
+.hero{padding-top:clamp(40px,5vw,68px);overflow:hidden}
+.hero::before{content:"";position:absolute;left:50%;top:8%;width:min(980px,120%);
+  aspect-ratio:1;transform:translateX(-50%);
+  background:radial-gradient(circle,rgba(255,59,107,.11),transparent 62%);pointer-events:none}
+.hero .wrap{position:relative}
+.hero .display em{font-style:normal;color:var(--accent)}
+.hero .lead{margin-top:22px}
+.hero-cta{display:flex;gap:14px;flex-wrap:wrap;margin-top:32px}
+.reel{margin-top:clamp(36px,5vw,56px);border:1px solid var(--line);border-radius:var(--r);
+  overflow:hidden;background:#000;position:relative;aspect-ratio:16/9}
+.reel video,.reel img{width:100%;height:100%;object-fit:cover}
+.reel .badge{position:absolute;left:14px;top:14px;z-index:2;background:rgba(11,13,18,.72);
+  backdrop-filter:blur(6px);border:1px solid var(--line);border-radius:99px;
+  padding:6px 13px;font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--num)}
+.reel .sound{position:absolute;right:14px;bottom:14px;z-index:2}
+.reel .placeholder{position:absolute;inset:0;display:grid;place-items:center;color:var(--dim);
+  font-family:var(--mono);font-size:13px;letter-spacing:.16em;text-align:center;padding:20px;
+  background:repeating-linear-gradient(45deg,#0E1118,#0E1118 12px,#101420 12px,#101420 24px)}
+
+/* ---------- цифры ---------- */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line-soft);
+  border-block:1px solid var(--line-soft)}
+.stat{background:var(--ground);padding:26px 20px}
+.stat b{display:block;font-family:var(--mono);font-weight:700;font-size:clamp(28px,3.4vw,38px);
+  color:var(--ink);line-height:1}
+.stat span{display:block;margin-top:8px;color:var(--muted);font-size:14px}
+@media(max-width:760px){.stats{grid-template-columns:repeat(2,1fr)}}
+
+/* ---------- услуги ---------- */
+.grid-4{display:grid;grid-template-columns:repeat(2,1fr);gap:18px;margin-top:44px}
+@media(max-width:820px){.grid-4{grid-template-columns:1fr}}
+.svc{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);
+  padding:28px;display:flex;flex-direction:column;gap:14px;transition:border-color .2s,transform .2s}
+.svc:hover{border-color:var(--accent);transform:translateY(-3px)}
+.svc .no{font-family:var(--mono);font-size:12px;color:var(--accent);letter-spacing:.2em}
+.svc p{color:var(--muted);font-size:15.5px}
+.svc ul{margin:0;padding-left:18px;color:var(--muted);font-size:14.5px;display:grid;gap:6px}
+.svc footer{margin-top:auto;padding-top:14px;border-top:1px solid var(--line-soft);
+  font-family:var(--mono);font-size:12px;color:var(--dim);display:flex;justify-content:space-between;gap:10px}
+
+/* ---------- кейсы ---------- */
+.filters{display:flex;gap:9px;flex-wrap:wrap;margin-top:30px}
+.chip{background:transparent;border:1px solid var(--line);color:var(--muted);border-radius:99px;
+  padding:9px 17px;font:inherit;font-size:14px;cursor:pointer;transition:.2s}
+.chip:hover{color:var(--ink)}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--ground);border-color:var(--ink)}
+.cases{display:grid;grid-template-columns:repeat(4,1fr);grid-auto-flow:dense;gap:16px;margin-top:28px}
+@media(max-width:1000px){.cases{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:760px){.cases{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:460px){.cases{grid-template-columns:1fr}}
+.case{position:relative;border:1px solid var(--line);border-radius:var(--r);overflow:hidden;
+  background:var(--panel);aspect-ratio:9/16}
+.case.wide{aspect-ratio:16/9;grid-column:span 2;align-self:center}
+@media(max-width:460px){.case.wide{grid-column:span 1}}
+.case img,.case video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.case video{opacity:0;transition:opacity .35s}
+.case.playing video{opacity:1}
+.case .info{position:absolute;inset:auto 0 0 0;z-index:2;padding:34px 14px 13px;
+  background:linear-gradient(to top,rgba(6,8,12,.92),transparent)}
+.case .info b{display:block;font-size:14.5px;font-weight:600;line-height:1.25}
+.case .info span{display:block;margin-top:4px;font-family:var(--mono);font-size:11px;
+  letter-spacing:.12em;text-transform:uppercase;color:var(--num)}
+.case-empty{grid-column:1/-1;border:1px dashed var(--line);border-radius:var(--r);
+  padding:44px;text-align:center;color:var(--dim);font-family:var(--mono);font-size:13px}
+
+/* ---------- процесс ---------- */
+.track{margin-top:44px;border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.step{display:grid;grid-template-columns:150px 1fr;gap:20px;padding:24px 26px;
+  border-bottom:1px solid var(--line-soft);align-items:start}
+.step:last-child{border-bottom:0}
+.step .no{font-family:var(--mono);font-size:13px;color:var(--accent);letter-spacing:.16em;padding-top:4px;white-space:nowrap}
+.step p{color:var(--muted);font-size:15.5px;margin-top:7px}
+@media(max-width:640px){.step{grid-template-columns:1fr;gap:6px;padding:20px}}
+
+/* ---------- пакеты ---------- */
+.plans{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:44px}
+@media(max-width:900px){.plans{grid-template-columns:1fr}}
+.plan{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);
+  padding:30px 26px;display:flex;flex-direction:column;gap:16px}
+.plan.best{border-color:var(--accent);background:var(--panel-2);position:relative}
+.plan .tag{position:absolute;top:-11px;left:26px;
+  background:var(--accent);color:#fff;font-family:var(--mono);font-size:10px;font-weight:700;
+  letter-spacing:.16em;padding:5px 11px;border-radius:99px}
+.plan .price{font-family:var(--mono);font-size:30px;font-weight:700;color:var(--ink)}
+.plan .price small{display:block;font-size:12px;color:var(--dim);font-weight:400;letter-spacing:.1em;margin-bottom:4px}
+.plan ul{margin:0;padding-left:18px;color:var(--muted);font-size:15px;display:grid;gap:8px}
+.plan .hint{margin-top:-8px}
+.plan .btn{margin-top:auto}
+
+.extras{margin-top:26px;background:var(--panel);border:1px solid var(--line);
+  border-radius:var(--r);padding:28px}
+.extras h3{font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.2em;
+  text-transform:uppercase;color:var(--num);margin-bottom:18px}
+.extras ul{list-style:none;margin:0;padding:0;display:grid;gap:1px;background:var(--line-soft)}
+.extras li{background:var(--panel);display:grid;grid-template-columns:1fr auto;
+  gap:4px 18px;padding:14px 2px;align-items:baseline}
+.extras li b{font-size:15.5px;font-weight:600}
+.extras li span{font-size:15px;color:var(--ink);white-space:nowrap}
+.extras li em{grid-column:1/-1;font-style:normal;color:var(--muted);font-size:14px}
+.extras .hint{margin-top:18px}
+@media(max-width:520px){.extras{padding:22px 18px}.extras li{grid-template-columns:1fr}}
+
+/* ---------- заявка ---------- */
+.brief{display:grid;grid-template-columns:1fr 1fr;gap:36px;margin-top:44px;align-items:start}
+@media(max-width:900px){.brief{grid-template-columns:1fr;gap:28px}}
+.form{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:28px;display:grid;gap:16px}
+.field{display:grid;gap:7px}
+.field label{font-size:13px;color:var(--muted);font-family:var(--mono);letter-spacing:.1em;text-transform:uppercase}
+.field input,.field textarea,.field select{background:var(--ground);border:1px solid var(--line);
+  color:var(--ink);border-radius:9px;padding:12px 13px;font:inherit;font-size:15.5px;width:100%}
+.field textarea{min-height:96px;resize:vertical}
+.field input::placeholder,.field textarea::placeholder{color:var(--dim)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:520px){.row2{grid-template-columns:1fr}}
+.hint{font-size:13px;color:var(--dim);line-height:1.5}
+.contacts{display:grid;gap:14px;margin-top:26px}
+.contact{display:flex;align-items:center;gap:13px;padding:16px 18px;background:var(--panel);
+  border:1px solid var(--line);border-radius:var(--r);text-decoration:none;transition:border-color .2s}
+.contact:hover{border-color:var(--num)}
+.contact b{font-size:15px}
+.contact span{display:block;color:var(--muted);font-size:13.5px}
+.toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(20px);
+  background:var(--ok);color:#04140D;font-weight:600;padding:13px 22px;border-radius:99px;
+  z-index:90;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;font-size:15px}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ---------- подвал ---------- */
+footer.bot{border-top:1px solid var(--line-soft);padding-block:34px;color:var(--dim);font-size:14px}
+footer.bot .wrap{display:flex;gap:18px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+footer.bot a{text-decoration:none;color:var(--muted)}
+footer.bot a:hover{color:var(--ink)}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap bar">
+    <a class="brand" href="#top">Art<span>_Motion</span></a>
+    <nav>
+      <a href="#services" data-en="Services">Услуги</a>
+      <a href="#cases" data-en="Work">Кейсы</a>
+      <a href="#process" data-en="Process">Процесс</a>
+      <a href="#plans" data-en="Pricing">Пакеты</a>
+    </nav>
+    <div class="lang" role="group" aria-label="Язык / Language">
+      <button type="button" data-lang="ru" aria-pressed="true">RU</button>
+      <button type="button" data-lang="en" aria-pressed="false">EN</button>
+    </div>
+    <a class="btn btn-main btn-sm" href="#brief" data-en="Get a quote">Обсудить проект</a>
+  </div>
+</header>
+
+<main id="top">
+
+<!-- ============ ХИРО ============ -->
+<section class="hero">
+  <div class="wrap">
+    <h1 class="brand-h1" id="pageH1" data-en="Artega Adelante — AI Video Engineer with 22 years of experience">Artega Adelante — AI Video Engineer, 22 года опыта</h1>
+    <p class="display" data-en="Video people actually <em>watch to the end</em>">Видео, которое <em>досматривают до конца</em></p>
+    <p class="lead" data-en="Editing, motion design and AI tools for brands and creators. Reels and Shorts, ads, explainers — from the script to the final render.">
+      Монтаж, моушн-дизайн и AI-инструменты для брендов и авторов. Reels и Shorts, реклама,
+      объясняющие ролики — от сценария до финального рендера.
+    </p>
+    <div class="hero-cta">
+      <a class="btn btn-main" href="#cases" data-en="See the work">Смотреть работы</a>
+      <a class="btn btn-ghost" href="#brief" data-en="Discuss a project">Обсудить проект</a>
+    </div>
+
+    <div class="reel" id="reel">
+      <span class="badge tc">SHOWREEL 2026</span>
+      <video id="reelVideo" src="assets/showreel_web.mp4" poster="assets/showreel.jpg"
+             muted loop playsinline autoplay preload="metadata"></video>
+    </div>
+  </div>
+</section>
+
+<!-- ============ ЦИФРЫ ============ -->
+<div class="stats">
+  <!-- 1000 роликов подтверждено 03.09.2026, 22 года опыта — владелец 21.09.2026; «24 ч» — обещание сметы из блока цен. -->
+  <div class="stat"><b>1000</b><span data-en="videos edited">роликов смонтировано</span></div>
+  <div class="stat"><b>22</b><span data-en="years in editing">года в монтаже</span></div>
+  <div class="stat"><b data-en="24 h">24 ч</b><span data-en="to a quote after the brief">на смету после брифа</span></div>
+  <div class="stat"><b>2–4</b><span data-en="days per short video">дня на короткий ролик</span></div>
+</div>
+
+<!-- ============ УСЛУГИ ============ -->
+<section id="services">
+  <div class="wrap">
+    <p class="eyebrow" data-en="Services">Услуги</p>
+    <h2 data-en="Four things we do well">Четыре вещи, которые делаем хорошо</h2>
+    <p class="lead" style="margin-top:18px" data-en="One team from idea to master file: no handoffs between a scriptwriter, an editor and a motion designer.">
+      Одна команда от идеи до мастер-файла: не нужно передавать проект между сценаристом,
+      монтажёром и моушн-дизайнером.
+    </p>
+
+    <div class="grid-4">
+      <article class="svc">
+        <span class="no">01</span>
+        <h3 data-en="Reels · Shorts · TikTok">Reels · Shorts · TikTok</h3>
+        <p data-en="Vertical video nobody scrolls past. A hook in the first two seconds, word-by-word captions, cutaways and kinetic text on the beat.">
+          Вертикаль, которую не пролистывают. Хук в первые две секунды, пословные субтитры,
+          перебивки и кинетика в такт.
+        </p>
+        <ul>
+          <li data-en="Hook, captions, sound design">Хук, субтитры, саунд-дизайн</li>
+          <li data-en="Cover and title text">Обложка и текст под пост</li>
+          <li data-en="Ready to publish, 9:16">Готово к публикации, 9:16</li>
+        </ul>
+        <footer><span data-en="2–4 days">2–4 дня</span><span class="tc">9:16</span></footer>
+      </article>
+
+      <article class="svc">
+        <span class="no">02</span>
+        <h3 data-en="Ads &amp; promo">Реклама и промо</h3>
+        <p data-en="Product videos, before/after, event posters, teasers and brand films. Built around one clear message, not around effects.">
+          Продуктовые ролики, before/after, афиши событий, тизеры и бренд-фильмы.
+          Строятся вокруг одного ясного сообщения, а не вокруг эффектов.
+        </p>
+        <ul>
+          <li data-en="Script and storyboard">Сценарий и раскадровка</li>
+          <li data-en="Colour, sound, graphics">Цвет, звук, графика</li>
+          <li data-en="16:9 master + vertical cutdowns">Мастер 16:9 + вертикальные адаптации</li>
+        </ul>
+        <footer><span data-en="5–10 days">5–10 дней</span><span class="tc">16:9 · 9:16</span></footer>
+      </article>
+
+      <article class="svc">
+        <span class="no">03</span>
+        <h3 data-en="Motion &amp; graphics">Моушн и графика</h3>
+        <p data-en="Infographics, titles, lower thirds, 3D cards, map animation. Graphics that explain the point instead of decorating it.">
+          Инфографика, титры, плашки, 3D-карточки, анимация карт. Графика, которая
+          объясняет мысль, а не украшает её.
+        </p>
+        <ul>
+          <li data-en="Brand kit: titles and lower thirds">Бренд-кит: титры и плашки</li>
+          <li data-en="Data and process explainers">Схемы данных и процессов</li>
+          <li data-en="Alpha render or project files">Рендер с альфой или проект</li>
+        </ul>
+        <footer><span data-en="3–7 days">3–7 дней</span><span class="tc">AE · REMOTION</span></footer>
+      </article>
+
+      <article class="svc">
+        <span class="no">04</span>
+        <h3 data-en="AI video &amp; voice">AI-видео и озвучка</h3>
+        <p data-en="Generated inserts and frames, dubbing and voice-over, auto captions, pipeline automation. AI does the routine, a human does the direction.">
+          Генерация вставок и кадров, дубляж и закадровый голос, автосубтитры,
+          автоматизация рутины. AI берёт рутину, режиссуру оставляем человеку.
+        </p>
+        <ul>
+          <li data-en="Generated B-roll and inserts">Генеративные перебивки и вставки</li>
+          <li data-en="Voice-over and dubbing">Закадровый голос и дубляж</li>
+          <li data-en="Multilingual subtitles">Субтитры на нескольких языках</li>
+        </ul>
+        <footer><span data-en="2–5 days">2–5 дней</span><span class="tc">AI + HUMAN</span></footer>
+      </article>
+    </div>
+  </div>
+</section>
+
+<div class="wrap"><div class="ruler"></div></div>
+
+<!-- ============ КЕЙСЫ ============ -->
+<section id="cases">
+  <div class="wrap">
+    <p class="eyebrow" data-en="Work">Кейсы</p>
+    <h2 data-en="Fragments where the graphics do the talking">Куски, где работает графика</h2>
+    <p class="lead" style="margin-top:18px" data-en="Every card is the densest window of a real project — hover to play.">
+      На каждой карточке — самый насыщенный кусок реального проекта. Наведите, чтобы посмотреть.
+    </p>
+
+    <div class="filters" role="group" aria-label="Фильтр кейсов" data-en-aria="Filter work">
+      <button class="chip" type="button" data-f="all" aria-pressed="true" data-en="All">Все</button>
+      <button class="chip" type="button" data-f="vertical" aria-pressed="false" data-en="Vertical">Вертикаль</button>
+      <button class="chip" type="button" data-f="ad" aria-pressed="false" data-en="Ads">Реклама</button>
+      <button class="chip" type="button" data-f="motion" aria-pressed="false" data-en="Motion">Моушн</button>
+      <button class="chip" type="button" data-f="ai" aria-pressed="false" data-en="AI">AI</button>
+    </div>
+
+    <!-- CASES:START — блок пересобирается скриптом build_assets.py -->
+    <div class="cases" id="caseGrid">
+      <article class="case wide" data-cat="ad motion" tabindex="0">
+        <img loading="lazy" src="assets/case02-cgi-ads-food-cars-product.jpg" alt="CGI-реклама: еда, авто, продукт">
+        <video muted loop playsinline preload="none" data-src="assets/case02-cgi-ads-food-cars-product.mp4"></video>
+        <div class="info">
+          <b data-en="CGI ads: food, cars, product">CGI-реклама: еда, авто, продукт</b>
+          <span data-en="AD">РЕКЛАМА</span>
+        </div>
+      </article>
+      <article class="case wide" data-cat="motion" tabindex="0">
+        <img loading="lazy" src="assets/case03-doc-collage-global-machine-s.jpg" alt="Док-коллаж «Global Machine Shift»">
+        <video muted loop playsinline preload="none" data-src="assets/case03-doc-collage-global-machine-s.mp4"></video>
+        <div class="info">
+          <b data-en="Doc collage: Global Machine Shift">Док-коллаж «Global Machine Shift»</b>
+          <span data-en="MOTION">МОУШН</span>
+        </div>
+      </article>
+      <article class="case wide" data-cat="motion" tabindex="0">
+        <img loading="lazy" src="assets/case04-nexa-product-motion-explaine.jpg" alt="NEXA — моушн-эксплейнер продукта">
+        <video muted loop playsinline preload="none" data-src="assets/case04-nexa-product-motion-explaine.mp4"></video>
+        <div class="info">
+          <b data-en="NEXA — product motion explainer">NEXA — моушн-эксплейнер продукта</b>
+          <span data-en="MOTION">МОУШН</span>
+        </div>
+      </article>
+      <article class="case wide" data-cat="motion" tabindex="0">
+        <img loading="lazy" src="assets/case05-saas-promo-ui-in-motion.jpg" alt="Промо сервиса: интерфейс в моушне">
+        <video muted loop playsinline preload="none" data-src="assets/case05-saas-promo-ui-in-motion.mp4"></video>
+        <div class="info">
+          <b data-en="SaaS promo: UI in motion">Промо сервиса: интерфейс в моушне</b>
+          <span data-en="MOTION">МОУШН</span>
+        </div>
+      </article>
+      <article class="case wide" data-cat="motion" tabindex="0">
+        <img loading="lazy" src="assets/case06-kinetic-typography.jpg" alt="Кинетическая типографика">
+        <video muted loop playsinline preload="none" data-src="assets/case06-kinetic-typography.mp4"></video>
+        <div class="info">
+          <b data-en="Kinetic typography">Кинетическая типографика</b>
+          <span data-en="MOTION">МОУШН</span>
+        </div>
+      </article>
+      <article class="case" data-cat="ai vertical" tabindex="0">
+        <img loading="lazy" src="assets/case07-ai-avatar-with-a-voice-clone.jpg" alt="AI-аватар с клоном голоса">
+        <video muted loop playsinline preload="none" data-src="assets/case07-ai-avatar-with-a-voice-clone.mp4"></video>
+        <div class="info">
+          <b data-en="AI avatar with a voice clone">AI-аватар с клоном голоса</b>
+          <span data-en="AI">AI</span>
+        </div>
+      </article>
+      <article class="case" data-cat="vertical" tabindex="0">
+        <img loading="lazy" src="assets/case08-anime-storytelling-kinetic-t.jpg" alt="Аниме-сторителлинг с кинетикой">
+        <video muted loop playsinline preload="none" data-src="assets/case08-anime-storytelling-kinetic-t.mp4"></video>
+        <div class="info">
+          <b data-en="Anime storytelling, kinetic type">Аниме-сторителлинг с кинетикой</b>
+          <span data-en="VERTICAL">ВЕРТИКАЛЬ</span>
+        </div>
+      </article>
+      <article class="case" data-cat="ad vertical" tabindex="0">
+        <img loading="lazy" src="assets/case09-kidilo-product-video.jpg" alt="Kidilo — продуктовый ролик">
+        <video muted loop playsinline preload="none" data-src="assets/case09-kidilo-product-video.mp4"></video>
+        <div class="info">
+          <b data-en="Kidilo — product video">Kidilo — продуктовый ролик</b>
+          <span data-en="AD">РЕКЛАМА</span>
+        </div>
+      </article>
+      <article class="case" data-cat="ad vertical" tabindex="0">
+        <img loading="lazy" src="assets/case10-cafely-english-ugc-ad.jpg" alt="CAFELY — реклама на английском">
+        <video muted loop playsinline preload="none" data-src="assets/case10-cafely-english-ugc-ad.mp4"></video>
+        <div class="info">
+          <b data-en="CAFELY — English UGC ad">CAFELY — реклама на английском</b>
+          <span data-en="AD">РЕКЛАМА</span>
+        </div>
+      </article>
+      <article class="case" data-cat="ad vertical" tabindex="0">
+        <img loading="lazy" src="assets/case11-la-fabrique-premium-product.jpg" alt="La Fabrique — премиум-продукт">
+        <video muted loop playsinline preload="none" data-src="assets/case11-la-fabrique-premium-product.mp4"></video>
+        <div class="info">
+          <b data-en="La Fabrique — premium product">La Fabrique — премиум-продукт</b>
+          <span data-en="AD">РЕКЛАМА</span>
+        </div>
+      </article>
+      <article class="case" data-cat="ai vertical" tabindex="0">
+        <img loading="lazy" src="assets/case12-3d-animated-story.jpg" alt="3D-мультфильм по сценарию">
+        <video muted loop playsinline preload="none" data-src="assets/case12-3d-animated-story.mp4"></video>
+        <div class="info">
+          <b data-en="3D animated story">3D-мультфильм по сценарию</b>
+          <span data-en="AI">AI</span>
+        </div>
+      </article>
+      <article class="case wide" data-cat="ai" tabindex="0">
+        <img loading="lazy" src="assets/case13-ai-film-sci-fi-short.jpg" alt="AI-фильм: сай-фай короткометражка">
+        <video muted loop playsinline preload="none" data-src="assets/case13-ai-film-sci-fi-short.mp4"></video>
+        <div class="info">
+          <b data-en="AI film: sci-fi short">AI-фильм: сай-фай короткометражка</b>
+          <span data-en="AI">AI</span>
+        </div>
+      </article>
+      <article class="case wide" data-cat="ad motion" tabindex="0">
+        <img loading="lazy" src="assets/case14-vulcan-cgi-motor-oil-ad.jpg" alt="VULCAN — CGI-реклама моторного масла">
+        <video muted loop playsinline preload="none" data-src="assets/case14-vulcan-cgi-motor-oil-ad.mp4"></video>
+        <div class="info">
+          <b data-en="VULCAN — CGI motor oil ad">VULCAN — CGI-реклама моторного масла</b>
+          <span data-en="AD">РЕКЛАМА</span>
+        </div>
+      </article>
+      <article class="case wide" data-cat="motion" tabindex="0">
+        <img loading="lazy" src="assets/case15-doc-timeline-archive-and-cha.jpg" alt="Док-таймлайн: архив и графика">
+        <video muted loop playsinline preload="none" data-src="assets/case15-doc-timeline-archive-and-cha.mp4"></video>
+        <div class="info">
+          <b data-en="Doc timeline: archive and charts">Док-таймлайн: архив и графика</b>
+          <span data-en="MOTION">МОУШН</span>
+        </div>
+      </article>
+      <article class="case wide" data-cat="ad motion" tabindex="0">
+        <img loading="lazy" src="assets/case16-the-obsidian-reserve-chocola.jpg" alt="The Obsidian Reserve — реклама шоколада">
+        <video muted loop playsinline preload="none" data-src="assets/case16-the-obsidian-reserve-chocola.mp4"></video>
+        <div class="info">
+          <b data-en="The Obsidian Reserve — chocolate ad">The Obsidian Reserve — реклама шоколада</b>
+          <span data-en="AD">РЕКЛАМА</span>
+        </div>
+      </article>
+    </div>
+    <!-- CASES:END -->
+  </div>
+</section>
+
+<div class="wrap"><div class="ruler"></div></div>
+
+<!-- ============ ПРОЦЕСС ============ -->
+<section id="process">
+  <div class="wrap">
+    <p class="eyebrow" data-en="Process">Процесс</p>
+    <h2 data-en="Four steps, no surprises">Четыре шага, без сюрпризов</h2>
+
+    <div class="track">
+      <div class="step">
+        <span class="no" data-en="01 · BRIEF">01 · БРИФ</span>
+        <div>
+          <h3 data-en="Brief and goal">Бриф и цель</h3>
+          <p data-en="Twenty minutes on a call or a filled-in form: who the video is for, what it should make people do, where it will be published.">
+            Двадцать минут на созвоне или заполненная форма: для кого ролик, что человек должен
+            сделать после просмотра, где он будет опубликован.
+          </p>
+        </div>
+      </div>
+      <div class="step">
+        <span class="no" data-en="02 · SCRIPT">02 · СЦЕНАРИЙ</span>
+        <div>
+          <h3 data-en="Script and storyboard">Сценарий и раскадровка</h3>
+          <p data-en="You approve the text and the key frames before the editing starts — that is where changes are cheap.">
+            Текст и ключевые кадры утверждаются до монтажа — на этом этапе правки ничего не стоят.
+          </p>
+        </div>
+      </div>
+      <div class="step">
+        <span class="no" data-en="03 · BUILD">03 · СБОРКА</span>
+        <div>
+          <h3 data-en="Edit, graphics, sound">Монтаж, графика, звук</h3>
+          <p data-en="Cut, motion, colour and sound design in one pass. You get a preview with timecode for comments.">
+            Резка, моушн, цвет и звук одним заходом. Присылаем превью с таймкодом,
+            чтобы комментарии были привязаны к секунде.
+          </p>
+        </div>
+      </div>
+      <div class="step">
+        <span class="no" data-en="04 · DELIVERY">04 · СДАЧА</span>
+        <div>
+          <h3 data-en="Revisions and delivery">Правки и сдача</h3>
+          <p data-en="Two rounds of revisions are included. You receive the master file, platform versions and the source project.">
+            Два круга правок включены. Отдаём мастер-файл, версии под площадки
+            и исходный проект.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ ПАКЕТЫ ============ -->
+<section id="plans">
+  <div class="wrap">
+    <p class="eyebrow" data-en="Pricing">Пакеты</p>
+    <h2 data-en="Pick the format of work">Выберите формат работы</h2>
+    <p class="lead" style="margin-top:18px" data-en="We work by projects and by retainer. The numbers below are starting points — the final quote depends on the length, the amount of graphics and the deadline.">
+      Работаем проектами и на абонементе. Ниже — стартовые цены: итог считаем по брифу —
+      хронометраж, объём графики, срок.
+    </p>
+
+    <!-- ЦЕНЫ — уровень средней студии постпродакшна (RU, 2026), сверено с рынком 03.09.2026:
+         монтаж Reels у студий 5-10 тыс. ₽ за ролик, агентства в пакете 13-15 тыс. ₽ (со съёмкой);
+         постпродакшн YouTube-выпуска 10-30 тыс. ₽; моушн-студии 35-57 тыс. ₽ за минуту,
+         2D-анимация до 60 сек от 90 тыс. ₽ у московских агентств.
+         Мы работаем без съёмки, поэтому держим нижнюю границу студийного диапазона.
+         ВНИМАНИЕ: прайс бота (tg-vacancy-helper/pitch_templates.py, FULL_PRICES) остался старым,
+         фрилансерским — его нужно поднять отдельно, иначе цены разъедутся. -->
+    <div class="plans">
+      <article class="plan">
+        <h3 data-en="Content pack">Контент-пакет</h3>
+        <div class="price"><small data-en="8 videos a month">8 роликов в месяц</small><span data-en="from 45 000 ₽">от 45 000 ₽</span></div>
+        <p class="hint" data-en="For channels and brands: a steady flow of short-form, about 5 600 ₽ per video">Для каналов и брендов: ровный поток вертикалок, ≈ 5 600 ₽ за ролик</p>
+        <ul>
+          <li data-en="Reels and Shorts from your footage">Reels и Shorts из вашего материала</li>
+          <li data-en="Captions and thumbnails">Субтитры и обложки</li>
+          <li data-en="One visual style for the channel">Единый стиль канала</li>
+          <li data-en="Two rounds of edits per video">Две правки на ролик</li>
+        </ul>
+        <a class="btn btn-ghost" href="#brief" data-en="Order">Заказать</a>
+      </article>
+
+      <article class="plan best">
+        <span class="tag" data-en="MOST POPULAR">ЧАЩЕ ВСЕГО БЕРУТ</span>
+        <h3 data-en="Turnkey video">Ролик под ключ</h3>
+        <div class="price"><small data-en="per project">за проект</small><span data-en="from 60 000 ₽">от 60 000 ₽</span></div>
+        <p class="hint" data-en="Ad, promo or explainer up to 60 sec — 10–14 working days">Реклама, промо или объясняющий ролик до 60 сек — 10–14 рабочих дней</p>
+        <ul>
+          <li data-en="Script and storyboard">Сценарий и раскадровка</li>
+          <li data-en="Motion design, 3D and graphics">Моушн, 3D и графика</li>
+          <li data-en="AI footage and voice when it fits">AI-кадры и озвучка, где уместно</li>
+          <li data-en="Sound design and colour">Саунд-дизайн и цвет</li>
+          <li data-en="Versions for 16:9, 9:16 and 1:1">Версии 16:9, 9:16 и 1:1</li>
+        </ul>
+        <a class="btn btn-main" href="#brief" data-en="Order">Заказать</a>
+      </article>
+
+      <article class="plan">
+        <h3 data-en="Studio retainer">Студия на абонементе</h3>
+        <div class="price"><small data-en="a month of our time">месяц занятости</small><span data-en="from 120 000 ₽">от 120 000 ₽</span></div>
+        <p class="hint" data-en="A fixed queue and a predictable schedule">Закреплённая очередь и предсказуемый график</p>
+        <ul>
+          <li data-en="Tasks in a queue without pauses">Задачи в очереди без пауз</li>
+          <li data-en="Priority over one-off orders">Приоритет над разовыми заказами</li>
+          <li data-en="Your own templates and project style">Свои шаблоны и стиль проекта</li>
+          <li data-en="Monthly plan and report">План и отчёт по месяцу</li>
+        </ul>
+        <a class="btn btn-ghost" href="#brief" data-en="Discuss">Обсудить</a>
+      </article>
+    </div>
+
+    <div class="extras">
+      <h3 data-en="Separate formats">Отдельные форматы</h3>
+      <ul>
+        <li><b data-en="Reels / Shorts">Reels / Shorts</b><span class="tc" data-en="from 6 000 ₽">от 6 000 ₽</span>
+          <em data-en="a single video: cutting, pacing, captions, music">разовый ролик: нарезка, темп, субтитры, музыка</em></li>
+        <li><b data-en="YouTube editing">Монтаж YouTube</b><span class="tc" data-en="from 2 000 ₽ per minute">от 2 000 ₽ за минуту</span>
+          <em data-en="long-form: cutting, cutaways, colour, titles">длинное видео: нарезка, перебивки, цвет, титры</em></li>
+        <li><b data-en="Podcast">Подкаст</b><span class="tc" data-en="from 25 000 ₽ per episode">от 25 000 ₽ за выпуск</span>
+          <em data-en="multicam, colour, titles, cutdowns to Shorts">мультикамера, цвет, титры, нарезка на Shorts</em></li>
+        <li><b data-en="AI content">AI-контент</b><span class="tc" data-en="from 15 000 ₽">от 15 000 ₽</span>
+          <em data-en="covers, avatar with a voice clone, AI videos">обложки, аватар с клоном голоса, нейро-ролики</em></li>
+        <li><b data-en="B2B promo">Промо для B2B</b><span class="tc" data-en="from 45 000 ₽">от 45 000 ₽</span>
+          <em data-en="script, graphics, voice-over, logo animation">сценарий, графика, озвучка, анимация логотипа</em></li>
+        <li><b data-en="Motion design">Моушн-дизайн</b><span class="tc" data-en="from 12 000 ₽ per scene">от 12 000 ₽ за сцену</span>
+          <em data-en="infographics, titles, lower thirds, map animation">инфографика, титры, плашки, анимация карт</em></li>
+        <li><b data-en="Music video">Клип</b><span class="tc" data-en="from 30 000 ₽">от 30 000 ₽</span>
+          <em data-en="edit, colour, effects">монтаж, цвет, эффекты</em></li>
+        <li><b data-en="Covers &amp; thumbnails">Обложки и превью</b><span class="tc" data-en="from 3 000 ₽">от 3 000 ₽</span>
+          <em data-en="a set for the channel, in one style">набор под канал, в одном стиле</em></li>
+      </ul>
+      <p class="hint" data-en="All prices are starting points. We send an exact quote after the brief — usually within a day.">
+        Все цены — стартовые. Точную смету присылаем после брифа, обычно в течение дня.
+      </p>
+    </div>
+  </div>
+</section>
+
+<div class="wrap"><div class="ruler"></div></div>
+
+<!-- ============ ЗАЯВКА ============ -->
+<section id="brief">
+  <div class="wrap">
+    <p class="eyebrow" data-en="Brief">Заявка</p>
+    <h2 data-en="Tell us about the project">Расскажите о проекте</h2>
+
+    <div class="brief">
+      <form class="form" id="briefForm" novalidate>
+        <div class="field">
+          <label for="f-name" data-en="Name or company">Имя или компания</label>
+          <input id="f-name" name="name" type="text" autocomplete="name" placeholder="Иван, Nova Coffee" data-en-ph="John, Nova Coffee" required>
+        </div>
+        <div class="field">
+          <label for="f-task" data-en="What needs to be done">Что нужно сделать</label>
+          <textarea id="f-task" name="task" placeholder="Например: 8 Reels в месяц по подкасту, нужен монтаж и обложки" data-en-ph="E.g. 8 Reels a month from a podcast, editing and covers" required></textarea>
+        </div>
+        <div class="row2">
+          <div class="field">
+            <label for="f-format" data-en="Format">Формат</label>
+            <select id="f-format" name="format">
+              <option data-en="Reels / Shorts (9:16)">Reels / Shorts (9:16)</option>
+              <option data-en="Ad / promo (16:9)">Реклама / промо (16:9)</option>
+              <option data-en="Motion &amp; graphics">Моушн и графика</option>
+              <option data-en="AI video / voice">AI-видео / озвучка</option>
+              <option data-en="Not sure yet">Пока не решил</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="f-deadline" data-en="Deadline">Срок</label>
+            <select id="f-deadline" name="deadline">
+              <option data-en="Urgent, 1–3 days">Срочно, 1–3 дня</option>
+              <option data-en="Within a week">В течение недели</option>
+              <option data-en="Within a month">В течение месяца</option>
+              <option data-en="Ongoing work">Постоянная работа</option>
+            </select>
+          </div>
+        </div>
+        <div class="row2">
+          <div class="field">
+            <label for="f-budget" data-en="Budget">Бюджет</label>
+            <select id="f-budget" name="budget">
+              <option data-en="Up to 15 000 ₽">До 15 000 ₽</option>
+              <option data-en="15 000–45 000 ₽">15 000–45 000 ₽</option>
+              <option data-en="45 000–120 000 ₽">45 000–120 000 ₽</option>
+              <option data-en="From 120 000 ₽ a month">От 120 000 ₽ в месяц</option>
+              <option data-en="Need a quote">Нужна оценка</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="f-contact" data-en="How to reach you">Как с вами связаться</label>
+            <input id="f-contact" name="contact" type="text" placeholder="@nickname или почта" data-en-ph="@nickname or email" required>
+          </div>
+        </div>
+        <button class="btn btn-main" type="submit" data-en="Copy brief and open Telegram">Собрать бриф и открыть Telegram</button>
+        <p class="hint" data-en="The form works without a server: the brief is copied to your clipboard and Telegram opens — just paste it into the chat.">
+          Форма работает без сервера: бриф копируется в буфер обмена и открывается Telegram —
+          останется вставить текст в чат.
+        </p>
+      </form>
+
+      <div>
+        <p class="lead" data-en="Prefer writing straight away? Here are the direct links.">
+          Не хотите заполнять форму — напишите напрямую.
+        </p>
+        <div class="contacts">
+          <a class="contact" id="tgLink" href="https://t.me/artega909" target="_blank" rel="noopener">
+            <b>Telegram</b><span id="tgHandle">@artega909</span>
+          </a>
+          <a class="contact" id="mailLink" href="mailto:daemon706@mail.ru">
+            <b>Email</b><span id="mailAddr">daemon706@mail.ru</span>
+          </a>
+        </div>
+        <p class="hint" style="margin-top:20px" data-en="Working hours: Mon–Sat, replies within a few hours. Source files of any size via any cloud storage.">
+          Отвечаем в течение нескольких часов, пн–сб. Исходники принимаем через любое облако,
+          объём не ограничен.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="bot">
+  <div class="wrap">
+    <span>© <span class="tc">2026</span> Art_Motion — <span data-en="video production &amp; AI">видеопродакшн и AI</span></span>
+    <span><a href="#top" data-en="Back to top">Наверх</a></span>
+  </div>
+</footer>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+/* ================= НАСТРОЙКИ — правится в одном месте ================= */
+const CONFIG = {
+  telegram: 'artega909',        // без @
+  email:    'daemon706@mail.ru' // пусто — карточка «Email» просто не показывается
+};
+/* ===================================================================== */
+
+document.getElementById('tgHandle').textContent = '@' + CONFIG.telegram;
+document.getElementById('tgLink').href = 'https://t.me/' + CONFIG.telegram;
+// Почты может не быть — тогда карточку лучше убрать совсем, чем показывать
+// заглушку: несуществующий адрес на продающей странице хуже его отсутствия.
+const mailLink = document.getElementById('mailLink');
+if (CONFIG.email) {
+  document.getElementById('mailAddr').textContent = CONFIG.email;
+  mailLink.href = 'mailto:' + CONFIG.email;
+} else {
+  mailLink.remove();
+}
+
+/* ---------- переключатель языка ---------- */
+const langBtns = document.querySelectorAll('.lang button');
+function setLang(lang){
+  document.querySelectorAll('[data-en]').forEach(el => {
+    if (!el.dataset.ru) el.dataset.ru = el.innerHTML.trim();
+    el.innerHTML = lang === 'en' ? el.dataset.en : el.dataset.ru;
+  });
+  document.querySelectorAll('[data-en-ph]').forEach(el => {
+    if (!el.dataset.ruPh) el.dataset.ruPh = el.placeholder;
+    el.placeholder = lang === 'en' ? el.dataset.enPh : el.dataset.ruPh;
+  });
+  document.querySelectorAll('[data-en-aria]').forEach(el => {
+    if (!el.dataset.ruAria) el.dataset.ruAria = el.getAttribute('aria-label');
+    el.setAttribute('aria-label', lang === 'en' ? el.dataset.enAria : el.dataset.ruAria);
+  });
+  // описания картинок кейсов берём из подписи карточки — она уже переведена
+  document.querySelectorAll('.case').forEach(card => {
+    const img = card.querySelector('img'), cap = card.querySelector('.info b');
+    if (img && cap) img.alt = cap.textContent.trim();
+  });
+  // вкладка повторяет h1 на выбранном языке
+  document.title = document.getElementById('pageH1').textContent;
+  document.documentElement.lang = lang;
+  langBtns.forEach(b => b.setAttribute('aria-pressed', String(b.dataset.lang === lang)));
+  try { localStorage.setItem('artmotion-lang', lang); } catch (e) {}
+}
+langBtns.forEach(b => b.addEventListener('click', () => setLang(b.dataset.lang)));
+try {
+  const saved = localStorage.getItem('artmotion-lang');
+  if (saved === 'en') setLang('en');
+} catch (e) {}
+
+/* ---------- фильтр кейсов ---------- */
+const chips = document.querySelectorAll('.chip');
+chips.forEach(chip => chip.addEventListener('click', () => {
+  chips.forEach(c => c.setAttribute('aria-pressed', String(c === chip)));
+  const f = chip.dataset.f;
+  document.querySelectorAll('.case').forEach(card => {
+    card.hidden = !(f === 'all' || (card.dataset.cat || '').split(' ').includes(f));
+  });
+}));
+
+/* ---------- превью кейсов: грузим только когда нужно ---------- */
+const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+function playCase(card){
+  const v = card.querySelector('video');
+  if (!v) return;
+  if (!v.src && v.dataset.src) v.src = v.dataset.src;
+  v.play().then(() => card.classList.add('playing')).catch(() => {});
+}
+function stopCase(card){
+  const v = card.querySelector('video');
+  if (!v) return;
+  card.classList.remove('playing');
+  v.pause();
+}
+function wireCases(){
+  const finePointer = window.matchMedia('(hover:hover)').matches;
+  document.querySelectorAll('.case').forEach(card => {
+    if (card.dataset.wired) return;
+    card.dataset.wired = '1';
+    if (finePointer){
+      card.addEventListener('mouseenter', () => playCase(card));
+      card.addEventListener('mouseleave', () => stopCase(card));
+      card.addEventListener('focusin', () => playCase(card));
+      card.addEventListener('focusout', () => stopCase(card));
+    }
+  });
+  // на телефоне превью сами играют при прокрутке — но не у тех, кто отключил анимацию
+  if (!finePointer && !reduceMotion && 'IntersectionObserver' in window){
+    const io = new IntersectionObserver(entries => {
+      entries.forEach(e => e.isIntersecting ? playCase(e.target) : stopCase(e.target));
+    }, { threshold: 0.6 });
+    document.querySelectorAll('.case').forEach(c => io.observe(c));
+  }
+}
+wireCases();
+
+/* ---------- шоурил в первом экране ----------
+   Браузеры останавливают автозапуск по своим правилам: вкладка ушла в фон,
+   у человека включена экономия трафика, включён запрет автовоспроизведения.
+   Поэтому не полагаемся на один атрибут autoplay, а мягко возвращаем ролик
+   к жизни — при возврате на вкладку и при первом действии человека.
+   Если браузер всё равно откажет, останется постер: страница не ломается. */
+const reel = document.getElementById('reelVideo');
+if (reel && reduceMotion) {
+  // человек отключил анимацию в системе — оставляем постер, ролик по клику
+  reel.removeAttribute('autoplay');
+  reel.pause();
+  reel.controls = true;
+} else if (reel) {
+  const playReel = () => reel.play().catch(() => {});
+  reel.addEventListener('loadeddata', playReel);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) playReel(); });
+  ['pointerdown', 'keydown', 'touchstart'].forEach(evt =>
+    window.addEventListener(evt, playReel, { once: true, passive: true }));
+  playReel();
+}
+
+/* ---------- форма-бриф ---------- */
+const toast = document.getElementById('toast');
+function say(msg){
+  toast.textContent = msg;
+  toast.classList.add('on');
+  setTimeout(() => toast.classList.remove('on'), 3200);
+}
+document.getElementById('briefForm').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const f = e.target;
+  if (!f.name.value.trim() || !f.task.value.trim() || !f.contact.value.trim()){
+    say(document.documentElement.lang === 'en'
+      ? 'Please fill in the name, the task and your contact.'
+      : 'Заполните имя, задачу и контакт.');
+    return;
+  }
+  const en = document.documentElement.lang === 'en';
+  const text = (en ? [
+    'New brief — Art_Motion',
+    'Client: ' + f.name.value.trim(),
+    'Task: ' + f.task.value.trim(),
+    'Format: ' + f.format.value,
+    'Deadline: ' + f.deadline.value,
+    'Budget: ' + f.budget.value,
+    'Contact: ' + f.contact.value.trim()
+  ] : [
+    'Новая заявка — Art_Motion',
+    'Клиент: ' + f.name.value.trim(),
+    'Задача: ' + f.task.value.trim(),
+    'Формат: ' + f.format.value,
+    'Срок: ' + f.deadline.value,
+    'Бюджет: ' + f.budget.value,
+    'Контакт: ' + f.contact.value.trim()
+  ]).join('\n');
+
+  // Копируем синхронно, пока действие человека ещё «свежее»: после открытия
+  // новой вкладки страница теряет фокус и буфер обмена уже не пишется.
+  let copied = false;
+  const ta = document.createElement('textarea');
+  ta.value = text; ta.setAttribute('readonly', '');
+  ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta);
+  ta.select(); ta.setSelectionRange(0, text.length);
+  try { copied = document.execCommand('copy'); } catch (err) {}
+  ta.remove();
+  if (!copied && navigator.clipboard) {
+    navigator.clipboard.writeText(text).catch(() => {});
+    copied = true;
+  }
+  say(copied
+    ? (en ? 'Brief copied — paste it into the chat.' : 'Бриф скопирован — вставьте его в чат.')
+    : (en ? 'Could not copy — send the brief manually.' : 'Не удалось скопировать — отправьте бриф вручную.'));
+  // Окно — сразу, в том же клике. Если браузер всё же не дал открыть вкладку,
+  // уходим в Telegram в этой же.
+  const tg = 'https://t.me/' + CONFIG.telegram;
+  const w = window.open(tg, '_blank');
+  if (!w) setTimeout(() => { location.href = tg; }, 1200);
+  else w.opener = null;
+});
+</script>
+</body>
+</html>
