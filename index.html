@@ -66,6 +66,9 @@ h1.brand-h1{font-family:var(--mono);font-size:13px;font-weight:700;letter-spacin
   gap:10px;margin-bottom:18px}
 h1.brand-h1::before{content:"";width:26px;height:1px;background:var(--num);opacity:.6;flex:none}
 .display{font-size:clamp(38px,6.4vw,74px)}
+/* «досматривают» — одно длинное слово: при 38 px оно шире экрана телефона
+   и обрезалось. На узких экранах размер идёт от ширины экрана. */
+@media(max-width:600px){.display{font-size:8.4vw}}
 h2{font-size:clamp(28px,3.8vw,44px)}
 h3{font-size:19px;font-weight:600;letter-spacing:-.01em;line-height:1.3}
 p{margin:0}
@@ -90,6 +93,18 @@ header.top{position:sticky;top:0;z-index:40;background:rgba(11,13,18,.86);
 .lang button{background:transparent;border:0;color:var(--dim);padding:7px 11px;cursor:pointer;font:inherit}
 .lang button[aria-pressed="true"]{background:var(--accent);color:#fff}
 @media(max-width:920px){.bar nav{display:none}.lang{margin-left:auto}}
+/* На телефоне в строку должны влезть логотип, RU/EN и кнопка: без flex:none
+   переключатель языка сплющивался до 15 px и переставал нажиматься. */
+.lang,.bar .btn{flex:none}
+@media(max-width:480px){
+  .bar{gap:10px}
+  .brand{font-size:14px}
+  .lang button{padding:7px 9px}
+  .bar .btn-sm{padding:9px 14px;font-size:13px}
+}
+/* Самые узкие экраны (320–360): кнопка в шапке уезжала за край —
+   прячем её, такая же кнопка есть в первом экране. */
+@media(max-width:360px){.bar .btn-sm{display:none}}
 
 /* ---------- кнопки ---------- */
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;
@@ -149,7 +164,8 @@ header.top{position:sticky;top:0;z-index:40;background:rgba(11,13,18,.86);
 .chip:hover{color:var(--ink)}
 .chip[aria-pressed="true"]{background:var(--ink);color:var(--ground);border-color:var(--ink)}
 .cases{display:grid;grid-template-columns:repeat(4,1fr);grid-auto-flow:dense;gap:16px;margin-top:28px}
-@media(max-width:1000px){.cases{grid-template-columns:repeat(3,1fr)}}
+/* Трёх колонок нет намеренно: широкая карточка занимает две из трёх,
+   вертикальные лезут в третью, и сетка на планшете рассыпалась дырами. */
 @media(max-width:760px){.cases{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:460px){.cases{grid-template-columns:1fr}}
 .case{position:relative;border:1px solid var(--line);border-radius:var(--r);overflow:hidden;
