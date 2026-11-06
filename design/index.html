@@ -72,6 +72,10 @@ textarea{width:100%;min-height:110px;margin-top:10px;border:1px solid var(--line
 details summary{cursor:pointer;color:var(--muted);font-size:13px;margin-top:10px}
 #toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(20px);background:#1f2328;color:#fff;padding:10px 16px;border-radius:10px;opacity:0;transition:.25s;pointer-events:none;max-width:90vw;z-index:9}
 #toast.on{opacity:1;transform:translateX(-50%)}
+.brand{display:flex;gap:12px;align-items:center;min-width:0}
+#hLogo{height:44px;max-width:130px;object-fit:contain;border-radius:6px}
+.note{margin:10px 0 0;font-size:12px;color:var(--muted)}
+.opts{display:grid;gap:8px;margin-bottom:12px}
 .hide{display:none!important}
 @media (max-width:900px){
   .app{grid-template-columns:1fr}
@@ -82,9 +86,12 @@ details summary{cursor:pointer;color:var(--muted);font-size:13px;margin-top:10px
 <body>
 
 <header class="top">
-  <div>
-    <h1>Визуализатор ремонта</h1>
-    <p>Загрузите фото, выделите стены, пол или мебель и примерьте цвет и материал</p>
+  <div class="brand">
+    <img id="hLogo" class="hide" alt="">
+    <div>
+      <h1 id="hName">Визуализатор ремонта</h1>
+      <p>Загрузите фото, выделите стены, пол или мебель и примерьте цвет и материал</p>
+    </div>
   </div>
   <div class="actions">
     <button class="btn primary" id="btnOpen">Загрузить фото</button>
@@ -147,9 +154,23 @@ details summary{cursor:pointer;color:var(--muted);font-size:13px;margin-top:10px
     </div>
 
     <div class="card">
+      <h2>Ваша компания</h2>
+      <div class="row" style="margin-top:0"><label for="cName">Название</label><input type="text" id="cName" maxlength="40" placeholder="Например, СтройДом"></div>
+      <div class="row"><label for="cContact">Телефон, сайт или Telegram</label><input type="text" id="cContact" maxlength="60" placeholder="+7 900 000-00-00"></div>
+      <div class="row"><div class="colorline"><input type="color" id="cColor" value="#c4562f"><span style="font-size:13px;color:var(--muted)">Фирменный цвет</span></div></div>
+      <div class="row actions"><button class="btn" id="btnLogo">Загрузить логотип</button><button class="btn hide" id="btnLogoDel">Убрать</button><input type="file" id="logoFile" accept="image/*" hidden></div>
+      <p class="note">Название и логотип появятся в шапке, на скачанной картинке и в описании для клиента. Всё хранится только в вашем браузере.</p>
+    </div>
+
+    <div class="card">
       <h2>Результат</h2>
+      <div class="opts">
+        <label class="chk"><input type="checkbox" id="optPair"> До и после рядом</label>
+        <label class="chk"><input type="checkbox" id="optBrand" checked> Подпись компании внизу</label>
+      </div>
       <div class="actions">
         <button class="btn primary" id="btnSave" disabled>Скачать PNG</button>
+        <button class="btn hide" id="btnShare" disabled>Отправить клиенту</button>
         <button class="btn" id="btnCopy" disabled>Копировать описание</button>
       </div>
       <details><summary>Описание изменений для клиента</summary><textarea id="summary" readonly></textarea></details>
@@ -305,7 +326,7 @@ function setImage(source, sw, sh){
   S.zones = []; S.active = -1; S.history = []; S.compare = false;
   $('#btnCmp').setAttribute('aria-pressed', 'false');
   $('#empty').classList.add('hide');
-  $('#btnSave').disabled = false; $('#btnCopy').disabled = false;
+  $('#btnSave').disabled = false; $('#btnCopy').disabled = false; $('#btnShare').disabled = false;
   addZone('Стены');
   render();
 }
@@ -597,7 +618,8 @@ function updateSummary(){
     const mt = MATERIALS.find(m => m.id === z.material), nm = nearestName(z.color);
     return '• ' + z.name + ': ' + (z.material === 'none' ? 'покраска' : mt.name.toLowerCase()) + ', цвет ' + (nm ? '«' + nm + '» ' : '') + z.color.toUpperCase();
   });
-  $('#summary').value = rows.length ? 'Предлагаемые изменения:\n' + rows.join('\n') + '\n\nВизуализация ориентировочная, итоговый вид зависит от освещения и фактуры материалов.' : 'Пока нет изменений.';
+  const head = (B.name || B.contact) ? [B.name, B.contact].filter(Boolean).join(' · ') + '\n\n' : '';
+  $('#summary').value = rows.length ? head + 'Предлагаемые изменения:\n' + rows.join('\n') + '\n\nВизуализация ориентировочная, итоговый вид зависит от освещения и фактуры материалов.' : 'Пока нет изменений.';
 }
 
 /* ====================== события ====================== */
@@ -720,12 +742,104 @@ $('#btnClear').addEventListener('click', () => {
   const z = activeZone(); if (!z) return; pushHistory(z); z.mask = new Uint8Array(S.w * S.h); touchMask(z); maskChanged(z);
 });
 
+/* ====================== фирменный стиль ====================== */
+const B = { name: '', contact: '', color: '#c4562f', logo: '', img: null };
+function saveBrand(){ try { localStorage.setItem('brand-v1', JSON.stringify({ name: B.name, contact: B.contact, color: B.color, logo: B.logo })); } catch (e) {} }
+function applyBrand(){
+  const root = document.documentElement.style, [r, g, b] = hex2rgb(B.color);
+  root.setProperty('--accent', B.color);
+  root.setProperty('--accent-ink', (.2126 * r + .7152 * g + .0722 * b) > 170 ? '#1f2328' : '#fff');
+  $('#hName').textContent = B.name || 'Визуализатор ремонта';
+  document.title = B.name ? B.name + ' — визуализатор ремонта' : 'Визуализатор ремонта';
+  const lg = $('#hLogo'); if (B.logo){ lg.src = B.logo; lg.classList.remove('hide'); } else lg.classList.add('hide');
+  $('#btnLogoDel').classList.toggle('hide', !B.logo);
+  $('#btnLogo').textContent = B.logo ? 'Заменить логотип' : 'Загрузить логотип';
+  updateSummary();
+}
+function setLogo(dataUrl){
+  B.logo = dataUrl; B.img = null;
+  if (dataUrl){ const im = new Image(); im.onload = () => { B.img = im; }; im.src = dataUrl; }
+}
+try {
+  const sv = JSON.parse(localStorage.getItem('brand-v1') || 'null');
+  if (sv){
+    B.name = String(sv.name || ''); B.contact = String(sv.contact || '');
+    B.color = /^#[0-9a-f]{6}$/i.test(sv.color) ? sv.color : B.color;
+    if (sv.logo && /^data:image\//.test(sv.logo)) setLogo(sv.logo);
+  }
+} catch (e) {}
+$('#cName').value = B.name; $('#cContact').value = B.contact; $('#cColor').value = B.color;
+$('#cName').addEventListener('input', e => { B.name = e.target.value.trim(); saveBrand(); applyBrand(); });
+$('#cContact').addEventListener('input', e => { B.contact = e.target.value.trim(); saveBrand(); updateSummary(); });
+$('#cColor').addEventListener('input', e => { B.color = e.target.value; saveBrand(); applyBrand(); });
+$('#btnLogo').addEventListener('click', () => $('#logoFile').click());
+$('#btnLogoDel').addEventListener('click', () => { setLogo(''); saveBrand(); applyBrand(); });
+$('#logoFile').addEventListener('change', e => {
+  const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+  const url = URL.createObjectURL(f), im = new Image();
+  im.onload = () => {
+    const k = Math.min(1, 320 / Math.max(im.naturalWidth, im.naturalHeight)), c = document.createElement('canvas');
+    c.width = Math.max(1, Math.round(im.naturalWidth * k)); c.height = Math.max(1, Math.round(im.naturalHeight * k));
+    c.getContext('2d').drawImage(im, 0, 0, c.width, c.height); URL.revokeObjectURL(url);
+    setLogo(c.toDataURL('image/png')); saveBrand(); applyBrand();
+  };
+  im.onerror = () => { URL.revokeObjectURL(url); toast('Не удалось открыть логотип'); };
+  im.src = url;
+});
+
 /* результат */
+function tagOn(g, t, x, y, al, u){
+  g.font = '600 ' + u * 13 + 'px system-ui,sans-serif'; g.textAlign = al; g.textBaseline = 'middle';
+  const tw = g.measureText(t).width + u * 20;
+  g.fillStyle = '#000a'; g.fillRect(al === 'left' ? x : x - tw, y, tw, u * 26);
+  g.fillStyle = '#fff'; g.fillText(t, al === 'left' ? x + u * 10 : x - u * 10, y + u * 13.5);
+}
+function buildExport(){
+  const pair = $('#optPair').checked, brand = $('#optBrand').checked && (B.name || B.contact || B.img);
+  const { w, h } = S, gap = pair ? 6 : 0, W = pair ? w * 2 + gap : w, u = W / 1000;
+  const fh = brand ? Math.round(Math.max(70, 84 * u)) : 0;
+  const c = document.createElement('canvas'); c.width = W; c.height = h + fh;
+  const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, W, h + fh);
+  if (pair){
+    g.drawImage(orig, 0, 0); g.drawImage(res, w + gap, 0);
+    tagOn(g, 'ДО', 12 * u, 12 * u, 'left', u); tagOn(g, 'ПОСЛЕ', W - 12 * u, 12 * u, 'right', u);
+  } else g.drawImage(res, 0, 0);
+  if (brand){
+    g.fillStyle = '#1f2328'; g.fillRect(0, h, W, fh);
+    g.fillStyle = B.color; g.fillRect(0, h, W, Math.max(3, 5 * u));
+    const pad = fh * .3; let x = pad;
+    if (B.img){
+      const k = Math.min(fh * .62 / B.img.naturalHeight, fh * 2.2 / B.img.naturalWidth);
+      const lw = B.img.naturalWidth * k, lh = B.img.naturalHeight * k;
+      g.drawImage(B.img, x, h + (fh - lh) / 2, lw, lh); x += lw + pad;
+    }
+    g.textAlign = 'left'; g.textBaseline = 'middle'; g.fillStyle = '#fff';
+    if (B.name && B.contact){
+      g.font = '700 ' + fh * .3 + 'px system-ui,sans-serif'; g.fillText(B.name, x, h + fh * .42);
+      g.font = '400 ' + fh * .22 + 'px system-ui,sans-serif'; g.fillStyle = '#c9ced6'; g.fillText(B.contact, x, h + fh * .72);
+    } else {
+      g.font = '700 ' + fh * .3 + 'px system-ui,sans-serif'; g.fillText(B.name || B.contact, x, h + fh * .55);
+    }
+  }
+  return c;
+}
+const canShareFiles = (() => {
+  try { return !!(navigator.canShare && navigator.share && navigator.canShare({ files: [new File([''], 'a.png', { type: 'image/png' })] })); }
+  catch (e) { return false; }
+})();
+if (canShareFiles) $('#btnShare').classList.remove('hide');
 $('#btnSave').addEventListener('click', () => {
   if (!S.base) return;
-  res.toBlob(b => {
+  buildExport().toBlob(b => {
     const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'vizualizaciya-remonta.png';
     document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  }, 'image/png');
+});
+$('#btnShare').addEventListener('click', () => {
+  if (!S.base) return;
+  buildExport().toBlob(async b => {
+    try { await navigator.share({ files: [new File([b], 'vizualizaciya-remonta.png', { type: 'image/png' })], text: $('#summary').value }); }
+    catch (e) { if (e && e.name !== 'AbortError') toast('Не удалось открыть «Поделиться». Скачайте PNG'); }
   }, 'image/png');
 });
 $('#btnCopy').addEventListener('click', async () => {
@@ -737,7 +851,7 @@ $('#btnCopy').addEventListener('click', async () => {
 /* старт */
 $('#inspector').classList.add('hide');
 $('#brushBox').classList.add('hide');
-renderZones(); updateSummary();
+renderZones(); applyBrand();
 </script>
 </body>
 </html>
