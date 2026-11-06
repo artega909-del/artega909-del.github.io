@@ -37,10 +37,14 @@ label.btn{cursor:pointer;user-select:none;-webkit-user-select:none}
 .inl input[type=range]{width:110px}
 .stage{position:relative;background:var(--stage);border-radius:14px;display:grid;place-items:center;min-height:320px;overflow:hidden}
 #view{display:block;max-width:100%;max-height:72vh;width:auto;height:auto;touch-action:none;cursor:crosshair}
-.empty{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:24px;color:#d6d8dc}
+.stage>*{grid-area:1/1}
+.empty .btn:not(.primary){color:var(--ink)}
+.empty{display:grid;place-items:center;text-align:center;padding:24px;color:#d6d8dc}
 .empty.drag{outline:2px dashed #fff8;outline-offset:-12px}
 .empty h2{color:#fff;font-size:18px;text-transform:none;letter-spacing:0;margin-bottom:8px}
 .empty p{margin:0 0 14px;color:#aeb2ba;max-width:420px}
+.paste{display:block;width:100%;max-width:360px;min-height:0;height:84px;margin:14px auto 0;padding:10px;border:1px dashed #fff5;border-radius:10px;background:#ffffff12;color:#fff;font:13px/1.35 inherit;resize:none;text-align:center}
+.paste::placeholder{color:#aeb2ba}
 .steps{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-top:16px;font-size:12px;color:#aeb2ba}
 .steps span{border:1px solid #fff3;border-radius:99px;padding:3px 10px}
 .hint{margin:10px 2px 0;color:var(--muted);font-size:13px;min-height:1.4em}
@@ -128,6 +132,7 @@ details summary{cursor:pointer;color:var(--muted);font-size:13px;margin-top:10px
             <button class="btn" id="btnDemo2">Попробовать на примере</button>
             <input type="file" id="cam" class="vh" accept="image/*" capture="environment">
           </div>
+          <textarea id="pasteBox" class="paste" aria-label="Вставить фото" placeholder="Не открывается выбор файла? Скопируйте фото, нажмите здесь и удерживайте, затем выберите «Вставить»"></textarea>
           <div class="steps"><span>1 · Фото</span><span>2 · Выделить зону</span><span>3 · Цвет и материал</span><span>4 · Скачать</span></div>
         </div>
       </div>
@@ -707,7 +712,12 @@ const stage = $('#stage');
 stage.addEventListener('dragover', e => { e.preventDefault(); $('#empty').classList.add('drag'); });
 stage.addEventListener('dragleave', () => $('#empty').classList.remove('drag'));
 stage.addEventListener('drop', e => { e.preventDefault(); $('#empty').classList.remove('drag'); loadFile(e.dataTransfer.files[0]); });
-document.addEventListener('paste', e => { const f = [...(e.clipboardData ? e.clipboardData.files : [])][0]; if (f) loadFile(f); });
+document.addEventListener('paste', e => {
+  const cd = e.clipboardData; if (!cd) return;
+  let f = [...(cd.files || [])][0];
+  if (!f) for (const it of (cd.items || [])) if (it.kind === 'file' && /^image\//.test(it.type)){ f = it.getAsFile(); break; }
+  if (f){ e.preventDefault(); loadFile(f); }
+});
 
 /* зоны и инспектор */
 Object.keys(ZONE_PRESETS).forEach(n => {
