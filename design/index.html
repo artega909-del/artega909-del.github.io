@@ -519,9 +519,13 @@ function wand(z, sx, sy, subtract){
     const f = feat(clamp(sy + dy, 0, h - 1) * w + clamp(sx + dx, 0, w - 1)); a0 += f[0]; b0 += f[1]; y0 += f[2]; n0++;
   }
   a0 /= n0; b0 /= n0; y0 /= n0;
-  const lim = S.tol * S.tol * 3, edgeT = (2 + S.tol * .12) * 4, edge = S.edge;
+  // разброс яркости вокруг клика: у гладкой поверхности предел по яркости строже, у неровной (сколы, фактура) шире
+  let vs = 0, vn = 0;
+  for (let dy = -7; dy <= 7; dy += 2) for (let dx = -7; dx <= 7; dx += 2){ const d = feat(clamp(sy + dy, 0, h - 1) * w + clamp(sx + dx, 0, w - 1))[2] - y0; vs += d * d; vn++; }
+  const spread = Math.min(25, 1.5 * Math.sqrt(vs / vn));
+  const lim = S.tol * S.tol * 3, ylim = S.tol * 1.3 + 4 + spread, edgeT = (2 + S.tol * .12) * 4, edge = S.edge;
   const seen = new Uint8Array(w * h), stack = new Int32Array(w * h); let sp = 0;
-  const ok = i => { if (edge[i] > edgeT) return false; const f = feat(i), da = f[0] - a0, db = f[1] - b0, dy = f[2] - y0; return da * da + db * db + dy * dy * .35 <= lim; };
+  const ok = i => { if (edge[i] > edgeT) return false; const f = feat(i); if (Math.abs(f[2] - y0) > ylim) return false; const da = f[0] - a0, db = f[1] - b0, dy = f[2] - y0; return da * da + db * db + dy * dy * .35 <= lim; };
   const start = sy * w + sx; stack[sp++] = start; seen[start] = 1;
   const out = new Uint8Array(w * h); let cnt = 0;
   while (sp){
@@ -603,13 +607,16 @@ function applyZone(z, out){
       const p = i * 4, r = base[p], g = base[p + 1], b = base[p + 2];
       let L = .2126 * r + .7152 * g + .0722 * b;
       if (fl) L = L * (1 - fl) + low[i] * fl; // убираем мелкие сколы, оставляем общий свет
-      let ratio = clamp((L + 10) / Lm, .25, 2.2), tr = cr, tg = cg, tb = cb;
+      let ratio = clamp((L + 10) / Lm, .3, 1.8), tr = cr, tg = cg, tb = cb;
       if (pat){
         ratio *= pat.lum[i]; const mx = pat.mix[i];
         if (mx){ tr += (MIXC[0] - tr) * mx; tg += (MIXC[1] - tg) * mx; tb += (MIXC[2] - tb) * mx; }
       }
       const q = k * a / 255;
-      out[p] = r + (tr * ratio - r) * q; out[p + 1] = g + (tg * ratio - g) * q; out[p + 2] = b + (tb * ratio - b) * q;
+      let nr = tr * ratio, ng = tg * ratio, nb = tb * ratio;
+      const mx = Math.max(nr, ng, nb);
+      if (mx > 255){ const sc = 255 / mx; nr *= sc; ng *= sc; nb *= sc; } // не даём цвету «выгорать» в розовый
+      out[p] = r + (nr - r) * q; out[p + 1] = g + (ng - g) * q; out[p + 2] = b + (nb - b) * q;
     }
   }
 }
