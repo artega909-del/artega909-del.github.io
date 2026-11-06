@@ -20,7 +20,9 @@ h2{font-size:13px;margin:0 0 10px;text-transform:uppercase;letter-spacing:.06em;
 .top{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:14px 16px;max-width:1500px;margin:0 auto}
 .top p{margin:2px 0 0;color:var(--muted);font-size:13px}
 .actions{display:flex;gap:8px;flex-wrap:wrap}
-.btn{border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:9px 14px;min-height:40px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;text-align:center;border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:9px 14px;min-height:40px}
+label.btn{cursor:pointer;user-select:none;-webkit-user-select:none}
+.vh{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;clip:rect(0 0 0 0);pointer-events:none}
 .btn:hover{border-color:#cfc9bd}
 .btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
 .btn.primary:hover{filter:brightness(1.07)}
@@ -94,9 +96,9 @@ details summary{cursor:pointer;color:var(--muted);font-size:13px;margin-top:10px
     </div>
   </div>
   <div class="actions">
-    <button class="btn primary" id="btnOpen">Загрузить фото</button>
+    <label class="btn primary" for="file" id="btnOpen">Загрузить фото</label>
     <button class="btn" id="btnDemo">Пример комнаты</button>
-    <input type="file" id="file" accept="image/*" hidden>
+    <input type="file" id="file" class="vh" accept="image/*">
   </div>
 </header>
 
@@ -121,8 +123,10 @@ details summary{cursor:pointer;color:var(--muted);font-size:13px;margin-top:10px
           <h2>Загрузите фото комнаты</h2>
           <p>Перетащите снимок сюда или выберите файл. Фото остаётся в вашем браузере и никуда не отправляется.</p>
           <div class="actions" style="justify-content:center">
-            <button class="btn primary" id="btnOpen2">Выбрать фото</button>
+            <label class="btn primary" for="file">Выбрать фото</label>
+            <label class="btn" for="cam">Сфотографировать</label>
             <button class="btn" id="btnDemo2">Попробовать на примере</button>
+            <input type="file" id="cam" class="vh" accept="image/*" capture="environment">
           </div>
           <div class="steps"><span>1 · Фото</span><span>2 · Выделить зону</span><span>3 · Цвет и материал</span><span>4 · Скачать</span></div>
         </div>
@@ -158,7 +162,7 @@ details summary{cursor:pointer;color:var(--muted);font-size:13px;margin-top:10px
       <div class="row" style="margin-top:0"><label for="cName">Название</label><input type="text" id="cName" maxlength="40" placeholder="Например, СтройДом"></div>
       <div class="row"><label for="cContact">Телефон, сайт или Telegram</label><input type="text" id="cContact" maxlength="60" placeholder="+7 900 000-00-00"></div>
       <div class="row"><div class="colorline"><input type="color" id="cColor" value="#c4562f"><span style="font-size:13px;color:var(--muted)">Фирменный цвет</span></div></div>
-      <div class="row actions"><button class="btn" id="btnLogo">Загрузить логотип</button><button class="btn hide" id="btnLogoDel">Убрать</button><input type="file" id="logoFile" accept="image/*" hidden></div>
+      <div class="row actions"><label class="btn" for="logoFile" id="btnLogo">Загрузить логотип</label><button class="btn hide" id="btnLogoDel">Убрать</button><input type="file" id="logoFile" class="vh" accept="image/*"></div>
       <p class="note">Название и логотип появятся в шапке, на скачанной картинке и в описании для клиента. Всё хранится только в вашем браузере.</p>
     </div>
 
@@ -331,12 +335,29 @@ function setImage(source, sw, sh){
   render();
 }
 
-function loadFile(f){
-  if (!f || !f.type.startsWith('image/')){ toast('Нужен файл-изображение (JPG, PNG, WebP)'); return; }
-  const url = URL.createObjectURL(f), im = new Image();
-  im.onload = () => { setImage(im, im.naturalWidth, im.naturalHeight); URL.revokeObjectURL(url); };
-  im.onerror = () => { toast('Не удалось открыть этот файл. Попробуйте JPG или PNG'); URL.revokeObjectURL(url); };
-  im.src = url;
+async function decodeImage(f){
+  // 1) createImageBitmap  2) временная ссылка на файл  3) чтение файла как data:-ссылки
+  if (window.createImageBitmap){
+    try { const bm = await createImageBitmap(f); return { src: bm, w: bm.width, h: bm.height }; } catch (e) {}
+  }
+  const fromUrl = url => new Promise((ok, no) => { const im = new Image(); im.onload = () => ok({ src: im, w: im.naturalWidth, h: im.naturalHeight }); im.onerror = no; im.src = url; });
+  try { const u = URL.createObjectURL(f); try { return await fromUrl(u); } finally { URL.revokeObjectURL(u); } } catch (e) {}
+  const du = await new Promise((ok, no) => { const r = new FileReader(); r.onload = () => ok(r.result); r.onerror = no; r.readAsDataURL(f); });
+  return fromUrl(du);
+}
+async function loadFile(f){
+  if (!f) return;
+  const nm = (f.name || '').toLowerCase(), ty = (f.type || '').toLowerCase();
+  if (!ty.startsWith('image/') && !/\.(jpe?g|png|webp|gif|bmp|avif|heic|heif)$/.test(nm)){ toast('Нужен файл-изображение (JPG, PNG, WebP)'); return; }
+  toast('Загружаю фото…');
+  let d;
+  try { d = await decodeImage(f); }
+  catch (e) {
+    toast(/hei[cf]/.test(nm + ty) ? 'Формат HEIC не открывается. В настройках камеры выберите «Наиболее совместимый» или отправьте снимок как JPG' : 'Не удалось открыть это фото. Попробуйте JPG или PNG');
+    return;
+  }
+  try { setImage(d.src, d.w, d.h); if (d.src.close) d.src.close(); toast('Фото загружено. Кликните по стене, чтобы выделить её'); }
+  catch (e) { toast('Не получилось обработать фото: ' + (e && e.message ? e.message : 'ошибка')); }
 }
 
 function loadDemo(){
@@ -680,9 +701,8 @@ $('#sub').addEventListener('change', e => S.sub = e.target.checked);
 
 /* файл / drag&drop / вставка */
 const fileIn = $('#file');
-['#btnOpen', '#btnOpen2'].forEach(s => $(s).addEventListener('click', () => fileIn.click()));
 ['#btnDemo', '#btnDemo2'].forEach(s => $(s).addEventListener('click', loadDemo));
-fileIn.addEventListener('change', () => { loadFile(fileIn.files[0]); fileIn.value = ''; });
+[fileIn, $('#cam')].forEach(inp => inp.addEventListener('change', () => { const f = inp.files && inp.files[0]; inp.value = ''; loadFile(f); }));
 const stage = $('#stage');
 stage.addEventListener('dragover', e => { e.preventDefault(); $('#empty').classList.add('drag'); });
 stage.addEventListener('dragleave', () => $('#empty').classList.remove('drag'));
@@ -772,7 +792,6 @@ $('#cName').value = B.name; $('#cContact').value = B.contact; $('#cColor').value
 $('#cName').addEventListener('input', e => { B.name = e.target.value.trim(); saveBrand(); applyBrand(); });
 $('#cContact').addEventListener('input', e => { B.contact = e.target.value.trim(); saveBrand(); updateSummary(); });
 $('#cColor').addEventListener('input', e => { B.color = e.target.value; saveBrand(); applyBrand(); });
-$('#btnLogo').addEventListener('click', () => $('#logoFile').click());
 $('#btnLogoDel').addEventListener('click', () => { setLogo(''); saveBrand(); applyBrand(); });
 $('#logoFile').addEventListener('change', e => {
   const f = e.target.files[0]; e.target.value = ''; if (!f) return;
