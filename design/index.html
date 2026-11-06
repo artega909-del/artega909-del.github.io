@@ -110,9 +110,11 @@ details summary{cursor:pointer;color:var(--muted);font-size:13px;margin-top:10px
   <section>
     <div class="toolbar" id="toolbar">
       <button class="tool" data-tool="wand" aria-pressed="true" title="Клик по стене выделяет всю область похожего цвета">Умная заливка</button>
+      <button class="tool" data-tool="poly" aria-pressed="false" title="Обвести стену, пол или зеркало по углам">Контур</button>
       <button class="tool" data-tool="brush" aria-pressed="false" title="Дорисовать выделение">Кисть</button>
       <button class="tool" data-tool="erase" aria-pressed="false" title="Стереть лишнее из выделения">Ластик</button>
       <button class="tool" id="btnUndo" title="Ctrl+Z">Отменить</button>
+      <button class="tool hide" id="btnClose" title="Enter">Замкнуть контур</button>
       <span class="sep"></span>
       <label class="inl" id="tolBox">Чувствительность <input type="range" id="tol" min="6" max="90" value="24"></label>
       <label class="inl hide" id="brushBox">Размер <input type="range" id="brush" min="6" max="120" value="36"></label>
@@ -157,6 +159,7 @@ details summary{cursor:pointer;color:var(--muted);font-size:13px;margin-top:10px
       </div>
       <div class="row"><div class="lbl"><span>Материал</span></div><div class="mats" id="mats"></div></div>
       <div class="row"><label for="strength"><span>Интенсивность</span><span id="strengthV"></span></label><input type="range" id="strength" min="0" max="100"></div>
+      <div class="row"><label for="flat"><span>Выровнять поверхность</span><span id="flatV"></span></label><input type="range" id="flat" min="0" max="100"></div>
       <div class="row" id="scaleRow"><label for="scale"><span>Размер рисунка</span><span id="scaleV"></span></label><input type="range" id="scale" min="0.4" max="3" step="0.1"></div>
       <div class="row chk" id="rotRow"><input type="checkbox" id="rot"><label for="rot">Повернуть рисунок на 90°</label></div>
       <div class="row"><button class="btn" id="btnClear" style="width:100%">Очистить выделение зоны</button></div>
@@ -324,6 +327,9 @@ function setImage(source, sw, sh){
   const b = planes.map(p => blurPlane(p, w, h, 2));
   S.smooth = new Uint8ClampedArray(n * 4);
   for (let i = 0; i < n; i++){ S.smooth[i * 4] = b[0][i]; S.smooth[i * 4 + 1] = b[1][i]; S.smooth[i * 4 + 2] = b[2][i]; S.smooth[i * 4 + 3] = 255; }
+  const lumP = new Uint8Array(n);
+  for (let i = 0; i < n; i++) lumP[i] = .2126 * S.base[i * 4] + .7152 * S.base[i * 4 + 1] + .0722 * S.base[i * 4 + 2];
+  S.low = blurPlane(lumP, w, h, Math.max(8, Math.round(Math.max(w, h) / 40)));
   // карта границ: заливка останавливается там, где яркость резко меняется (рамы, углы, мебель)
   S.edge = new Uint8Array(n);
   const Ls = new Float32Array(n);
@@ -410,7 +416,7 @@ function addZone(name){
   S.zones.push({
     id: S.uid++, base: name, name: same ? name + ' ' + (same + 1) : name,
     mask: new Uint8Array(S.w * S.h), color: p.color, material: p.material, colorTouched: false,
-    strength: 100, scale: 1, rot: false, visible: true, stats: null, _pk: null, _pat: null
+    strength: 100, flat: 0, scale: 1, rot: false, visible: true, stats: null, _pk: null, _pat: null
   });
   S.active = S.zones.length - 1;
   renderZones(); renderInspector(); updateHint(); updateSummary();
@@ -439,6 +445,7 @@ function pushHistory(z){
   if (S.history.length > 20) S.history.shift();
 }
 function undo(){
+  if (S.poly && S.poly.length){ S.poly.pop(); if (!S.poly.length) S.poly = null; paintView(); return; }
   const h = S.history.pop(); if (!h){ toast('Отменять пока нечего'); return; }
   const z = S.zones.find(q => q.id === h.id); if (!z) return;
   z.mask = h.mask; touchMask(z); S.active = S.zones.indexOf(z);
@@ -480,6 +487,26 @@ function wand(z, sx, sy, subtract){
   return cnt;
 }
 
+function addPolyPoint(p){
+  if (!S.poly) S.poly = [];
+  const u = S.w / (view.clientWidth || S.w);
+  if (S.poly.length >= 3 && Math.hypot(p.x - S.poly[0].x, p.y - S.poly[0].y) < 14 * u){ closePoly(); return; }
+  // точки у самого края кадра прилипают к краю, чтобы контур доходил до угла
+  const sn = (v, max) => v < 14 * u ? 0 : v > max - 14 * u ? max : v;
+  S.poly.push({ x: sn(p.x, S.w), y: sn(p.y, S.h) }); paintView();
+}
+function closePoly(){
+  const z = activeZone();
+  if (!z || !S.poly || S.poly.length < 3){ toast('Поставьте хотя бы 3 точки'); return; }
+  const c = document.createElement('canvas'); c.width = S.w; c.height = S.h;
+  const g = c.getContext('2d');
+  g.beginPath(); S.poly.forEach((q, i) => i ? g.lineTo(q.x, q.y) : g.moveTo(q.x, q.y)); g.closePath();
+  g.fillStyle = '#fff'; g.fill();
+  const a = g.getImageData(0, 0, S.w, S.h).data, m = z.mask;
+  pushHistory(z);
+  for (let i = 0; i < m.length; i++){ const v = a[i * 4 + 3]; if (S.sub) m[i] = Math.min(m[i], 255 - v); else if (v > m[i]) m[i] = v; }
+  S.poly = null; touchMask(z); maskChanged(z);
+}
 function dab(z, cx, cy, erase){
   const { w, h } = S, R = S.brush, m = z.mask;
   const x0 = Math.max(0, Math.floor(cx - R)), x1 = Math.min(w - 1, Math.ceil(cx + R));
@@ -511,14 +538,15 @@ const patCache = (z) => {
 
 function applyZone(z, out){
   const st = ensureStats(z); if (!st.count || !z.strength) return;
-  const { w } = S, base = S.base, m = z.mask, k = z.strength / 100;
+  const { w } = S, base = S.base, m = z.mask, k = z.strength / 100, fl = (z.flat || 0) / 100, low = S.low;
   const [cr, cg, cb] = hex2rgb(z.color);
   const pat = z.material === 'none' ? null : patCache(z), Lm = st.lum + 10;
   for (let y = st.y0; y <= st.y1; y++){
     for (let x = st.x0, i = y * w + st.x0; x <= st.x1; x++, i++){
       const a = m[i]; if (!a) continue;
       const p = i * 4, r = base[p], g = base[p + 1], b = base[p + 2];
-      const L = .2126 * r + .7152 * g + .0722 * b;
+      let L = .2126 * r + .7152 * g + .0722 * b;
+      if (fl) L = L * (1 - fl) + low[i] * fl; // убираем мелкие сколы, оставляем общий свет
       let ratio = clamp((L + 10) / Lm, .25, 2.2), tr = cr, tg = cg, tb = cb;
       if (pat){
         ratio *= pat.lum[i]; const mx = pat.mix[i];
@@ -574,7 +602,14 @@ function paintView(){
     }
     ictx.putImageData(id, 0, 0); vctx.drawImage(ovl, 0, 0);
   }
-  if (S.hover && S.tool !== 'wand'){
+  if (S.poly && S.poly.length){
+    const pts = S.hover && !S.stroke ? S.poly.concat([S.hover]) : S.poly;
+    vctx.beginPath(); pts.forEach((q, i) => i ? vctx.lineTo(q.x, q.y) : vctx.moveTo(q.x, q.y));
+    vctx.lineWidth = lw * 1.6; vctx.strokeStyle = '#fff'; vctx.stroke();
+    vctx.lineWidth = lw * .6; vctx.strokeStyle = '#e0357a'; vctx.stroke();
+    S.poly.forEach((q, i) => { vctx.beginPath(); vctx.arc(q.x, q.y, lw * (i ? 2.6 : 4.4), 0, 7); vctx.fillStyle = i ? '#e0357a' : '#fff'; vctx.fill(); vctx.lineWidth = lw * .8; vctx.strokeStyle = '#e0357a'; vctx.stroke(); });
+  }
+  if (S.hover && (S.tool === 'brush' || S.tool === 'erase')){
     vctx.beginPath(); vctx.arc(S.hover.x, S.hover.y, S.brush, 0, 7);
     vctx.lineWidth = lw; vctx.strokeStyle = '#fff'; vctx.stroke();
     vctx.lineWidth = lw / 2; vctx.strokeStyle = '#000'; vctx.stroke();
@@ -618,7 +653,7 @@ function renderInspector(){
   ins.classList.toggle('hide', !z); if (!z) return;
   $('#zname').value = z.name;
   $('#color').value = z.color; $('#hex').textContent = z.color.toUpperCase(); $('#cname').textContent = nearestName(z.color);
-  $('#strength').value = z.strength; $('#strengthV').textContent = z.strength + '%';
+  $('#flat').value = z.flat; $('#flatV').textContent = z.flat + '%'; $('#strength').value = z.strength; $('#strengthV').textContent = z.strength + '%';
   $('#scale').value = z.scale; $('#scaleV').textContent = '×' + z.scale.toFixed(1);
   $('#rot').checked = z.rot;
   const tex = z.material !== 'none';
@@ -632,8 +667,9 @@ function updateHint(){
   if (!S.base) t = '';
   else if (S.compare) t = 'Потяните линию влево или вправо — слева исходное фото, справа результат.';
   else if (!z) t = 'Добавьте зону справа, затем выделите её на фото.';
+  else if (S.tool === 'poly') t = 'Ставьте точки по углам стены, пола или зеркала. Замкните контур нажатием на первую (белую) точку или кнопкой «Замкнуть контур». «Отменить» убирает последнюю точку.';
   else if (!hasMask(z)) t = 'Кликните по «' + z.name.toLowerCase() + '» на фото — выделится вся область похожего цвета.';
-  else if (S.tool === 'wand') t = 'Захватило лишнее — уменьшите «Чувствительность» и нажмите «Отменить». Не хватает куска — кликните по нему ещё раз или дорисуйте кистью.';
+  else if (S.tool === 'wand') t = 'Захватило лишнее — уменьшите «Чувствительность» и нажмите «Отменить». Не хватает куска — кликните по нему ещё раз или дорисуйте кистью. Стены в трещинах и сколах удобнее обвести «Контуром».';
   else if (S.tool === 'brush') t = 'Закрасьте то, что нужно добавить в зону. Размер кисти — слева.';
   else t = 'Сотрите всё, что не должно перекрашиваться (розетки, плинтус, рамы).';
   $('#hint').textContent = t;
@@ -660,6 +696,7 @@ view.addEventListener('pointerdown', e => {
   const p = pos(e);
   if (S.compare){ S.stroke = { cmp: true }; S.split = clamp(p.x / S.w, 0, 1); paintView(); return; }
   const z = activeZone(); if (!z){ toast('Сначала добавьте зону справа'); return; }
+  if (S.tool === 'poly'){ addPolyPoint(p); return; }
   pushHistory(z);
   if (S.tool === 'wand'){
     const n = wand(z, Math.floor(p.x), Math.floor(p.y), S.sub);
@@ -687,18 +724,25 @@ function maskChanged(z){ renderZones(); updateHint(); updateSummary(); requestRe
 document.querySelectorAll('[data-tool]').forEach(b => b.addEventListener('click', () => {
   S.tool = b.dataset.tool; S.compare = false; $('#btnCmp').setAttribute('aria-pressed', 'false');
   document.querySelectorAll('[data-tool]').forEach(q => q.setAttribute('aria-pressed', String(q === b)));
-  $('#tolBox').classList.toggle('hide', S.tool !== 'wand'); $('#subBox').classList.toggle('hide', S.tool !== 'wand');
-  $('#brushBox').classList.toggle('hide', S.tool === 'wand');
-  view.style.cursor = S.tool === 'wand' ? 'crosshair' : 'none';
+  const bt = S.tool === 'brush' || S.tool === 'erase'; S.poly = null;
+  $('#tolBox').classList.toggle('hide', S.tool !== 'wand'); $('#subBox').classList.toggle('hide', !(S.tool === 'wand' || S.tool === 'poly'));
+  $('#brushBox').classList.toggle('hide', !bt); $('#btnClose').classList.toggle('hide', S.tool !== 'poly');
+  view.style.cursor = bt ? 'none' : 'crosshair';
   updateHint(); paintView();
 }));
 $('#btnCmp').addEventListener('click', () => {
   if (!S.base) return;
   S.compare = !S.compare; $('#btnCmp').setAttribute('aria-pressed', String(S.compare));
-  view.style.cursor = S.compare ? 'ew-resize' : (S.tool === 'wand' ? 'crosshair' : 'none');
+  view.style.cursor = S.compare ? 'ew-resize' : ((S.tool === 'brush' || S.tool === 'erase') ? 'none' : 'crosshair');
   updateHint(); paintView();
 });
 $('#btnUndo').addEventListener('click', undo);
+$('#btnClose').addEventListener('click', closePoly);
+document.addEventListener('keydown', e => {
+  if (/INPUT|TEXTAREA/.test(document.activeElement.tagName)) return;
+  if (e.key === 'Enter' && S.poly) closePoly();
+  if (e.key === 'Escape' && S.poly){ S.poly = null; paintView(); }
+});
 document.addEventListener('keydown', e => { if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && !/INPUT|TEXTAREA/.test(document.activeElement.tagName)){ e.preventDefault(); undo(); } });
 $('#tol').addEventListener('input', e => S.tol = +e.target.value);
 $('#brush').addEventListener('input', e => { S.brush = +e.target.value; paintView(); });
@@ -763,6 +807,7 @@ $('#color').addEventListener('change', () => { renderZones(); updateSummary(); }
 $('#zname').addEventListener('input', e => { const z = activeZone(); if (z){ z.name = e.target.value || 'Зона'; renderZones(); updateSummary(); } });
 $('#strength').addEventListener('input', e => { const z = activeZone(); if (!z) return; z.strength = +e.target.value; $('#strengthV').textContent = z.strength + '%'; requestRender(); });
 let scT;
+$('#flat').addEventListener('input', e => { const z = activeZone(); if (!z) return; z.flat = +e.target.value; $('#flatV').textContent = z.flat + '%'; requestRender(); });
 $('#scale').addEventListener('input', e => {
   const z = activeZone(); if (!z) return; z.scale = +e.target.value; $('#scaleV').textContent = '×' + z.scale.toFixed(1);
   clearTimeout(scT); scT = setTimeout(requestRender, 120);
