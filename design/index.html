@@ -35,7 +35,7 @@ label.btn{cursor:pointer;user-select:none;-webkit-user-select:none}
 .sep{width:1px;align-self:stretch;background:var(--line);margin:0 4px}
 .inl{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
 .inl input[type=range]{width:110px}
-.stage{position:relative;background:var(--stage);border-radius:14px;display:grid;place-items:center;min-height:320px;overflow:hidden}
+.stage{position:relative;background:var(--stage);border-radius:5px;display:grid;place-items:center;min-height:320px;overflow:hidden}
 #view{display:block;max-width:100%;max-height:72vh;width:auto;height:auto;touch-action:none;cursor:crosshair}
 .stage>*{grid-area:1/1}
 .empty .btn:not(.primary){color:var(--ink)}
@@ -209,6 +209,12 @@ textarea.gtext{min-height:64px;resize:vertical;margin-top:0}
       <div class="row"><label for="match"><span>Подстроить под свет сцены</span><span id="matchV"></span></label><input type="range" id="match" min="0" max="100"></div>
       <div class="row"><label for="flat"><span>Выровнять поверхность</span><span id="flatV"></span></label><input type="range" id="flat" min="0" max="100"></div>
       <div class="row" id="scaleRow"><label for="scale"><span>Размер рисунка</span><span id="scaleV"></span></label><input type="range" id="scale" min="0.4" max="3" step="0.1"></div>
+      <div class="row" id="perspRow">
+        <div class="lbl"><span>Перспектива</span><span id="perspV"></span></div>
+        <div class="actions"><button class="btn" id="perspSet">Задать 4 угла</button><button class="btn hide" id="perspClear">Сбросить</button></div>
+        <div class="row hide" id="depthRow"><label for="depth"><span>Глубина рисунка</span><span id="depthV"></span></label><input type="range" id="depth" min="0.1" max="3" step="0.01"></div>
+        <p class="note">Отметьте 4 угла поверхности (пола, стены, фасада) в любом порядке, и материал ляжет под тем же углом, что и на фото. Если рисунок выглядит растянутым или сжатым вглубь, поменяйте «Глубину».</p>
+      </div>
       <div class="row chk" id="rotRow"><input type="checkbox" id="rot"><label for="rot">Повернуть рисунок на 90°</label></div>
       <div class="row"><button class="btn" id="btnClear" style="width:100%">Очистить выделение зоны</button></div>
     </div>
@@ -305,7 +311,7 @@ const PAT = {
     o.l = l; o.m = 0;
   },
   wood(u, v, o){
-    const PH = 60, PL = 420, row = Math.floor(v / PH), off = hash(row, 0, 5) * PL;
+    const PH = 60, PL = 600, row = Math.floor(v / PH), off = hash(row, 0, 5) * PL;
     const uu = u + off, col = Math.floor(uu / PL), id = hash(row, col, 6);
     const grain = fbm(uu / 260, v / 3.2, 8, 3);
     let l = (.8 + .35 * id) * (.78 + .5 * grain);
@@ -320,14 +326,14 @@ const PAT = {
     o.l = 1.05 - .34 * Math.max(v1, v2) + (fbm(u / 30, v / 30, 12, 3) - .47) * .12; o.m = 0;
   },
   brick(u, v, o){
-    const BH = 26, BW = 64, row = Math.floor(v / BH), off = (row & 1) * BW / 2;
+    const BH = 36, BW = 110, row = Math.floor(v / BH), off = (row & 1) * BW / 2;
     const uu = u + off, col = Math.floor(uu / BW), ux = uu - col * BW, uy = v - row * BH;
-    if (ux < 3 || uy < 3){ o.l = .96 + (hash(u, v, 14) - .5) * .06; o.m = .85; return; }
+    if (ux < 4 || uy < 4){ o.l = .96 + (hash(u, v, 14) - .5) * .06; o.m = .85; return; }
     o.l = .78 + .4 * hash(row, col, 11) + (fbm(u / 6, v / 6, 12, 2) - .4) * .2; o.m = 0;
   },
   tile(u, v, o){
-    const T = 90, i = Math.floor(u / T), j = Math.floor(v / T), ux = u - i * T, uy = v - j * T;
-    if (ux < 3 || uy < 3){ o.l = .94; o.m = .7; return; }
+    const T = 150, i = Math.floor(u / T), j = Math.floor(v / T), ux = u - i * T, uy = v - j * T;
+    if (ux < 4 || uy < 4){ o.l = .94; o.m = .7; return; }
     o.l = .95 + .1 * hash(i, j, 13) + (fbm(u / 60, v / 60, 15, 2) - .47) * .08; o.m = 0;
   },
   fabric(u, v, o){ o.l = 1 + .09 * Math.sin(u * 1.8) + .09 * Math.sin(v * 1.8) + (hash(u, v, 16) - .5) * .1; o.m = 0; }
@@ -508,7 +514,23 @@ function pushHistory(z){
   S.history.push({ id: z.id, mask: z.mask.slice() });
   if (S.history.length > 20) S.history.shift();
 }
+function startPersp(){
+  const z = activeZone(); if (!z) return;
+  S.compare = false; $('#btnCmp').setAttribute('aria-pressed', 'false'); S.poly = null; S.pm = [];
+  view.style.cursor = 'crosshair'; updateHint(); paintView();
+  view.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+}
+function addPerspPoint(p){
+  S.pm.push({ x: p.x, y: p.y });
+  if (S.pm.length < 4){ updateHint(); paintView(); return; }
+  const z = activeZone(), pts = orderQuad(S.pm); S.pm = null;
+  // глубина по умолчанию: по форме выбранного четырёхугольника (можно подправить ползунком)
+  const d = (a, c) => Math.hypot(a.x - c.x, a.y - c.y), wpx = (d(pts[0], pts[1]) + d(pts[3], pts[2])) / 2, hpx = (d(pts[0], pts[3]) + d(pts[1], pts[2])) / 2;
+  z.persp = { pts, depth: z.persp ? z.persp.depth : clamp(Math.round(1.6 * hpx / Math.max(1, wpx) * 100) / 100, .1, 1.5) }; buildH(z);
+  renderInspector(); updateHint(); requestRender();
+}
 function undo(){
+  if (S.pm && S.pm.length){ S.pm.pop(); if (!S.pm.length) S.pm = null; updateHint(); paintView(); return; }
   if (S.poly && S.poly.length){ S.poly.pop(); if (!S.poly.length) S.poly = null; paintView(); return; }
   const h = S.history.pop(); if (!h){ toast('Отменять пока нечего'); return; }
   const z = S.zones.find(q => q.id === h.id); if (!z) return;
@@ -594,14 +616,62 @@ function stroke(z, a, b, erase){
 }
 
 /* ====================== рендер ====================== */
+function solveH(src, dst){
+  const A = [], b = [];
+  for (let i = 0; i < 4; i++){
+    const x = src[i][0], y = src[i][1], u = dst[i][0], v = dst[i][1];
+    A.push([x, y, 1, 0, 0, 0, -u * x, -u * y]); b.push(u);
+    A.push([0, 0, 0, x, y, 1, -v * x, -v * y]); b.push(v);
+  }
+  for (let c = 0; c < 8; c++){
+    let m = c; for (let r = c + 1; r < 8; r++) if (Math.abs(A[r][c]) > Math.abs(A[m][c])) m = r;
+    if (Math.abs(A[m][c]) < 1e-9) return null;
+    [A[c], A[m]] = [A[m], A[c]]; [b[c], b[m]] = [b[m], b[c]];
+    for (let r = 0; r < 8; r++){ if (r === c) continue; const f = A[r][c] / A[c][c]; for (let k = c; k < 8; k++) A[r][k] -= f * A[c][k]; b[r] -= f * b[c]; }
+  }
+  return b.map((v, i) => v / A[i][i]);
+}
+function orderQuad(pts){
+  const t = pts.slice().sort((a, c) => a.y - c.y), top = t.slice(0, 2).sort((a, c) => a.x - c.x), bot = t.slice(2).sort((a, c) => a.x - c.x);
+  return [top[0], top[1], bot[1], bot[0]]; // левый верх, правый верх, правый низ, левый низ
+}
+function buildH(z){
+  if (!z.persp) { z._H = null; return; }
+  const [tl, tr, br, bl] = z.persp.pts, d = (a, c) => Math.hypot(a.x - c.x, a.y - c.y);
+  const Wq = 2000, Hq = Wq * z.persp.depth; // поверхность условно шириной 4 м (≈500 единиц рисунка на метр)
+  const H = solveH([[tl.x, tl.y], [tr.x, tr.y], [br.x, br.y], [bl.x, bl.y]], [[0, 0], [Wq, 0], [Wq, Hq], [0, Hq]]);
+  if (!H){ z.persp = null; z._H = null; toast('Не получилось: углы лежат почти на одной линии'); return; }
+  z._H = H;
+}
 const patCache = (z) => {
-  const key = z.material + '|' + z.scale + '|' + z.rot + '|' + S.w + 'x' + S.h;
+  const key = z.material + '|' + z.scale + '|' + z.rot + '|' + S.w + 'x' + S.h + '|' + (z.persp ? JSON.stringify(z.persp) : '');
   if (z._pk === key) return z._pat;
   const n = S.w * S.h, lum = new Float32Array(n), mix = new Float32Array(n);
-  const f = PAT[z.material], o = { l: 1, m: 0 }, s = z.scale;
-  for (let y = 0, i = 0; y < S.h; y++) for (let x = 0; x < S.w; x++, i++){
-    let u = x / s, v = y / s; if (z.rot){ const t = u; u = v; v = t; }
-    f(u, v, o); lum[i] = o.l; mix[i] = o.m;
+  const f = PAT[z.material], o = { l: 1, m: 0 }, s = z.scale, fs = s * S.w / 2000;
+  const H = z.persp && z._H;
+  if (!H){
+    for (let y = 0, i = 0; y < S.h; y++) for (let x = 0; x < S.w; x++, i++){
+      let u = x / fs, v = y / fs; if (z.rot){ const t = u; u = v; v = t; }
+      f(u, v, o); lum[i] = o.l; mix[i] = o.m;
+    }
+  } else {
+    // рисунок в перспективе: каждая точка кадра переводится в координаты плоской поверхности
+    // знак знаменателя в центре области задаёт «сторону горизонта»; на другой стороне плоскость не определена
+    const qc = z.persp.pts, cx = (qc[0].x + qc[2].x) / 2, cy = (qc[0].y + qc[2].y) / 2, sg = Math.sign(H[6] * cx + H[7] * cy + 1) || 1;
+    const map = (x, y) => { const d = H[6] * x + H[7] * y + 1; return d * sg > 1e-6 ? [(H[0] * x + H[1] * y + H[2]) / d / s, (H[3] * x + H[4] * y + H[5]) / d / s] : null; };
+    for (let y = 0, i = 0; y < S.h; y++) for (let x = 0; x < S.w; x++, i++){
+      const q = map(x + .5, y + .5);
+      if (!q){ lum[i] = 1; mix[i] = 0; continue; } // выше линии горизонта плоскость не определена
+      const qx = map(x + 1.5, y + .5), qy = map(x + .5, y + 1.5);
+      let fp = 1; if (qx && qy) fp = Math.max(Math.abs(qx[0] - q[0]) + Math.abs(qx[1] - q[1]), Math.abs(qy[0] - q[0]) + Math.abs(qy[1] - q[1]));
+      const n = clamp(Math.ceil(fp / 1.4), 1, 4); let sl = 0, sm = 0;
+      for (let a = 0; a < n; a++) for (let c = 0; c < n; c++){
+        const t = n === 1 ? q : map(x + (a + .5) / n, y + (c + .5) / n) || q;
+        let u = t[0], v = t[1]; if (z.rot){ const w2 = u; u = v; v = w2; }
+        f(u, v, o); sl += o.l; sm += o.m;
+      }
+      lum[i] = sl / (n * n); mix[i] = sm / (n * n);
+    }
   }
   z._pk = key; return z._pat = { lum, mix };
 };
@@ -681,6 +751,15 @@ function paintView(){
     }
     ictx.putImageData(id, 0, 0); vctx.drawImage(ovl, 0, 0);
   }
+  const zp = activeZone();
+  if (!S.pm && zp && zp.persp){
+    const q = zp.persp.pts; vctx.beginPath(); q.forEach((a, i) => i ? vctx.lineTo(a.x, a.y) : vctx.moveTo(a.x, a.y)); vctx.closePath();
+    vctx.setLineDash([lw * 4, lw * 3]); vctx.lineWidth = lw * 1.4; vctx.strokeStyle = '#fff'; vctx.stroke(); vctx.setLineDash([]);
+  }
+  if (S.pm && S.pm.length){
+    S.pm.forEach((q, i) => { vctx.beginPath(); vctx.arc(q.x, q.y, lw * 4, 0, 7); vctx.fillStyle = '#e0357a'; vctx.fill(); vctx.lineWidth = lw; vctx.strokeStyle = '#fff'; vctx.stroke();
+      vctx.fillStyle = '#fff'; vctx.font = '700 ' + lw * 5 + 'px system-ui,sans-serif'; vctx.textAlign = 'center'; vctx.textBaseline = 'middle'; vctx.fillText(String(i + 1), q.x, q.y + lw * .3); });
+  }
   if (S.poly && S.poly.length){
     const pts = S.hover && !S.stroke ? S.poly.concat([S.hover]) : S.poly;
     vctx.beginPath(); pts.forEach((q, i) => i ? vctx.lineTo(q.x, q.y) : vctx.moveTo(q.x, q.y));
@@ -736,7 +815,10 @@ function renderInspector(){
   $('#scale').value = z.scale; $('#scaleV').textContent = '×' + z.scale.toFixed(1);
   $('#rot').checked = z.rot;
   const tex = z.material !== 'none';
-  $('#scaleRow').classList.toggle('hide', !tex); $('#rotRow').classList.toggle('hide', !tex);
+  $('#scaleRow').classList.toggle('hide', !tex); $('#rotRow').classList.toggle('hide', !tex); $('#perspRow').classList.toggle('hide', !tex);
+  const hp = !!z.persp; $('#perspClear').classList.toggle('hide', !hp); $('#depthRow').classList.toggle('hide', !hp);
+  $('#perspV').textContent = hp ? 'задана' : ''; $('#perspSet').textContent = hp ? 'Задать заново' : 'Задать 4 угла';
+  if (hp){ $('#depth').value = z.persp.depth; $('#depthV').textContent = '×' + z.persp.depth.toFixed(2); }
   document.querySelectorAll('#swatches button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.c.toLowerCase() === z.color.toLowerCase())));
   document.querySelectorAll('#mats button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.m === z.material)));
 }
@@ -744,6 +826,7 @@ function renderInspector(){
 function updateHint(){
   const z = activeZone(); let t = '';
   if (!S.base) t = '';
+  else if (S.pm) t = 'Отметьте 4 угла поверхности, под которой должен лечь материал: ещё ' + (4 - S.pm.length) + '. «Отменить» убирает последнюю точку, Esc отменяет.';
   else if (S.compare) t = 'Потяните линию влево или вправо — слева исходное фото, справа результат.';
   else if (!z) t = 'Добавьте зону справа, затем выделите её на фото.';
   else if (S.tool === 'poly') t = 'Ставьте точки по углам стены, пола или зеркала. Замкните контур нажатием на первую (белую) точку или кнопкой «Замкнуть контур». «Отменить» убирает последнюю точку.';
@@ -751,6 +834,7 @@ function updateHint(){
   else if (S.tool === 'wand') t = 'Захватило лишнее — уменьшите «Чувствительность» и нажмите «Отменить». Не хватает куска — кликните по нему ещё раз или дорисуйте кистью. Стены в трещинах и сколах удобнее обвести «Контуром».';
   else if (S.tool === 'brush') t = 'Закрасьте то, что нужно добавить в зону. Размер кисти — слева.';
   else t = 'Сотрите всё, что не должно перекрашиваться (розетки, плинтус, рамы).';
+  if (z && S.base && !S.compare && !S.pm && z.material !== 'none' && !z.persp && hasMask(z)) t += ' Чтобы материал лёг под углом, нажмите «Задать 4 угла» в блоке «Что меняем».';
   $('#hint').textContent = t;
 }
 
@@ -778,6 +862,7 @@ view.addEventListener('pointerdown', e => {
   const p = pos(e);
   if (S.compare){ S.stroke = { cmp: true }; S.split = clamp(p.x / S.w, 0, 1); paintView(); return; }
   const z = activeZone(); if (!z){ toast('Сначала добавьте зону справа'); return; }
+  if (S.pm){ addPerspPoint(p); return; }
   if (S.tool === 'poly'){ addPolyPoint(p); return; }
   pushHistory(z);
   if (S.tool === 'wand'){
@@ -806,7 +891,7 @@ function maskChanged(z){ renderZones(); updateHint(); updateSummary(); requestRe
 document.querySelectorAll('[data-tool]').forEach(b => b.addEventListener('click', () => {
   S.tool = b.dataset.tool; S.compare = false; $('#btnCmp').setAttribute('aria-pressed', 'false');
   document.querySelectorAll('[data-tool]').forEach(q => q.setAttribute('aria-pressed', String(q === b)));
-  const bt = S.tool === 'brush' || S.tool === 'erase'; S.poly = null;
+  const bt = S.tool === 'brush' || S.tool === 'erase'; S.poly = null; S.pm = null;
   $('#tolBox').classList.toggle('hide', S.tool !== 'wand'); $('#subBox').classList.toggle('hide', !(S.tool === 'wand' || S.tool === 'poly'));
   $('#brushBox').classList.toggle('hide', !bt); $('#btnClose').classList.toggle('hide', S.tool !== 'poly');
   view.style.cursor = bt ? 'none' : 'crosshair';
@@ -823,7 +908,7 @@ $('#btnClose').addEventListener('click', closePoly);
 document.addEventListener('keydown', e => {
   if (/INPUT|TEXTAREA/.test(document.activeElement.tagName)) return;
   if (e.key === 'Enter' && S.poly) closePoly();
-  if (e.key === 'Escape' && S.poly){ S.poly = null; paintView(); }
+  if (e.key === 'Escape' && (S.poly || S.pm)){ S.poly = null; S.pm = null; updateHint(); paintView(); }
 });
 document.addEventListener('keydown', e => { if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && !/INPUT|TEXTAREA/.test(document.activeElement.tagName)){ e.preventDefault(); undo(); } });
 $('#tol').addEventListener('input', e => S.tol = +e.target.value);
@@ -860,7 +945,7 @@ MATERIALS.forEach(m => {
   const c = document.createElement('canvas'); c.width = 64; c.height = 44;
   const g = c.getContext('2d'), id = g.createImageData(64, 44), col = hex2rgb(m.color || '#B8B2A7'), o = { l: 1, m: 0 };
   for (let y = 0, i = 0; y < 44; y++) for (let x = 0; x < 64; x++, i += 4){
-    let l = 1, mx = 0; if (m.id !== 'none'){ PAT[m.id](x * 2.2, y * 2.2, o); l = o.l; mx = o.m; }
+    let l = 1, mx = 0; if (m.id !== 'none'){ PAT[m.id](x * 5, y * 5, o); l = o.l; mx = o.m; }
     for (let k = 0; k < 3; k++){ const t = col[k] + (MIXC[k] - col[k]) * mx; id.data[i + k] = clamp(t * l, 0, 255); }
     id.data[i + 3] = 255;
   }
@@ -869,7 +954,7 @@ MATERIALS.forEach(m => {
   b.addEventListener('click', () => {
     const z = activeZone(); if (!z) return;
     z.material = m.id; if (m.color && !z.colorTouched) z.color = m.color;
-    renderZones(); renderInspector(); updateSummary(); requestRender();
+    renderZones(); renderInspector(); updateSummary(); updateHint(); requestRender();
   });
   $('#mats').appendChild(b);
 });
@@ -894,6 +979,13 @@ $('#flat').addEventListener('input', e => { const z = activeZone(); if (!z) retu
 $('#scale').addEventListener('input', e => {
   const z = activeZone(); if (!z) return; z.scale = +e.target.value; $('#scaleV').textContent = '×' + z.scale.toFixed(1);
   clearTimeout(scT); scT = setTimeout(requestRender, 120);
+});
+$('#perspSet').addEventListener('click', startPersp);
+$('#perspClear').addEventListener('click', () => { const z = activeZone(); if (!z) return; z.persp = null; z._H = null; renderInspector(); requestRender(); });
+let depT;
+$('#depth').addEventListener('input', e => {
+  const z = activeZone(); if (!z || !z.persp) return; z.persp.depth = +e.target.value; $('#depthV').textContent = '×' + z.persp.depth.toFixed(2);
+  clearTimeout(depT); depT = setTimeout(() => { buildH(z); requestRender(); }, 140);
 });
 $('#rot').addEventListener('change', e => { const z = activeZone(); if (z){ z.rot = e.target.checked; requestRender(); } });
 $('#btnClear').addEventListener('click', () => {
