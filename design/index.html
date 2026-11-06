@@ -173,6 +173,8 @@ textarea.gtext{min-height:64px;resize:vertical;margin-top:0}
           <div class="sw" id="swatches"></div>
         </div>
         <div class="row"><div class="lbl"><span>Материал</span></div><div class="mats" id="mats"></div></div>
+        <div class="row hide" id="armRow"><div class="actions"><button class="btn" id="armAdd" aria-pressed="false">+ Добавить участок</button><button class="btn" id="armSub" aria-pressed="false">− Исключить объект</button></div></div>
+        <div class="row hide" id="smoothRow"><button class="btn" id="smoothBtn" style="width:100%">Сгладить сколы и трещины</button></div>
         <div class="row hide" id="fixRow"><div class="lbl"><span>Выделилось не то?</span></div><div class="actions"><button class="btn" id="tolLess">Меньше</button><button class="btn" id="tolMore">Больше</button></div></div>
       </div>
     </div>
@@ -295,6 +297,7 @@ const MATERIALS = [
   { id: 'tile',     name: 'Плитка',     color: '#D7D9D9' },
   { id: 'fabric',   name: 'Ткань',      color: '#6F8A8C' }
 ];
+const ROUGH_T = 13; // выше этого разброса яркости предлагаем сгладить поверхность
 const AUTO_COLORS = ['#9CAF9A', '#D8C3A0', '#2F3E55', '#C26B4A', '#B8B2A7', '#D8A9A4', '#2F6B5A', '#D2A33B'];
 const ZONE_PRESETS = {
   'Область': { color: '#9CAF9A', material: 'none' },
@@ -325,10 +328,10 @@ function fbm(x, y, s, o){
 }
 /* каждая функция пишет в o.l — множитель яркости (≈1) и o.m — доля «шва» (0..1) */
 const PAT = {
-  plaster(u, v, o){ o.l = 1 + (fbm(u / 40, v / 40, 1, 4) - .47) * .22 + (hash(u, v, 9) - .5) * .08; o.m = 0; },
+  plaster(u, v, o){ o.l = 1 + (fbm(u / 28, v / 28, 1, 4) - .47) * .14 + (hash(u / 2, v / 2, 9) - .5) * .05; o.m = 0; },
   concrete(u, v, o){
-    let l = 1 + (fbm(u / 70, v / 70, 2, 5) - .47) * .5 + (hash(u, v, 3) - .5) * .12;
-    if (hash(u / 2, v / 2, 4) > .985) l -= .25;
+    let l = 1 + (fbm(u / 55, v / 55, 2, 5) - .47) * .26 + (hash(u / 2, v / 2, 3) - .5) * .07;
+    if (hash(u / 3, v / 3, 4) > .985) l -= .16;
     o.l = l; o.m = 0;
   },
   wood(u, v, o){
@@ -340,11 +343,11 @@ const PAT = {
     o.l = l; o.m = 0;
   },
   marble(u, v, o){
-    const t = fbm(u / 220, v / 220, 10, 5);
-    const v1 = Math.pow(1 - Math.abs(Math.sin((u * .0045 + v * .0032 + t * 3.4) * Math.PI)), 14);
-    const t2 = fbm(u / 90, v / 90, 11, 3);
-    const v2 = Math.pow(1 - Math.abs(Math.sin((-u * .003 + v * .006 + t2 * 2.2) * Math.PI)), 22) * .6;
-    o.l = 1.05 - .34 * Math.max(v1, v2) + (fbm(u / 30, v / 30, 12, 3) - .47) * .12; o.m = 0;
+    const sm = (e0, e1, x) => { const t = clamp((x - e0) / (e1 - e0), 0, 1); return t * t * (3 - 2 * t); };
+    const t = fbm(u / 220, v / 220, 10, 5), w1 = Math.abs(Math.sin((u * .0045 + v * .0032 + t * 3.4) * Math.PI));
+    const t2 = fbm(u / 90, v / 90, 11, 3), w2 = Math.abs(Math.sin((-u * .003 + v * .006 + t2 * 2.2) * Math.PI));
+    const core = (1 - sm(0, .06, w1)) * .34 + (1 - sm(0, .035, w2)) * .2, halo = Math.pow(1 - w1, 6) * .12; // жила с мягким ореолом, а не волосяная линия
+    o.l = 1.03 - core - halo + (fbm(u / 70, v / 70, 12, 4) - .47) * .16; o.m = 0;
   },
   brick(u, v, o){
     const BH = 36, BW = 110, row = Math.floor(v / BH), off = (row & 1) * BW / 2;
@@ -357,7 +360,7 @@ const PAT = {
     if (ux < 4 || uy < 4){ o.l = .94; o.m = .7; return; }
     o.l = .95 + .1 * hash(i, j, 13) + (fbm(u / 60, v / 60, 15, 2) - .47) * .08; o.m = 0;
   },
-  fabric(u, v, o){ o.l = 1 + .09 * Math.sin(u * 1.8) + .09 * Math.sin(v * 1.8) + (hash(u, v, 16) - .5) * .1; o.m = 0; }
+  fabric(u, v, o){ o.l = 1 + .07 * Math.sin(u * .55) + .07 * Math.sin(v * .55) + (hash(u / 3, v / 3, 16) - .5) * .09; o.m = 0; } // нить ≈ 11 единиц, чтобы не было муара
 };
 
 /* ====================== состояние ====================== */
@@ -394,7 +397,7 @@ function blurPlane(src, w, h, r){
 }
 
 let onNewPhoto = null;
-function resetInteraction(){ S.pm = null; S.poly = null; S.stroke = null; S.tap = null; S.hover = null; }
+function resetInteraction(){ S.arm = null; S.pm = null; S.poly = null; S.stroke = null; S.tap = null; S.hover = null; }
 function setImage(source, sw, sh, opts){
   opts = opts || {};
   const k = Math.min(1, MAXSIDE / Math.max(sw, sh));
@@ -415,7 +418,6 @@ function setImage(source, sw, sh, opts){
   for (let i = 0; i < n; i++){ S.smooth[i * 4] = b[0][i]; S.smooth[i * 4 + 1] = b[1][i]; S.smooth[i * 4 + 2] = b[2][i]; S.smooth[i * 4 + 3] = 255; }
   const lumP = new Uint8Array(n);
   for (let i = 0; i < n; i++) lumP[i] = .2126 * S.base[i * 4] + .7152 * S.base[i * 4 + 1] + .0722 * S.base[i * 4 + 2];
-  S.low = blurPlane(lumP, w, h, Math.max(8, Math.round(Math.max(w, h) / 40)));
   // насколько ярко освещена сцена (92-й процентиль яркости) и общий оттенок света (серый мир)
   const hist = new Uint32Array(256); let sr = 0, sg = 0, sb = 0;
   for (let i = 0; i < n; i++){ hist[lumP[i]]++; sr += S.base[i * 4]; sg += S.base[i * 4 + 1]; sb += S.base[i * 4 + 2]; }
@@ -535,8 +537,48 @@ function ensureStats(z){
   return z.stats = { x0, y0, x1, y1, count: cnt, lum: lw ? ls / lw : 128 };
 }
 
-function touchMask(z){ z.stats = null; }
+function touchMask(z){ z.stats = null; z._mv = (z._mv || 0) + 1; }
 
+function blurF(src, w, h, r){
+  const n = 2 * r + 1, tmp = new Float32Array(w * h), out = new Float32Array(w * h);
+  for (let y = 0; y < h; y++){
+    const o = y * w; let s2 = 0;
+    for (let x = -r; x <= r; x++) s2 += src[o + clamp(x, 0, w - 1)];
+    for (let x = 0; x < w; x++){ tmp[o + x] = s2 / n; s2 += src[o + Math.min(w - 1, x + r + 1)] - src[o + Math.max(0, x - r)]; }
+  }
+  for (let x = 0; x < w; x++){
+    let s2 = 0;
+    for (let y = -r; y <= r; y++) s2 += tmp[clamp(y, 0, h - 1) * w + x];
+    for (let y = 0; y < h; y++){ out[y * w + x] = s2 / n; s2 += tmp[Math.min(h - 1, y + r + 1) * w + x] - tmp[Math.max(0, y - r) * w + x]; }
+  }
+  return out;
+}
+// общий свет внутри области: размытие яркости только по пикселям самой области, поэтому соседние тёмные предметы не затекают
+function zoneLow(z){
+  const key = (z._mv || 0) + '|' + S.w + 'x' + S.h;
+  if (z._low && z._lowKey === key) return z._low;
+  const st = ensureStats(z), R = Math.max(10, Math.round(Math.max(S.w, S.h) / 22));
+  const x0 = st.x0, y0 = st.y0, bw = st.x1 - st.x0 + 1, bh = st.y1 - st.y0 + 1;
+  if (bw < 1 || bh < 1) return z._low = { x0: 0, y0: 0, bw: 0, bh: 0, data: new Float32Array(0) };
+  const Lm = new Float32Array(bw * bh), Wm = new Float32Array(bw * bh), Lo = new Float32Array(bw * bh);
+  for (let y = 0; y < bh; y++) for (let x = 0; x < bw; x++){
+    const gi = (y + y0) * S.w + x + x0, p = gi * 4, L = .2126 * S.base[p] + .7152 * S.base[p + 1] + .0722 * S.base[p + 2], i = y * bw + x;
+    Lo[i] = L; if (z.mask[gi] > 127){ Lm[i] = L; Wm[i] = 1; }
+  }
+  const r = Math.min(R, Math.max(2, Math.floor(Math.min(bw, bh) / 2))), a = blurF(Lm, bw, bh, r), b = blurF(Wm, bw, bh, r), data = new Float32Array(bw * bh);
+  for (let i = 0; i < data.length; i++) data[i] = b[i] > .02 ? a[i] / b[i] : Lo[i];
+  z._lowKey = key; return z._low = { x0, y0, bw, bh, data };
+}
+// насколько поверхность неровная (сколы, трещины): разброс яркости относительно общего света
+function measureRough(z){
+  const st = ensureStats(z); if (!st.count){ z.rough = 0; return; }
+  const zl = zoneLow(z); let n = 0, sum = 0, sq = 0;
+  for (let y = st.y0; y <= st.y1; y += 2) for (let x = st.x0; x <= st.x1; x += 2){
+    const gi = y * S.w + x; if (z.mask[gi] <= 127) continue; const p = gi * 4;
+    const d = .2126 * S.base[p] + .7152 * S.base[p + 1] + .0722 * S.base[p + 2] - zl.data[(y - zl.y0) * zl.bw + (x - zl.x0)]; n++; sum += d; sq += d * d;
+  }
+  z.rough = n ? Math.sqrt(Math.max(0, sq / n - (sum / n) ** 2)) : 0;
+}
 function pushHistory(z){
   S.history.push({ id: z.id, mask: z.mask.slice() });
   if (S.history.length > 20) S.history.shift();
@@ -705,7 +747,7 @@ const patCache = (z) => {
 
 function applyZone(z, out){
   const st = ensureStats(z); if (!st.count || !z.strength) return;
-  const { w } = S, base = S.base, m = z.mask, k = z.strength / 100, fl = (z.flat || 0) / 100, low = S.low;
+  const { w } = S, base = S.base, m = z.mask, k = z.strength / 100, fl = (z.flat || 0) / 100;
   const [cr, cg, cb] = hex2rgb(z.color);
   const mk = (z.match == null ? 65 : z.match) / 100;
   const pat = z.material === 'none' ? null : patCache(z);
@@ -713,7 +755,7 @@ function applyZone(z, out){
   const Lm = st.lum + 10, expo = 1 - (1 - clamp(S.ref * .88 / 235, .4, 1)) * mk; // белое в сцене примерно на 88% от самых ярких бликов
   const ck = .3 * mk, tint = S.cast.map(c => 1 + (c - 1) * ck);
   // новый материал приносит свою фактуру: старый рисунок (дерево, швы) убираем, оставляя общий свет
-  const flz = pat ? Math.max(fl, .8) : fl;
+  const flz = pat ? Math.max(fl, .8) : fl, zl = flz ? zoneLow(z) : null;
   if (!pat){ z._pat = null; z._pk = null; } // рисунок не нужен — освобождаем память
   for (let y = st.y0; y <= st.y1; y++){
     for (let x = st.x0, i = y * w + st.x0; x <= st.x1; x++, i++){
@@ -721,7 +763,11 @@ function applyZone(z, out){
       if (pat && !pat.done[i]) pat.calc(x, y, i);
       const p = i * 4, r = base[p], g = base[p + 1], b = base[p + 2];
       let L = .2126 * r + .7152 * g + .0722 * b;
-      if (flz) L = L * (1 - flz) + low[i] * flz; // убираем мелкие сколы и старую фактуру, оставляем общий свет
+      if (flz){ // убираем мелкие сколы и старую фактуру, оставляем общий свет
+        const lx = x - zl.x0, ly = y - zl.y0;
+        const lo = (lx >= 0 && ly >= 0 && lx < zl.bw && ly < zl.bh) ? zl.data[ly * zl.bw + lx] : L;
+        L = L * (1 - flz) + lo * flz;
+      }
       let ratio = clamp((L + 10) / Lm, .3, 1.8) * expo, tr = cr * tint[0], tg = cg * tint[1], tb = cb * tint[2];
       if (pat){
         ratio *= pat.lum[i]; const mx = pat.mix[i];
@@ -730,7 +776,7 @@ function applyZone(z, out){
       const q = k * a / 255;
       let nr = tr * ratio, ng = tg * ratio, nb = tb * ratio;
       const mx = Math.max(nr, ng, nb);
-      if (mx > 255){ const sc = 255 / mx; nr *= sc; ng *= sc; nb *= sc; } // не даём цвету «выгорать» в розовый
+      if (mx > 205){ const sc = (205 + 50 * (1 - Math.exp(-(mx - 205) / 50))) / mx; nr *= sc; ng *= sc; nb *= sc; } // яркие места сжимаются плавно: цвет не выгорает и не уходит в розовый
       out[p] = r + (nr - r) * q; out[p + 1] = g + (ng - g) * q; out[p + 2] = b + (nb - b) * q;
     }
   }
@@ -841,6 +887,9 @@ function renderInspector(){
   const z = activeZone(), ins = $('#inspector');
   ins.classList.toggle('hide', !z); $('#noZone').classList.toggle('hide', !!z); $('#advZone').classList.toggle('hide', !z); if (!z) return;
   $('#fixRow').classList.toggle('hide', !(z.simple && z.seed));
+  $('#armRow').classList.toggle('hide', !hasMask(z)); $('#armAdd').setAttribute('aria-pressed', String(S.arm === 'add')); $('#armSub').setAttribute('aria-pressed', String(S.arm === 'sub'));
+  $('#smoothRow').classList.toggle('hide', !(z.rough > ROUGH_T && z.material === 'none'));
+  $('#smoothBtn').textContent = z.flat >= 50 ? 'Вернуть как на фото' : 'Сгладить сколы и трещины';
   $('#zname').value = z.name;
   $('#color').value = z.color; $('#hex').textContent = z.color.toUpperCase(); $('#cname').textContent = nearestName(z.color);
   $('#match').value = z.match; $('#matchV').textContent = z.match + '%'; $('#flat').value = z.flat; $('#flatV').textContent = z.flat + '%'; $('#strength').value = z.strength; $('#strengthV').textContent = z.strength + '%';
@@ -858,6 +907,7 @@ function renderInspector(){
 function updateHint(){
   const z = activeZone(); let t = '';
   if (!S.base) t = '';
+  else if (S.arm) t = S.arm === 'add' ? 'Нажмите на фото на участок, который нужно добавить в область (например, полосу света у подсветки).' : 'Нажмите на фото на то, что нужно исключить из области (ковёр, раковину, лампу).';
   else if (S.pm) t = 'Отметьте 4 угла поверхности, под которой должен лечь материал: ещё ' + (4 - S.pm.length) + '. «Отменить» убирает последнюю точку, Esc отменяет.';
   else if (S.compare) t = 'Потяните линию влево или вправо: слева исходное фото, справа результат.';
   else if (S.tool === 'poly') t = 'Ставьте точки по углам стены, пола или зеркала. Замкните контур нажатием на первую (белую) точку или кнопкой «Замкнуть контур».';
@@ -898,6 +948,10 @@ view.addEventListener('pointerdown', e => {
 });
 function press(p){
   if (S.pm){ addPerspPoint(p); return; }
+  if (S.arm && activeZone()){ // «Добавить участок» / «Исключить объект»: одно нажатие по фото
+    const z = activeZone(), sub = S.arm === 'sub'; S.arm = null;
+    pushHistory(z); wand(z, Math.floor(p.x), Math.floor(p.y), sub); z.simple = false; maskChanged(z); return;
+  }
   const fresh = S.tool === 'wand' && !S.sub && !S.addMode;
   if (fresh){ // нажатие на уже выделенную область выбирает её, а не создаёт новую
     const hit = zoneAt(p);
@@ -982,7 +1036,7 @@ function retune(d){
 let pRaf = 0;
 function requestPaint(){ if (!pRaf) pRaf = requestAnimationFrame(() => { pRaf = 0; paintView(); }); }
 function updateTouch(){ view.style.touchAction = ((S.tool === 'brush' || S.tool === 'erase') && !S.compare) ? 'none' : 'pan-y'; }
-function maskChanged(z){ if (z) autoPersp(z); renderZones(); renderInspector(); updateHint(); updateSummary(); requestRender(); }
+function maskChanged(z){ if (z){ autoPersp(z); measureRough(z); } renderZones(); renderInspector(); updateHint(); updateSummary(); requestRender(); }
 
 document.querySelectorAll('[data-tool]').forEach(b => b.addEventListener('click', () => {
   S.tool = b.dataset.tool; S.compare = false; $('#btnCmp').setAttribute('aria-pressed', 'false');
@@ -1004,7 +1058,7 @@ $('#btnClose').addEventListener('click', closePoly);
 document.addEventListener('keydown', e => {
   if (isTyping()) return;
   if (e.key === 'Enter' && S.poly) closePoly();
-  if (e.key === 'Escape' && (S.poly || S.pm)){ S.poly = null; S.pm = null; updateHint(); paintView(); }
+  if (e.key === 'Escape' && (S.poly || S.pm || S.arm)){ S.poly = null; S.pm = null; S.arm = null; renderInspector(); updateHint(); paintView(); }
 });
 // печатаем текст — горячие клавиши не трогаем; ползунки и флажки печатью не считаются
 const isTyping = () => { const a = document.activeElement; return !!a && (a.tagName === 'TEXTAREA' || (a.tagName === 'INPUT' && !['range', 'checkbox', 'radio', 'button', 'color', 'file'].includes(a.type))); };
@@ -1080,6 +1134,10 @@ $('#scale').addEventListener('input', e => {
 });
 $('#perspSet').addEventListener('click', startPersp);
 $('#perspClear').addEventListener('click', () => { const z = activeZone(); if (!z) return; z.persp = null; z._H = null; z.noPersp = true; renderInspector(); requestRender(); });
+$('#smoothBtn').addEventListener('click', () => { const z = activeZone(); if (!z) return; z.flat = z.flat >= 50 ? 0 : 85; renderInspector(); requestRender(); });
+const arm = mode => { const z = activeZone(); if (!z) return; S.arm = S.arm === mode ? null : mode; S.compare = false; $('#btnCmp').setAttribute('aria-pressed', 'false'); renderInspector(); updateHint(); };
+$('#armAdd').addEventListener('click', () => arm('add'));
+$('#armSub').addEventListener('click', () => arm('sub'));
 $('#tolLess').addEventListener('click', () => retune(-6));
 $('#tolMore').addEventListener('click', () => retune(6));
 $('#addMode').addEventListener('change', e => { S.addMode = e.target.checked; });
