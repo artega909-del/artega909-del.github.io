@@ -88,6 +88,9 @@ textarea.gtext{min-height:64px;resize:vertical;margin-top:0}
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .gstatus{margin:10px 0 0;font-size:13px;color:var(--muted);min-height:1.4em}
 .gstatus.err{color:#b3261e}
+.steps2{margin:0 0 8px;padding-left:18px;font-size:13px;color:var(--muted)}
+.steps2 li{margin-bottom:2px}
+#gPrompt{font-size:12.5px;color:var(--muted);margin-top:0}
 .gal{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:10px}
 .gal button{padding:0;border:2px solid transparent;border-radius:10px;overflow:hidden;background:#000;aspect-ratio:3/4}
 .gal button[aria-pressed="true"]{border-color:var(--accent)}
@@ -162,14 +165,28 @@ textarea.gtext{min-height:64px;resize:vertical;margin-top:0}
           <select id="gStyle" class="gtext"><option value="scandi">Скандинавский</option><option value="loft">Лофт</option><option value="modern">Современный</option><option value="classic">Классика</option><option value="japandi">Джапанди</option><option value="eco">Эко</option></select></div>
       </div>
       <div class="row"><label for="gWish"><span>Пожелания клиента</span></label><textarea id="gWish" class="gtext" maxlength="400" placeholder="Например: светлая плитка, тёплый свет, подвесная тумба"></textarea></div>
-      <div class="row"><button class="btn primary" id="gGo" style="width:100%">Нарисовать 2 варианта</button></div>
+      <div class="row">
+        <div class="lbl"><span>Бесплатный способ</span></div>
+        <ol class="steps2">
+          <li>Скопируйте запрос.</li>
+          <li>Откройте любое приложение нейросети, где можно редактировать картинки. Прикрепите фото комнаты и вставьте запрос.</li>
+          <li>Сохраните результат и загрузите его сюда.</li>
+        </ol>
+        <textarea id="gPrompt" class="gtext" readonly rows="5" aria-label="Запрос для нейросети"></textarea>
+        <div class="actions" style="margin-top:8px">
+          <button class="btn" id="gCopy">Скопировать запрос</button>
+          <label class="btn primary" for="gOwn">Загрузить готовый вариант</label>
+          <input type="file" id="gOwn" class="vh" accept="image/*">
+        </div>
+      </div>
       <p class="gstatus" id="gStatus" role="status"></p>
       <div class="gal hide" id="gGal"></div>
       <div class="row hide" id="gBackRow"><button class="btn" id="gBack" style="width:100%">Вернуть исходное фото</button></div>
-      <details id="gSettings"><summary>Настройки сервера генерации</summary>
+      <details id="gSettings"><summary>Автоматически через сервер (платно за картинку)</summary>
+        <div class="row"><button class="btn primary" id="gGo" style="width:100%">Нарисовать 2 варианта</button></div>
         <div class="row"><label for="gUrl"><span>Адрес сервера</span></label><input type="text" id="gUrl" class="gtext" placeholder="https://design-visualizer-api.имя.workers.dev" autocomplete="off" autocapitalize="off" spellcheck="false"></div>
         <div class="row"><label for="gToken"><span>Ключ доступа (если задан)</span></label><input type="text" id="gToken" class="gtext" autocomplete="off" autocapitalize="off" spellcheck="false"></div>
-        <p class="note">Ключ нейросети хранится на сервере, а не на странице. Инструкция по запуску сервера лежит в папке design-api.</p>
+        <p class="note">Ключ нейросети хранится на сервере, а не на странице. Инструкция по запуску лежит в папке design-api.</p>
       </details>
     </div>
 
@@ -355,8 +372,8 @@ function setImage(source, sw, sh, opts){
   for (const c of [view, orig, res, ovl]){ c.width = w; c.height = h; }
   octx.drawImage(source, 0, 0, w, h);
   S.gen = opts.generated ? (opts.label || 'ИИ') : '';
-  if (!opts.generated){ photo.width = w; photo.height = h; pctx.drawImage(orig, 0, 0); }
-  S.hasBef = !!opts.generated && photo.width > 0;
+  if (!opts.generated){ photo.width = w; photo.height = h; pctx.drawImage(orig, 0, 0); S.hasPhoto = true; }
+  S.hasBef = !!opts.generated && !!S.hasPhoto;
   if (S.hasBef){ bef.width = w; bef.height = h; bctx.clearRect(0, 0, w, h); coverDraw(bctx, photo, w, h); }
   const id = octx.getImageData(0, 0, w, h);
   S.w = w; S.h = h; S.base = id.data;
@@ -997,7 +1014,7 @@ function useVariant(i){
   im.src = G.variants[i];
 }
 $('#gBack').addEventListener('click', () => {
-  if (!photo.width) return;
+  if (!S.hasPhoto) return;
   setImage(photo, photo.width, photo.height);
   document.querySelectorAll('#gGal button').forEach(b => b.setAttribute('aria-pressed', 'false'));
   $('#gBackRow').classList.add('hide'); updateSummary();
@@ -1025,6 +1042,31 @@ async function generate(){
   } finally { clearTimeout(to); G.busy = false; $('#gGo').disabled = false; }
 }
 $('#gGo').addEventListener('click', generate);
+
+/* бесплатный способ: запрос для любой нейросети и загрузка готового варианта */
+const RU_ROOMS = { bathroom: 'ванная комната', kitchen: 'кухня', living: 'гостиная', bedroom: 'спальня', hall: 'прихожая', other: 'помещение' };
+function buildAskText(){
+  const room = RU_ROOMS[$('#gRoom').value] || 'помещение', style = $('#gStyle').selectedOptions[0].textContent, wish = $('#gWish').value.trim().replace(/\s+/g, ' ');
+  return 'На фото ' + room + ' в процессе ремонта. Нарисуй, как она будет выглядеть после готового ремонта в стиле «' + style + '». ' +
+    'Сохрани ракурс, перспективу, пропорции помещения и положение окон и дверей. Убери мусор, провода и повреждения, а стены, пол, потолок, свет и мебель сделай новыми. ' +
+    (wish ? 'Пожелания клиента: ' + wish + '. ' : '') + 'Реалистичное освещение, высокая детализация, без текста и людей.';
+}
+const refreshAsk = () => { $('#gPrompt').value = buildAskText(); };
+['gRoom', 'gStyle'].forEach(id => $('#' + id).addEventListener('change', refreshAsk)); $('#gWish').addEventListener('input', refreshAsk); refreshAsk();
+$('#gCopy').addEventListener('click', async () => {
+  refreshAsk();
+  try { await navigator.clipboard.writeText($('#gPrompt').value); toast('Запрос скопирован'); }
+  catch (e) { $('#gPrompt').focus(); $('#gPrompt').select(); toast('Запрос выделен, нажмите «Копировать» в меню'); }
+});
+$('#gOwn').addEventListener('change', async e => {
+  const f = e.target.files && e.target.files[0]; e.target.value = ''; if (!f) return;
+  if (!S.hasPhoto){ toast('Сначала загрузите фото комнаты'); return; }
+  let d; try { d = await decodeImage(f); } catch (err) { toast('Не удалось открыть картинку. Попробуйте JPG или PNG'); return; }
+  const k = Math.min(1, MAXSIDE / Math.max(d.w, d.h)), c = document.createElement('canvas');
+  c.width = Math.round(d.w * k); c.height = Math.round(d.h * k); c.getContext('2d').drawImage(d.src, 0, 0, c.width, c.height);
+  if (d.src.close) d.src.close();
+  G.variants.push(c.toDataURL('image/jpeg', .92)); showVariants(G.variants); useVariant(G.variants.length - 1);
+});
 
 /* старт */
 $('#inspector').classList.add('hide');
