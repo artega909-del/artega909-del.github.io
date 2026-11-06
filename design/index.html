@@ -82,6 +82,16 @@ details summary{cursor:pointer;color:var(--muted);font-size:13px;margin-top:10px
 #hLogo{height:44px;max-width:130px;object-fit:contain;border-radius:6px}
 .note{margin:10px 0 0;font-size:12px;color:var(--muted)}
 .opts{display:grid;gap:8px;margin-bottom:12px}
+.gtext{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;font:inherit;background:#fff}
+select.gtext{min-height:40px}
+textarea.gtext{min-height:64px;resize:vertical;margin-top:0}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.gstatus{margin:10px 0 0;font-size:13px;color:var(--muted);min-height:1.4em}
+.gstatus.err{color:#b3261e}
+.gal{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:10px}
+.gal button{padding:0;border:2px solid transparent;border-radius:10px;overflow:hidden;background:#000;aspect-ratio:3/4}
+.gal button[aria-pressed="true"]{border-color:var(--accent)}
+.gal img{width:100%;height:100%;object-fit:cover;display:block}
 .hide{display:none!important}
 @media (max-width:900px){
   .app{grid-template-columns:1fr}
@@ -143,6 +153,26 @@ details summary{cursor:pointer;color:var(--muted);font-size:13px;margin-top:10px
   </section>
 
   <aside>
+    <div class="card" id="genCard">
+      <h2>Нарисовать вариант (ИИ)</h2>
+      <div class="g2">
+        <div><label class="lbl" for="gRoom">Помещение</label>
+          <select id="gRoom" class="gtext"><option value="bathroom">Ванная</option><option value="kitchen">Кухня</option><option value="living">Гостиная</option><option value="bedroom">Спальня</option><option value="hall">Прихожая</option><option value="other">Другое</option></select></div>
+        <div><label class="lbl" for="gStyle">Стиль</label>
+          <select id="gStyle" class="gtext"><option value="scandi">Скандинавский</option><option value="loft">Лофт</option><option value="modern">Современный</option><option value="classic">Классика</option><option value="japandi">Джапанди</option><option value="eco">Эко</option></select></div>
+      </div>
+      <div class="row"><label for="gWish"><span>Пожелания клиента</span></label><textarea id="gWish" class="gtext" maxlength="400" placeholder="Например: светлая плитка, тёплый свет, подвесная тумба"></textarea></div>
+      <div class="row"><button class="btn primary" id="gGo" style="width:100%">Нарисовать 2 варианта</button></div>
+      <p class="gstatus" id="gStatus" role="status"></p>
+      <div class="gal hide" id="gGal"></div>
+      <div class="row hide" id="gBackRow"><button class="btn" id="gBack" style="width:100%">Вернуть исходное фото</button></div>
+      <details id="gSettings"><summary>Настройки сервера генерации</summary>
+        <div class="row"><label for="gUrl"><span>Адрес сервера</span></label><input type="text" id="gUrl" class="gtext" placeholder="https://design-visualizer-api.имя.workers.dev" autocomplete="off" autocapitalize="off" spellcheck="false"></div>
+        <div class="row"><label for="gToken"><span>Ключ доступа (если задан)</span></label><input type="text" id="gToken" class="gtext" autocomplete="off" autocapitalize="off" spellcheck="false"></div>
+        <p class="note">Ключ нейросети хранится на сервере, а не на странице. Инструкция по запуску сервера лежит в папке design-api.</p>
+      </details>
+    </div>
+
     <div class="card">
       <h2>Зоны</h2>
       <div id="zoneList"></div>
@@ -288,6 +318,10 @@ const PAT = {
 /* ====================== состояние ====================== */
 const view = $('#view'), vctx = view.getContext('2d');
 const orig = document.createElement('canvas'), octx = orig.getContext('2d');
+const photo = document.createElement('canvas'), pctx = photo.getContext('2d'); // исходное фото клиента
+const bef = document.createElement('canvas'), bctx = bef.getContext('2d');       // «до» для режима сравнения
+const beforeCanvas = () => S.hasBef ? bef : orig;
+function coverDraw(g, src, W, H){ const k = Math.max(W / src.width, H / src.height), dw = src.width * k, dh = src.height * k; g.drawImage(src, (W - dw) / 2, (H - dh) / 2, dw, dh); }
 const res = document.createElement('canvas'), rctx = res.getContext('2d');
 const ovl = document.createElement('canvas'), ictx = ovl.getContext('2d');
 
@@ -314,11 +348,16 @@ function blurPlane(src, w, h, r){
   return out;
 }
 
-function setImage(source, sw, sh){
+function setImage(source, sw, sh, opts){
+  opts = opts || {};
   const k = Math.min(1, MAXSIDE / Math.max(sw, sh));
   const w = Math.max(2, Math.round(sw * k)), h = Math.max(2, Math.round(sh * k));
   for (const c of [view, orig, res, ovl]){ c.width = w; c.height = h; }
   octx.drawImage(source, 0, 0, w, h);
+  S.gen = opts.generated ? (opts.label || 'ИИ') : '';
+  if (!opts.generated){ photo.width = w; photo.height = h; pctx.drawImage(orig, 0, 0); }
+  S.hasBef = !!opts.generated && photo.width > 0;
+  if (S.hasBef){ bef.width = w; bef.height = h; bctx.clearRect(0, 0, w, h); coverDraw(bctx, photo, w, h); }
   const id = octx.getImageData(0, 0, w, h);
   S.w = w; S.h = h; S.base = id.data;
   // сглаженная копия — по ней «умная заливка» не цепляется за шум и фактуру стен
@@ -576,7 +615,7 @@ function paintView(){
   const u = w / (view.clientWidth || w), lw = 2 * u; // размеры в экранных пикселях, а не пикселях фото
   if (S.compare){
     const sx = S.split * w;
-    vctx.save(); vctx.beginPath(); vctx.rect(0, 0, sx, h); vctx.clip(); vctx.drawImage(orig, 0, 0); vctx.restore();
+    vctx.save(); vctx.beginPath(); vctx.rect(0, 0, sx, h); vctx.clip(); vctx.drawImage(beforeCanvas(), 0, 0); vctx.restore();
     vctx.fillStyle = '#fff'; vctx.fillRect(sx - lw / 2, 0, lw, h);
     vctx.beginPath(); vctx.arc(sx, h / 2, lw * 8, 0, 7); vctx.fillStyle = '#fff'; vctx.fill();
     vctx.fillStyle = '#1f2328'; vctx.font = '600 ' + lw * 8 + 'px system-ui,sans-serif'; vctx.textAlign = 'center'; vctx.textBaseline = 'middle';
@@ -681,7 +720,10 @@ function updateSummary(){
     return '• ' + z.name + ': ' + (z.material === 'none' ? 'покраска' : mt.name.toLowerCase()) + ', цвет ' + (nm ? '«' + nm + '» ' : '') + z.color.toUpperCase();
   });
   const head = (B.name || B.contact) ? [B.name, B.contact].filter(Boolean).join(' · ') + '\n\n' : '';
-  $('#summary').value = rows.length ? head + 'Предлагаемые изменения:\n' + rows.join('\n') + '\n\nВизуализация ориентировочная, итоговый вид зависит от освещения и фактуры материалов.' : 'Пока нет изменений.';
+  const gen = S.gen ? 'Идея в стиле «' + S.gen + '» создана нейросетью. Она показывает общее настроение, точные материалы и размеры согласуются отдельно.' : '';
+  $('#summary').value = rows.length
+    ? head + (gen ? gen + '\n\n' : '') + 'Предлагаемые изменения:\n' + rows.join('\n') + '\n\nВизуализация ориентировочная, итоговый вид зависит от освещения и фактуры материалов.'
+    : (gen ? head + gen : 'Пока нет изменений.');
 }
 
 /* ====================== события ====================== */
@@ -875,7 +917,7 @@ function buildExport(){
   const c = document.createElement('canvas'); c.width = W; c.height = h + fh;
   const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, W, h + fh);
   if (pair){
-    g.drawImage(orig, 0, 0); g.drawImage(res, w + gap, 0);
+    g.drawImage(beforeCanvas(), 0, 0); g.drawImage(res, w + gap, 0);
     tagOn(g, 'ДО', 12 * u, 12 * u, 'left', u); tagOn(g, 'ПОСЛЕ', W - 12 * u, 12 * u, 'right', u);
   } else g.drawImage(res, 0, 0);
   if (brand){
@@ -921,6 +963,68 @@ $('#btnCopy').addEventListener('click', async () => {
   try { await navigator.clipboard.writeText(t); toast('Описание скопировано'); }
   catch { const ta = $('#summary'); ta.closest('details').open = true; ta.select(); toast('Выделено — нажмите Ctrl+C'); }
 });
+
+/* ====================== генерация (ИИ) ====================== */
+// Адрес сервера можно задать здесь, тогда поле в настройках заполнится само.
+const GEN_DEFAULT_URL = '';
+const G = { url: GEN_DEFAULT_URL, token: '', busy: false, variants: [] };
+try { const sv = JSON.parse(localStorage.getItem('gen-v1') || 'null'); if (sv){ G.url = String(sv.url || G.url); G.token = String(sv.token || ''); } } catch (e) {}
+const saveGen = () => { try { localStorage.setItem('gen-v1', JSON.stringify({ url: G.url, token: G.token })); } catch (e) {} };
+$('#gUrl').value = G.url; $('#gToken').value = G.token;
+$('#gUrl').addEventListener('input', e => { G.url = e.target.value.trim(); saveGen(); });
+$('#gToken').addEventListener('input', e => { G.token = e.target.value.trim(); saveGen(); });
+function gStatus(t, err){ const el = $('#gStatus'); el.textContent = t; el.classList.toggle('err', !!err); }
+
+function showVariants(list){
+  G.variants = list;
+  const box = $('#gGal'); box.innerHTML = ''; box.classList.remove('hide');
+  list.forEach((u, i) => {
+    const b = document.createElement('button'); b.setAttribute('aria-pressed', 'false'); b.title = 'Вариант ' + (i + 1);
+    const im = document.createElement('img'); im.src = u; im.alt = 'Вариант ' + (i + 1); b.appendChild(im);
+    b.addEventListener('click', () => useVariant(i));
+    box.appendChild(b);
+  });
+}
+function useVariant(i){
+  const im = new Image(), label = $('#gStyle').selectedOptions[0].textContent;
+  im.onload = () => {
+    setImage(im, im.naturalWidth, im.naturalHeight, { generated: true, label });
+    document.querySelectorAll('#gGal button').forEach((b, k) => b.setAttribute('aria-pressed', String(k === i)));
+    $('#gBackRow').classList.remove('hide');
+    updateSummary(); toast('Вариант в редакторе. Можно менять цвета и материалы, а «До / После» покажет исходное фото');
+  };
+  im.onerror = () => toast('Не удалось открыть вариант');
+  im.src = G.variants[i];
+}
+$('#gBack').addEventListener('click', () => {
+  if (!photo.width) return;
+  setImage(photo, photo.width, photo.height);
+  document.querySelectorAll('#gGal button').forEach(b => b.setAttribute('aria-pressed', 'false'));
+  $('#gBackRow').classList.add('hide'); updateSummary();
+});
+async function generate(){
+  if (!S.base){ toast('Сначала загрузите фото'); return; }
+  if (!G.url){ $('#gSettings').open = true; $('#gUrl').focus(); gStatus('Укажите адрес сервера генерации в настройках ниже.', true); return; }
+  if (G.busy) return;
+  const k = Math.min(1, 1024 / Math.max(photo.width, photo.height)), c = document.createElement('canvas');
+  c.width = Math.round(photo.width * k); c.height = Math.round(photo.height * k);
+  c.getContext('2d').drawImage(photo, 0, 0, c.width, c.height);
+  const body = { image: c.toDataURL('image/jpeg', .9), width: c.width, height: c.height, style: $('#gStyle').value, room: $('#gRoom').value, wish: $('#gWish').value, n: 2 };
+  G.busy = true; $('#gGo').disabled = true; gStatus('Рисую варианты. Обычно это занимает 20–60 секунд…', false);
+  const ctrl = new AbortController(), to = setTimeout(() => ctrl.abort(), 150000);
+  try {
+    const r = await fetch(G.url.replace(/\/+$/, '') + '/generate', {
+      method: 'POST', signal: ctrl.signal, body: JSON.stringify(body),
+      headers: Object.assign({ 'content-type': 'application/json' }, G.token ? { 'x-app-token': G.token } : {})
+    });
+    let d = null; try { d = await r.json(); } catch (e) {}
+    if (!r.ok || !d || !d.images || !d.images.length) throw new Error((d && d.error) || 'Сервер ответил ошибкой (' + r.status + ')');
+    showVariants(d.images); gStatus('Готово. Нажмите на вариант, чтобы открыть его в редакторе.', false);
+  } catch (e) {
+    gStatus(e.name === 'AbortError' ? 'Слишком долго. Повторите попытку.' : e instanceof TypeError ? 'Не удалось связаться с сервером. Проверьте адрес и интернет.' : e.message, true);
+  } finally { clearTimeout(to); G.busy = false; $('#gGo').disabled = false; }
+}
+$('#gGo').addEventListener('click', generate);
 
 /* старт */
 $('#inspector').classList.add('hide');

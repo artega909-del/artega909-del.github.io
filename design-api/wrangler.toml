@@ -1,0 +1,14 @@
+name = "design-visualizer-api"
+main = "worker.js"
+compatibility_date = "2025-01-01"
+
+[vars]
+# Сайты, которым разрешено обращаться к серверу. Добавьте свой домен, если он появится.
+ALLOWED_ORIGINS = "https://artega909-del.github.io"
+IMAGE_MODEL = "gpt-image-1"
+IMAGE_QUALITY = "medium"
+MAX_VARIANTS = "2"
+
+# Секреты не пишите сюда. Их задают командами:
+#   wrangler secret put OPENAI_API_KEY
+#   wrangler secret put APP_TOKENS      (необязательно, ключи доступа клиентов через запятую)
