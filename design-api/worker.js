@@ -106,6 +106,21 @@ export function buildPrompt({ style, room, wish }) {
   ].filter(Boolean).join(' ');
 }
 
+// описание участка для перерисовки по маске: только то, что написал пользователь, без служебных символов
+export function buildEditPrompt({ desc, room }) {
+  const roomName = own(ROOMS, room) ? ROOMS[room] : ROOMS.other;
+  const d = String(desc || '').replace(/[\r\n]+/g, ' ').trim().slice(0, 300);
+  return [
+    `Edit only the masked area of this photo of a ${roomName}.`,
+    `Replace it with: ${d}.`,
+    'Keep everything outside the masked area exactly as it is.',
+    'Match the camera perspective, lighting, shadows and color temperature of the rest of the room.',
+    'Photorealistic, high detail, no text, no watermarks, no people.',
+  ].join(' ');
+}
+
+const EDIT_SIZES = ['1024x1024', '1536x1024', '1024x1536']; // размеры, которые принимает нейросеть при редактировании
+
 function pickSize(w, h) {
   const r = w / h;
   if (r > 1.2) return '1536x1024';
@@ -141,7 +156,8 @@ async function handle(request, env, cors) {
   const url = new URL(request.url);
   if (request.method === 'GET' && url.pathname === '/health') return json({ ok: true }, 200, cors.headers);
   if (!cors.ok) return json({ error: 'Этому сайту запрещено обращаться к серверу генерации.' }, 403, cors.headers);
-  if (request.method !== 'POST' || url.pathname !== '/generate') return json({ error: 'Не найдено.' }, 404, cors.headers);
+  const isEdit = url.pathname === '/edit';
+  if (request.method !== 'POST' || (url.pathname !== '/generate' && !isEdit)) return json({ error: 'Не найдено.' }, 404, cors.headers);
 
   if (!env.OPENAI_API_KEY) return json({ error: 'На сервере не задан ключ нейросети.' }, 500, cors.headers);
 
@@ -176,19 +192,32 @@ async function handle(request, env, cors) {
     return json({ error: 'Фото слишком большое по размерам. Уменьшите его до ' + MAX_SIDE + ' пикселей по длинной стороне.' }, 413, cors.headers);
   }
 
+  let mask = null;
+  if (isEdit) {
+    // перерисовка участка: нужна картинка ровно допустимого размера и PNG-маска того же размера с прозрачностью
+    if (!dim || !EDIT_SIZES.includes(dim.w + 'x' + dim.h)) return json({ error: 'Для перерисовки участка фото должно быть 1024×1024, 1536×1024 или 1024×1536.' }, 400, cors.headers);
+    if (typeof body.desc !== 'string' || body.desc.trim().length < 3) return json({ error: 'Напишите, что должно быть на этом месте.' }, 400, cors.headers);
+    mask = parseDataUrl(body.mask);
+    if (!mask || mask.type !== 'image/png') return json({ error: 'Нужна маска участка в формате PNG.' }, 400, cors.headers);
+    const md = imageSize(mask.bytes, 'image/png');
+    if (!md || md.w !== dim.w || md.h !== dim.h) return json({ error: 'Маска должна быть того же размера, что и фото.' }, 400, cors.headers);
+    if (mask.bytes[25] !== 4 && mask.bytes[25] !== 6) return json({ error: 'Маска должна быть PNG с прозрачностью.' }, 400, cors.headers);
+  }
+
   const maxN = Math.max(1, Math.min(4, Number(env.MAX_VARIANTS || 2)));
-  const n = Math.max(1, Math.min(maxN, Math.floor(Number(body.n) || 1)));
+  const n = isEdit ? 1 : Math.max(1, Math.min(maxN, Math.floor(Number(body.n) || 1)));
   const w = dim ? dim.w : Number(body.width) || 1, h = dim ? dim.h : Number(body.height) || 1;
 
   const fd = new FormData();
   fd.append('model', env.IMAGE_MODEL || 'gpt-image-1');
-  fd.append('prompt', buildPrompt(body));
+  fd.append('prompt', isEdit ? buildEditPrompt(body) : buildPrompt(body));
   fd.append('n', String(n));
-  fd.append('size', pickSize(w, h));
+  fd.append('size', isEdit ? dim.w + 'x' + dim.h : pickSize(w, h));
   fd.append('quality', env.IMAGE_QUALITY || 'medium');
   fd.append('output_format', 'jpeg');
   fd.append('output_compression', '85');
   fd.append('image', new Blob([img.bytes], { type: img.type }), img.type === 'image/png' ? 'room.png' : 'room.jpg');
+  if (mask) fd.append('mask', new Blob([mask.bytes], { type: 'image/png' }), 'mask.png');
 
   let up;
   try {

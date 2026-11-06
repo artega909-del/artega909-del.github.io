@@ -1,6 +1,6 @@
 // Проверка посредника без настоящей нейросети: запрос к OpenAI подменяется.
 // Запуск: node design-api/test.mjs
-import worker, { buildPrompt } from './worker.js';
+import worker, { buildPrompt, buildEditPrompt } from './worker.js';
 import assert from 'node:assert/strict';
 
 const ORIGIN = 'https://artega909-del.github.io';
@@ -96,3 +96,24 @@ console.log('ok 7 ошибки провайдера');
 setReply(200, { data: [{ b64_json: 'Z' }] });
 const raw = await (await worker.fetch(req({ image: pixel }), env)).text(); assert.ok(!raw.includes('sk-test'));
 console.log('ok 8 CORS, ключ не утекает');
+
+// 9. перерисовка участка по маске (/edit)
+const pngA = (w, h, ct = 6) => { const b = Buffer.from(png(w, h).split(',')[1], 'base64'); b[25] = ct; return 'data:image/png;base64,' + b.toString('base64'); };
+const ok1024 = jpeg(1024, 1024), mask1024 = pngA(1024, 1024);
+setReply(200, { data: [{ b64_json: 'EDIT' }] });
+({ res, data } = await run(req({ image: ok1024, mask: mask1024, desc: 'светлый паркет ёлочкой', room: 'bathroom' }, {}, 'POST', '/edit')));
+assert.equal(res.status, 200); assert.deepEqual(data.images, ['data:image/jpeg;base64,EDIT']);
+const ed = upstream.init.body;
+assert.ok(ed.get('mask'), 'маска ушла в нейросеть'); assert.equal(ed.get('size'), '1024x1024'); assert.equal(ed.get('n'), '1');
+assert.match(ed.get('prompt'), /only the masked area/); assert.match(ed.get('prompt'), /светлый паркет/); assert.match(ed.get('prompt'), /bathroom/);
+for (const [label, body, st] of [
+  ['нет описания', { image: ok1024, mask: mask1024, desc: '' }, 400],
+  ['нет маски', { image: ok1024, desc: 'паркет' }, 400],
+  ['маска — JPEG', { image: ok1024, mask: jpeg(1024, 1024), desc: 'паркет' }, 400],
+  ['маска другого размера', { image: ok1024, mask: pngA(1024, 1536), desc: 'паркет' }, 400],
+  ['маска без прозрачности (RGB)', { image: ok1024, mask: pngA(1024, 1024, 2), desc: 'паркет' }, 400],
+  ['фото недопустимого размера', { image: jpeg(800, 600), mask: pngA(800, 600), desc: 'паркет' }, 400],
+]) { const o = await run(req(body, {}, 'POST', '/edit')); assert.equal(o.res.status, st, label + ' → ' + o.res.status); assert.ok(o.data.error, label); assert.equal(o.res.headers.get('access-control-allow-origin'), ORIGIN, label + ': CORS'); }
+({ res } = await run(req({ image: ok1024, mask: mask1024, desc: 'паркет' }, { 'x-app-token': 'wrong' }, 'POST', '/edit'))); assert.equal(res.status, 401, '/edit тоже закрыт ключом');
+assert.ok(!buildEditPrompt({ desc: 'a\nb\r\nc', room: '__proto__' }).includes('\n'));
+console.log('ok 9 перерисовка участка по маске: маска уходит, плохой ввод отклоняется, ключ нужен');

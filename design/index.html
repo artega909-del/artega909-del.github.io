@@ -174,6 +174,12 @@ textarea.gtext{min-height:64px;resize:vertical;margin-top:0}
         </div>
         <div class="row"><div class="lbl"><span>Материал</span></div><div class="mats" id="mats"></div></div>
         <div class="row hide" id="armRow"><div class="actions"><button class="btn" id="armAdd" aria-pressed="false">+ Добавить участок</button><button class="btn" id="armSub" aria-pressed="false">− Исключить объект</button></div></div>
+        <div class="row hide" id="aiEditRow">
+          <div class="lbl"><span>Заменить с помощью ИИ</span></div>
+          <input type="text" id="aiDesc" class="gtext" maxlength="200" placeholder="Что должно быть на этом месте? Например: светлый паркет ёлочкой" autocomplete="off" aria-label="Что должно быть на этом месте">
+          <button class="btn primary" id="aiEditBtn" style="width:100%;margin-top:8px">Перерисовать область (ИИ)</button>
+          <p class="gstatus" id="aiEditStatus" role="status"></p>
+        </div>
         <div class="row hide" id="smoothRow"><button class="btn" id="smoothBtn" style="width:100%">Сгладить сколы и трещины</button></div>
         <div class="row hide" id="fixRow"><div class="lbl"><span>Выделилось не то?</span></div><div class="actions"><button class="btn" id="tolLess">Меньше</button><button class="btn" id="tolMore">Больше</button></div></div>
       </div>
@@ -397,19 +403,8 @@ function blurPlane(src, w, h, r){
 }
 
 let onNewPhoto = null;
-function resetInteraction(){ S.arm = null; S.pm = null; S.poly = null; S.stroke = null; S.tap = null; S.hover = null; }
-function setImage(source, sw, sh, opts){
-  opts = opts || {};
-  const k = Math.min(1, MAXSIDE / Math.max(sw, sh));
-  const w = Math.max(2, Math.round(sw * k)), h = Math.max(2, Math.round(sh * k));
-  for (const c of [view, orig, res, ovl]){ c.width = w; c.height = h; }
-  octx.drawImage(source, 0, 0, w, h);
-  S.gen = opts.generated ? (opts.label || 'ИИ') : ''; S.genSrc = opts.generated ? (opts.src || 'own') : '';
-  if (!opts.generated){ photo.width = w; photo.height = h; pctx.drawImage(orig, 0, 0); S.hasPhoto = true; }
-  S.hasBef = !!opts.generated && !!S.hasPhoto;
-  if (S.hasBef){ bef.width = w; bef.height = h; bctx.clearRect(0, 0, w, h); coverDraw(bctx, photo, w, h); }
-  const id = octx.getImageData(0, 0, w, h);
-  S.w = w; S.h = h; S.base = id.data;
+function computeDerived(){
+  const w = S.w, h = S.h;
   // сглаженная копия — по ней «умная заливка» не цепляется за шум и фактуру стен
   const n = w * h, planes = [0, 1, 2].map(() => new Uint8Array(n));
   for (let i = 0; i < n; i++){ planes[0][i] = S.base[i * 4]; planes[1][i] = S.base[i * 4 + 1]; planes[2][i] = S.base[i * 4 + 2]; }
@@ -433,6 +428,22 @@ function setImage(source, sw, sh, opts){
     const gx = (Ls[i + 1] - Ls[i - 1]) / 2, gy = (Ls[i + w] - Ls[i - w]) / 2;
     S.edge[i] = Math.min(255, Math.hypot(gx, gy) * 4);
   }
+}
+
+function resetInteraction(){ S.arm = null; S.pm = null; S.poly = null; S.stroke = null; S.tap = null; S.hover = null; }
+function setImage(source, sw, sh, opts){
+  opts = opts || {};
+  const k = Math.min(1, MAXSIDE / Math.max(sw, sh));
+  const w = Math.max(2, Math.round(sw * k)), h = Math.max(2, Math.round(sh * k));
+  for (const c of [view, orig, res, ovl]){ c.width = w; c.height = h; }
+  octx.drawImage(source, 0, 0, w, h);
+  S.gen = opts.generated ? (opts.label || 'ИИ') : ''; S.genSrc = opts.generated ? (opts.src || 'own') : '';
+  if (!opts.generated){ photo.width = w; photo.height = h; pctx.drawImage(orig, 0, 0); S.hasPhoto = true; }
+  S.hasBef = !!opts.generated && !!S.hasPhoto;
+  if (S.hasBef){ bef.width = w; bef.height = h; bctx.clearRect(0, 0, w, h); coverDraw(bctx, photo, w, h); }
+  const id = octx.getImageData(0, 0, w, h);
+  S.w = w; S.h = h; S.base = id.data;
+  computeDerived();
   S.zones = []; S.active = -1; S.history = []; S.compare = false;
   resetInteraction(); S.ovlData = null; updateTouch();
   if (!opts.generated){ S.photoId = (S.photoId || 0) + 1; if (onNewPhoto) onNewPhoto(); }
@@ -601,6 +612,11 @@ function undo(){
   if (S.pm && S.pm.length){ S.pm.pop(); if (!S.pm.length) S.pm = null; updateHint(); paintView(); return; }
   if (S.poly && S.poly.length){ S.poly.pop(); if (!S.poly.length) S.poly = null; paintView(); return; }
   const h = S.history.pop(); if (!h){ toast('Отменять пока нечего'); return; }
+  if (h.type === 'ai'){ // вернуть участок фото, который перерисовала нейросеть, вместе с областью
+    octx.putImageData(h.before, h.x0, h.y0); S.base = octx.getImageData(0, 0, S.w, S.h).data; computeDerived();
+    const zi = Math.min(h.zi, S.zones.length); S.zones.splice(zi, 0, h.zone); S.active = zi;
+    S.zones.forEach(touchMask); renderZones(); renderInspector(); updateHint(); updateSummary(); render(); return;
+  }
   const z = S.zones.find(q => q.id === h.id); if (!z) return;
   z.mask = h.mask; z.simple = false; touchMask(z); autoPersp(z); S.active = S.zones.indexOf(z);
   renderZones(); renderInspector(); requestRender(); updateHint();
@@ -887,7 +903,7 @@ function renderInspector(){
   const z = activeZone(), ins = $('#inspector');
   ins.classList.toggle('hide', !z); $('#noZone').classList.toggle('hide', !!z); $('#advZone').classList.toggle('hide', !z); if (!z) return;
   $('#fixRow').classList.toggle('hide', !(z.simple && z.seed));
-  $('#armRow').classList.toggle('hide', !hasMask(z)); $('#armAdd').setAttribute('aria-pressed', String(S.arm === 'add')); $('#armSub').setAttribute('aria-pressed', String(S.arm === 'sub'));
+  $('#armRow').classList.toggle('hide', !hasMask(z)); $('#aiEditRow').classList.toggle('hide', !hasMask(z)); $('#armAdd').setAttribute('aria-pressed', String(S.arm === 'add')); $('#armSub').setAttribute('aria-pressed', String(S.arm === 'sub'));
   $('#smoothRow').classList.toggle('hide', !(z.rough > ROUGH_T && z.material === 'none'));
   $('#smoothBtn').textContent = z.flat >= 50 ? 'Вернуть как на фото' : 'Сгладить сколы и трещины';
   $('#zname').value = z.name;
@@ -1278,6 +1294,7 @@ onNewPhoto = () => { // новое фото клиента: прошлые ва�
   G.variants = []; G.srcs = []; G.seq++; G.consent = false;
   $('#gGal').innerHTML = ''; $('#gGal').classList.add('hide'); $('#gBackRow').classList.add('hide');
   $('#gGo').textContent = 'Нарисовать 2 варианта'; gStatus('', false);
+  $('#aiEditBtn').textContent = 'Перерисовать область (ИИ)'; aiStatus('', false);
 };
 function confirmLose(){ // свой «подтвердить» на странице: confirm() в закрытой ссылке не работает
   if (Date.now() < (S.loseUntil || 0)){ S.loseUntil = 0; return true; }
@@ -1344,6 +1361,88 @@ async function generate(){
   } finally { clearTimeout(to); G.busy = false; $('#gGo').disabled = false; }
 }
 $('#gGo').addEventListener('click', generate);
+
+/* ====================== перерисовка выбранной области нейросетью ====================== */
+const EDIT_SIZES = [[1024, 1024], [1536, 1024], [1024, 1536]]; // размеры, которые принимает нейросеть при редактировании
+function aiStatus(t, err){ const el = $('#aiEditStatus'); el.textContent = t; el.classList.toggle('err', !!err); }
+function prepEdit(z){
+  const W = S.w, H = S.h, st = ensureStats(z);
+  // окно вокруг области с запасом, чтобы нейросеть видела окружение и подобрала свет и перспективу
+  const mx = Math.max(24, Math.round(Math.max(st.x1 - st.x0, st.y1 - st.y0) * .3));
+  let x0 = Math.max(0, st.x0 - mx), y0 = Math.max(0, st.y0 - mx), x1 = Math.min(W, st.x1 + 1 + mx), y1 = Math.min(H, st.y1 + 1 + mx);
+  const asp = (x1 - x0) / (y1 - y0), [tw, th] = asp > 1.25 ? EDIT_SIZES[1] : asp < .8 ? EDIT_SIZES[2] : EDIT_SIZES[0], ta = tw / th;
+  let nw = x1 - x0, nh = y1 - y0; if (nw / nh < ta) nw = Math.ceil(nh * ta); else nh = Math.ceil(nw / ta);
+  nw = Math.min(nw, W); nh = Math.min(nh, H);
+  x0 = clamp(Math.round((x0 + x1) / 2 - nw / 2), 0, W - nw); y0 = clamp(Math.round((y0 + y1) / 2 - nh / 2), 0, H - nh);
+  const ww = nw, wh = nh, sc = Math.min(tw / ww, th / wh), dw = ww * sc, dh = wh * sc, dx = (tw - dw) / 2, dy = (th - dh) / 2;
+  // область чуть расширяем и смягчаем край: шов между старым и новым получается незаметным
+  const dil = blurPlane(z.mask, W, H, 3); for (let i = 0; i < dil.length; i++) dil[i] = dil[i] > 20 ? 255 : 0;
+  const md = blurPlane(dil, W, H, 2);
+  const ci = document.createElement('canvas'); ci.width = tw; ci.height = th; const cg = ci.getContext('2d');
+  cg.fillStyle = '#000'; cg.fillRect(0, 0, tw, th); cg.drawImage(orig, x0, y0, ww, wh, dx, dy, dw, dh);
+  const cm = document.createElement('canvas'); cm.width = tw; cm.height = th; const mg = cm.getContext('2d'), mid = mg.createImageData(tw, th), d = mid.data;
+  for (let y = 0; y < th; y++) for (let x = 0; x < tw; x++){ // прозрачное = менять; поля вокруг фото и всё остальное остаётся
+    let a = 255;
+    if (x >= dx && x < dx + dw && y >= dy && y < dy + dh){ const sx = Math.min(W - 1, x0 + Math.floor((x - dx) / sc)), sy = Math.min(H - 1, y0 + Math.floor((y - dy) / sc)); a = 255 - md[sy * W + sx]; }
+    d[(y * tw + x) * 4 + 3] = a;
+  }
+  mg.putImageData(mid, 0, 0);
+  return { image: ci.toDataURL('image/jpeg', .93), mask: cm.toDataURL('image/png'), g: { x0, y0, ww, wh, tw, th, dx, dy, dw, dh }, md };
+}
+function composeEdit(img, g, md){
+  const W = S.w, fx = img.naturalWidth / g.tw, fy = img.naturalHeight / g.th;
+  const c = document.createElement('canvas'); c.width = g.ww; c.height = g.wh; const cg = c.getContext('2d');
+  cg.drawImage(img, g.dx * fx, g.dy * fy, g.dw * fx, g.dh * fy, 0, 0, g.ww, g.wh);
+  const A = cg.getImageData(0, 0, g.ww, g.wh).data;
+  for (let y = 0; y < g.wh; y++) for (let x = 0; x < g.ww; x++){ // новое попадает только внутрь области, остальное остаётся побайтно прежним
+    const gi = (g.y0 + y) * W + g.x0 + x, a = md[gi] / 255; if (!a) continue;
+    const p = gi * 4, q = (y * g.ww + x) * 4;
+    for (let k = 0; k < 3; k++) S.base[p + k] = S.base[p + k] * (1 - a) + A[q + k] * a;
+  }
+  octx.putImageData(new ImageData(S.base, S.w, S.h), 0, 0);
+}
+const loadImg = url => new Promise((ok, no) => { const im = new Image(); im.onload = () => ok(im); im.onerror = no; im.src = url; });
+async function aiEdit(){
+  const z = activeZone();
+  if (!z || !hasMask(z)){ aiStatus('Сначала нажмите на фото на то, что хотите заменить.', true); return; }
+  const desc = $('#aiDesc').value.trim();
+  if (desc.length < 3){ aiStatus('Напишите, что должно быть на этом месте.', true); $('#aiDesc').focus(); return; }
+  if (!G.url){ $('#genCard').open = true; $('#gSettings').open = true; aiStatus('Укажите адрес сервера в блоке «Идея в другом стиле (ИИ)» → «Автоматически через сервер».', true); return; }
+  if (G.busy) return;
+  if (!G.consent){ // фото клиента уходит на сервер и в нейросеть: спрашиваем явно
+    G.consent = true; $('#aiEditBtn').textContent = 'Подтверждаю: отправить фото на сервер';
+    aiStatus('Фрагмент фото уйдёт на ваш сервер и в нейросеть. Если клиент согласен, нажмите кнопку ещё раз.', false); return;
+  }
+  $('#aiEditBtn').textContent = 'Перерисовать область (ИИ)';
+  const seq = ++G.seq, pid = S.photoId, zid = z.id, prep = prepEdit(z);
+  G.busy = true; $('#aiEditBtn').disabled = true; aiStatus('Перерисовываю область. Обычно это занимает 20–60 секунд…', false);
+  const ctrl = new AbortController(), to = setTimeout(() => ctrl.abort(), 150000);
+  try {
+    const r = await fetch(G.url.replace(/\/+$/, '') + '/edit', {
+      method: 'POST', signal: ctrl.signal,
+      body: JSON.stringify({ image: prep.image, mask: prep.mask, desc, room: $('#gRoom').value }),
+      headers: Object.assign({ 'content-type': 'application/json' }, G.token ? { 'x-app-token': G.token } : {})
+    });
+    let d = null; try { d = await r.json(); } catch (e) {}
+    if (!r.ok || !d || !d.images || !d.images.length) throw new Error((d && d.error) || 'Сервер ответил ошибкой (' + r.status + ')');
+    const img = await loadImg(d.images[0]);
+    if (seq !== G.seq || pid !== S.photoId || !S.zones.some(q => q.id === zid)) return; // пока рисовалось, фото сменили или область удалили
+    const before = octx.getImageData(prep.g.x0, prep.g.y0, prep.g.ww, prep.g.wh);
+    if (!S.hasBef){ bef.width = S.w; bef.height = S.h; bctx.drawImage(orig, 0, 0); S.hasBef = true; } // «До» остаётся исходным фото
+    composeEdit(img, prep.g, prep.md);
+    const zi = S.zones.findIndex(q => q.id === zid), zone = S.zones[zi];
+    S.zones.splice(zi, 1); S.active = Math.min(zi, S.zones.length - 1); resetInteraction();
+    S.history.push({ type: 'ai', x0: prep.g.x0, y0: prep.g.y0, ww: prep.g.ww, wh: prep.g.wh, before, zone, zi });
+    if (S.history.length > 20) S.history.shift();
+    computeDerived(); S.zones.forEach(touchMask);
+    renderZones(); renderInspector(); updateHint(); updateSummary(); render();
+    aiStatus('Готово. Не понравилось: нажмите «Отменить».', false);
+  } catch (e) {
+    aiStatus(e.name === 'AbortError' ? 'Слишком долго. Повторите попытку.' : e instanceof TypeError ? 'Не удалось связаться с сервером. Проверьте адрес и интернет.' : e.message, true);
+  } finally { clearTimeout(to); G.busy = false; $('#aiEditBtn').disabled = false; }
+}
+$('#aiEditBtn').addEventListener('click', aiEdit);
+$('#aiDesc').addEventListener('keydown', e => { if (e.key === 'Enter'){ e.preventDefault(); aiEdit(); } });
 
 /* бесплатный способ: запрос для любой нейросети и загрузка готового варианта */
 const RU_ROOMS = { bathroom: 'ванная комната', kitchen: 'кухня', living: 'гостиная', bedroom: 'спальня', hall: 'прихожая', other: 'помещение' };
