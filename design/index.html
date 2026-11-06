@@ -78,6 +78,15 @@ textarea{width:100%;min-height:110px;margin-top:10px;border:1px solid var(--line
 details summary{cursor:pointer;color:var(--muted);font-size:13px;margin-top:10px}
 #toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(20px);background:#1f2328;color:#fff;padding:10px 16px;border-radius:10px;opacity:0;transition:.25s;pointer-events:none;max-width:90vw;z-index:9}
 #toast.on{opacity:1;transform:translateX(-50%)}
+.quick{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.lead{margin:0;font-size:15px;color:var(--muted)}
+details.more{padding:0}
+details.more>summary{cursor:pointer;padding:14px;font-weight:600;font-size:14px;color:var(--ink);list-style-position:inside}
+details.more[open]>summary{border-bottom:1px solid var(--line)}
+details.more>*:not(summary){margin-left:14px;margin-right:14px}
+details.more>*:last-child{margin-bottom:14px}
+details.more>summary+*{margin-top:12px}
+#zoneList{margin-bottom:4px}
 .brand{display:flex;gap:12px;align-items:center;min-width:0}
 #hLogo{height:44px;max-width:130px;object-fit:contain;border-radius:6px}
 .note{margin:10px 0 0;font-size:12px;color:var(--muted)}
@@ -109,7 +118,7 @@ textarea.gtext{min-height:64px;resize:vertical;margin-top:0}
     <img id="hLogo" class="hide" alt="">
     <div>
       <h1 id="hName">Визуализатор ремонта</h1>
-      <p>Загрузите фото, выделите стены, пол или мебель и примерьте цвет и материал</p>
+      <p>Загрузите фото, нажмите на стену или пол и выберите цвет</p>
     </div>
   </div>
   <div class="actions">
@@ -121,20 +130,6 @@ textarea.gtext{min-height:64px;resize:vertical;margin-top:0}
 
 <main class="app">
   <section>
-    <div class="toolbar" id="toolbar">
-      <button class="tool" data-tool="wand" aria-pressed="true" title="Клик по стене выделяет всю область похожего цвета">Умная заливка</button>
-      <button class="tool" data-tool="poly" aria-pressed="false" title="Обвести стену, пол или зеркало по углам">Контур</button>
-      <button class="tool" data-tool="brush" aria-pressed="false" title="Дорисовать выделение">Кисть</button>
-      <button class="tool" data-tool="erase" aria-pressed="false" title="Стереть лишнее из выделения">Ластик</button>
-      <button class="tool" id="btnUndo" title="Ctrl+Z">Отменить</button>
-      <button class="tool hide" id="btnClose" title="Enter">Замкнуть контур</button>
-      <span class="sep"></span>
-      <label class="inl" id="tolBox">Чувствительность <input type="range" id="tol" min="6" max="90" value="24"></label>
-      <label class="inl hide" id="brushBox">Размер <input type="range" id="brush" min="6" max="120" value="36"></label>
-      <label class="inl" id="subBox"><input type="checkbox" id="sub"> вычитать</label>
-      <span class="sep"></span>
-      <button class="tool" id="btnCmp" aria-pressed="false" title="Потяните линию, чтобы сравнить с исходным фото">До / После</button>
-    </div>
     <div class="stage" id="stage">
       <canvas id="view" width="4" height="3"></canvas>
       <div class="empty" id="empty">
@@ -148,16 +143,78 @@ textarea.gtext{min-height:64px;resize:vertical;margin-top:0}
             <input type="file" id="cam" class="vh" accept="image/*" capture="environment">
           </div>
           <textarea id="pasteBox" class="paste" aria-label="Вставить фото" placeholder="Не открывается выбор файла? Скопируйте фото, нажмите здесь и удерживайте, затем выберите «Вставить»"></textarea>
-          <div class="steps"><span>1 · Фото</span><span>2 · Выделить зону</span><span>3 · Цвет и материал</span><span>4 · Скачать</span></div>
+          <div class="steps"><span>1 · Фото</span><span>2 · Нажмите на стену или пол</span><span>3 · Выберите цвет</span><span>4 · Скачайте</span></div>
         </div>
       </div>
+    </div>
+    <div class="quick">
+      <button class="tool" id="btnUndo" title="Ctrl+Z">Отменить</button>
+      <button class="tool" id="btnCmp" aria-pressed="false" title="Потяните линию, чтобы сравнить с исходным фото">До / После</button>
     </div>
     <p class="hint" id="hint"></p>
   </section>
 
   <aside>
-    <div class="card" id="genCard">
-      <h2>Нарисовать вариант (ИИ)</h2>
+    <div class="card" id="editCard">
+      <h2>Что меняем</h2>
+      <p class="lead" id="noZone">Нажмите на фото на то, что хотите изменить: стену, пол или мебель.</p>
+      <div id="zoneList"></div>
+      <div id="inspector" class="hide">
+        <div class="row">
+          <div class="lbl"><span>Цвет</span><span class="hex" id="hex"></span></div>
+          <div class="colorline"><input type="color" id="color"><span style="font-size:13px;color:var(--muted)" id="cname"></span></div>
+          <div class="sw" id="swatches"></div>
+        </div>
+        <div class="row"><div class="lbl"><span>Материал</span></div><div class="mats" id="mats"></div></div>
+        <div class="row hide" id="fixRow"><div class="lbl"><span>Выделилось не то?</span></div><div class="actions"><button class="btn" id="tolLess">Меньше</button><button class="btn" id="tolMore">Больше</button></div></div>
+      </div>
+    </div>
+
+    <div class="card" id="resultCard">
+      <h2>Готово</h2>
+      <div class="opts">
+        <label class="chk"><input type="checkbox" id="optPair"> До и после рядом</label>
+        <label class="chk"><input type="checkbox" id="optBrand" checked> Подпись компании внизу</label>
+      </div>
+      <div class="actions">
+        <button class="btn primary" id="btnSave" disabled>Скачать PNG</button>
+        <button class="btn hide" id="btnShare" disabled>Отправить клиенту</button>
+        <button class="btn" id="btnCopy" disabled>Копировать описание</button>
+      </div>
+      <details><summary>Описание изменений для клиента</summary><textarea id="summary" readonly></textarea></details>
+    </div>
+
+    <details class="card more" id="advCard"><summary>Дополнительно: свои инструменты и настройки</summary>
+      <div class="toolbar" id="toolbar">
+        <button class="tool" data-tool="wand" aria-pressed="true" title="Нажатие на фото выделяет область похожего цвета">Умная заливка</button>
+        <button class="tool" data-tool="poly" aria-pressed="false" title="Обвести стену, пол или зеркало по углам">Контур</button>
+        <button class="tool" data-tool="brush" aria-pressed="false" title="Дорисовать выделение">Кисть</button>
+        <button class="tool" data-tool="erase" aria-pressed="false" title="Стереть лишнее из выделения">Ластик</button>
+        <button class="tool hide" id="btnClose" title="Enter">Замкнуть контур</button>
+        <label class="inl" id="tolBox">Чувствительность <input type="range" id="tol" min="6" max="90" value="24"></label>
+        <label class="inl hide" id="brushBox">Размер <input type="range" id="brush" min="6" max="120" value="36"></label>
+        <label class="inl" id="subBox"><input type="checkbox" id="sub"> вычитать</label>
+        <label class="inl" id="addBox"><input type="checkbox" id="addMode"> добавлять к текущей области</label>
+      </div>
+      <div id="advZone" class="hide">
+        <div class="row"><label for="zname">Название области</label><input type="text" id="zname" maxlength="30"></div>
+        <div class="row"><label for="strength"><span>Интенсивность</span><span id="strengthV"></span></label><input type="range" id="strength" min="0" max="100"></div>
+        <div class="row"><label for="match"><span>Подстроить под свет сцены</span><span id="matchV"></span></label><input type="range" id="match" min="0" max="100"></div>
+        <div class="row"><label for="flat"><span>Выровнять поверхность</span><span id="flatV"></span></label><input type="range" id="flat" min="0" max="100"></div>
+        <div class="row" id="scaleRow"><label for="scale"><span>Размер рисунка</span><span id="scaleV"></span></label><input type="range" id="scale" min="0.4" max="3" step="0.1"></div>
+        <div class="row" id="perspRow">
+          <div class="lbl"><span>Перспектива</span><span id="perspV"></span></div>
+          <div class="actions"><button class="btn" id="perspSet">Задать 4 угла</button><button class="btn hide" id="perspClear">Без перспективы</button></div>
+          <div class="row hide" id="depthRow"><label for="depth"><span>Глубина рисунка</span><span id="depthV"></span></label><input type="range" id="depth" min="0.1" max="3" step="0.01"></div>
+          <p class="note">Перспектива подбирается сама по форме области. Если нужно точнее, отметьте 4 угла поверхности (пола, стены, фасада) в любом порядке.</p>
+        </div>
+        <div class="row chk" id="rotRow"><input type="checkbox" id="rot"><label for="rot">Повернуть рисунок на 90°</label></div>
+        <div class="row"><button class="btn" id="btnClear" style="width:100%">Очистить выделение области</button></div>
+      </div>
+      <div class="lbl" style="margin-top:14px"><span>Добавить область вручную</span></div>
+      <div class="chips" id="addZone"></div>
+    </details>
+    <details class="card more" id="genCard"><summary>Идея в другом стиле (ИИ)</summary>
       <div class="g2">
         <div><label class="lbl" for="gRoom">Помещение</label>
           <select id="gRoom" class="gtext"><option value="bathroom">Ванная</option><option value="kitchen">Кухня</option><option value="living">Гостиная</option><option value="bedroom">Спальня</option><option value="hall">Прихожая</option><option value="other">Другое</option></select></div>
@@ -188,59 +245,14 @@ textarea.gtext{min-height:64px;resize:vertical;margin-top:0}
         <div class="row"><label for="gToken"><span>Ключ доступа (если задан)</span></label><input type="text" id="gToken" class="gtext" autocomplete="off" autocapitalize="off" spellcheck="false"></div>
         <p class="note">Ключ нейросети хранится на сервере, а не на странице. Инструкция по запуску лежит в папке design-api.</p>
       </details>
-    </div>
-
-    <div class="card">
-      <h2>Зоны</h2>
-      <div id="zoneList"></div>
-      <div class="chips" id="addZone"></div>
-    </div>
-
-    <div class="card" id="inspector">
-      <h2>Что меняем</h2>
-      <div class="row" style="margin-top:0"><label for="zname">Название зоны</label><input type="text" id="zname" maxlength="30"></div>
-      <div class="row">
-        <div class="lbl"><span>Цвет</span><span class="hex" id="hex"></span></div>
-        <div class="colorline"><input type="color" id="color"><span style="font-size:13px;color:var(--muted)" id="cname"></span></div>
-        <div class="sw" id="swatches"></div>
-      </div>
-      <div class="row"><div class="lbl"><span>Материал</span></div><div class="mats" id="mats"></div></div>
-      <div class="row"><label for="strength"><span>Интенсивность</span><span id="strengthV"></span></label><input type="range" id="strength" min="0" max="100"></div>
-      <div class="row"><label for="match"><span>Подстроить под свет сцены</span><span id="matchV"></span></label><input type="range" id="match" min="0" max="100"></div>
-      <div class="row"><label for="flat"><span>Выровнять поверхность</span><span id="flatV"></span></label><input type="range" id="flat" min="0" max="100"></div>
-      <div class="row" id="scaleRow"><label for="scale"><span>Размер рисунка</span><span id="scaleV"></span></label><input type="range" id="scale" min="0.4" max="3" step="0.1"></div>
-      <div class="row" id="perspRow">
-        <div class="lbl"><span>Перспектива</span><span id="perspV"></span></div>
-        <div class="actions"><button class="btn" id="perspSet">Задать 4 угла</button><button class="btn hide" id="perspClear">Сбросить</button></div>
-        <div class="row hide" id="depthRow"><label for="depth"><span>Глубина рисунка</span><span id="depthV"></span></label><input type="range" id="depth" min="0.1" max="3" step="0.01"></div>
-        <p class="note">Отметьте 4 угла поверхности (пола, стены, фасада) в любом порядке, и материал ляжет под тем же углом, что и на фото. Если рисунок выглядит растянутым или сжатым вглубь, поменяйте «Глубину».</p>
-      </div>
-      <div class="row chk" id="rotRow"><input type="checkbox" id="rot"><label for="rot">Повернуть рисунок на 90°</label></div>
-      <div class="row"><button class="btn" id="btnClear" style="width:100%">Очистить выделение зоны</button></div>
-    </div>
-
-    <div class="card">
-      <h2>Ваша компания</h2>
+    </details>
+    <details class="card more" id="brandCard"><summary>Ваша компания: название, логотип, цвет</summary>
       <div class="row" style="margin-top:0"><label for="cName">Название</label><input type="text" id="cName" maxlength="40" placeholder="Например, СтройДом"></div>
       <div class="row"><label for="cContact">Телефон, сайт или Telegram</label><input type="text" id="cContact" maxlength="60" placeholder="+7 900 000-00-00"></div>
       <div class="row"><div class="colorline"><input type="color" id="cColor" value="#c4562f"><span style="font-size:13px;color:var(--muted)">Фирменный цвет</span></div></div>
       <div class="row actions"><label class="btn" for="logoFile" id="btnLogo">Загрузить логотип</label><button class="btn hide" id="btnLogoDel">Убрать</button><input type="file" id="logoFile" class="vh" accept="image/*"></div>
       <p class="note">Название и логотип появятся в шапке, на скачанной картинке и в описании для клиента. Всё хранится только в вашем браузере.</p>
-    </div>
-
-    <div class="card">
-      <h2>Результат</h2>
-      <div class="opts">
-        <label class="chk"><input type="checkbox" id="optPair"> До и после рядом</label>
-        <label class="chk"><input type="checkbox" id="optBrand" checked> Подпись компании внизу</label>
-      </div>
-      <div class="actions">
-        <button class="btn primary" id="btnSave" disabled>Скачать PNG</button>
-        <button class="btn hide" id="btnShare" disabled>Отправить клиенту</button>
-        <button class="btn" id="btnCopy" disabled>Копировать описание</button>
-      </div>
-      <details><summary>Описание изменений для клиента</summary><textarea id="summary" readonly></textarea></details>
-    </div>
+    </details>
   </aside>
 </main>
 <div id="toast" role="status"></div>
@@ -276,7 +288,9 @@ const MATERIALS = [
   { id: 'tile',     name: 'Плитка',     color: '#D7D9D9' },
   { id: 'fabric',   name: 'Ткань',      color: '#6F8A8C' }
 ];
+const AUTO_COLORS = ['#9CAF9A', '#D8C3A0', '#2F3E55', '#C26B4A', '#B8B2A7', '#D8A9A4', '#2F6B5A', '#D2A33B'];
 const ZONE_PRESETS = {
+  'Область': { color: '#9CAF9A', material: 'none' },
   'Стены':   { color: '#9CAF9A', material: 'none' },
   'Пол':     { color: '#A9743F', material: 'wood' },
   'Потолок': { color: '#F4F2EE', material: 'none' },
@@ -412,7 +426,7 @@ function setImage(source, sw, sh, opts){
   $('#btnCmp').setAttribute('aria-pressed', 'false');
   $('#empty').classList.add('hide');
   $('#btnSave').disabled = false; $('#btnCopy').disabled = false; $('#btnShare').disabled = false;
-  addZone('Стены');
+  renderZones(); renderInspector(); updateHint(); updateSummary();
   render();
 }
 
@@ -484,8 +498,8 @@ function addZone(name){
   const p = ZONE_PRESETS[name] || ZONE_PRESETS['Другое'];
   const same = S.zones.filter(z => z.base === name).length;
   S.zones.push({
-    id: S.uid++, base: name, name: same ? name + ' ' + (same + 1) : name,
-    mask: new Uint8Array(S.w * S.h), color: p.color, material: p.material, colorTouched: false,
+    id: S.uid++, base: name, name: name === 'Область' ? 'Область ' + (same + 1) : (same ? name + ' ' + (same + 1) : name),
+    mask: new Uint8Array(S.w * S.h), color: name === 'Область' ? AUTO_COLORS[S.zones.length % AUTO_COLORS.length] : p.color, material: p.material, colorTouched: false,
     strength: 100, match: 65, flat: 0, scale: 1, rot: false, visible: true, stats: null, _pk: null, _pat: null
   });
   S.active = S.zones.length - 1;
@@ -524,9 +538,7 @@ function addPerspPoint(p){
   S.pm.push({ x: p.x, y: p.y });
   if (S.pm.length < 4){ updateHint(); paintView(); return; }
   const z = activeZone(), pts = orderQuad(S.pm); S.pm = null;
-  // глубина по умолчанию: по форме выбранного четырёхугольника (можно подправить ползунком)
-  const d = (a, c) => Math.hypot(a.x - c.x, a.y - c.y), wpx = (d(pts[0], pts[1]) + d(pts[3], pts[2])) / 2, hpx = (d(pts[0], pts[3]) + d(pts[1], pts[2])) / 2;
-  z.persp = { pts, depth: z.persp ? z.persp.depth : clamp(Math.round(1.6 * hpx / Math.max(1, wpx) * 100) / 100, .1, 1.5) }; buildH(z);
+  z.noPersp = false; setPersp(z, pts, false);
   renderInspector(); updateHint(); requestRender();
 }
 function undo(){
@@ -534,7 +546,7 @@ function undo(){
   if (S.poly && S.poly.length){ S.poly.pop(); if (!S.poly.length) S.poly = null; paintView(); return; }
   const h = S.history.pop(); if (!h){ toast('Отменять пока нечего'); return; }
   const z = S.zones.find(q => q.id === h.id); if (!z) return;
-  z.mask = h.mask; touchMask(z); S.active = S.zones.indexOf(z);
+  z.mask = h.mask; z.simple = false; touchMask(z); autoPersp(z); S.active = S.zones.indexOf(z);
   renderZones(); renderInspector(); requestRender(); updateHint();
 }
 
@@ -597,7 +609,7 @@ function closePoly(){
   const a = g.getImageData(0, 0, S.w, S.h).data, m = z.mask;
   pushHistory(z);
   for (let i = 0; i < m.length; i++){ const v = a[i * 4 + 3]; if (S.sub) m[i] = Math.min(m[i], 255 - v); else if (v > m[i]) m[i] = v; }
-  S.poly = null; touchMask(z); maskChanged(z);
+  z.simple = false; S.poly = null; touchMask(z); maskChanged(z);
 }
 function dab(z, cx, cy, erase){
   const { w, h } = S, R = S.brush, m = z.mask;
@@ -747,7 +759,6 @@ function paintView(){
     for (let y = y0; y <= y1; y++) for (let x = x0, i = y * w + x0; x <= x1; x++, i++){
       const on = m[i] > 127;
       if (on && (m[i - 1] <= 127 || m[i + 1] <= 127 || m[i - w] <= 127 || m[i + w] <= 127)){ const p = i * 4; d[p] = 255; d[p + 1] = 255; d[p + 2] = 255; d[p + 3] = 255; }
-      else if (on && ((x + y) & 7) < 1){ const p = i * 4; d[p] = 224; d[p + 1] = 53; d[p + 2] = 122; d[p + 3] = 140; }
     }
     ictx.putImageData(id, 0, 0); vctx.drawImage(ovl, 0, 0);
   }
@@ -803,12 +814,13 @@ function renderZones(){
     });
     box.appendChild(el);
   });
-  if (!S.zones.length) box.innerHTML = '<p style="margin:0;color:var(--muted);font-size:13px">Добавьте зону: стены, пол, мебель…</p>';
+
 }
 
 function renderInspector(){
   const z = activeZone(), ins = $('#inspector');
-  ins.classList.toggle('hide', !z); if (!z) return;
+  ins.classList.toggle('hide', !z); $('#noZone').classList.toggle('hide', !!z); $('#advZone').classList.toggle('hide', !z); if (!z) return;
+  $('#fixRow').classList.toggle('hide', !(z.simple && z.seed));
   $('#zname').value = z.name;
   $('#color').value = z.color; $('#hex').textContent = z.color.toUpperCase(); $('#cname').textContent = nearestName(z.color);
   $('#match').value = z.match; $('#matchV').textContent = z.match + '%'; $('#flat').value = z.flat; $('#flatV').textContent = z.flat + '%'; $('#strength').value = z.strength; $('#strengthV').textContent = z.strength + '%';
@@ -827,14 +839,12 @@ function updateHint(){
   const z = activeZone(); let t = '';
   if (!S.base) t = '';
   else if (S.pm) t = 'Отметьте 4 угла поверхности, под которой должен лечь материал: ещё ' + (4 - S.pm.length) + '. «Отменить» убирает последнюю точку, Esc отменяет.';
-  else if (S.compare) t = 'Потяните линию влево или вправо — слева исходное фото, справа результат.';
-  else if (!z) t = 'Добавьте зону справа, затем выделите её на фото.';
-  else if (S.tool === 'poly') t = 'Ставьте точки по углам стены, пола или зеркала. Замкните контур нажатием на первую (белую) точку или кнопкой «Замкнуть контур». «Отменить» убирает последнюю точку.';
-  else if (!hasMask(z)) t = 'Кликните по «' + z.name.toLowerCase() + '» на фото — выделится вся область похожего цвета.';
-  else if (S.tool === 'wand') t = 'Захватило лишнее — уменьшите «Чувствительность» и нажмите «Отменить». Не хватает куска — кликните по нему ещё раз или дорисуйте кистью. Стены в трещинах и сколах удобнее обвести «Контуром».';
-  else if (S.tool === 'brush') t = 'Закрасьте то, что нужно добавить в зону. Размер кисти — слева.';
-  else t = 'Сотрите всё, что не должно перекрашиваться (розетки, плинтус, рамы).';
-  if (z && S.base && !S.compare && !S.pm && z.material !== 'none' && !z.persp && hasMask(z)) t += ' Чтобы материал лёг под углом, нажмите «Задать 4 угла» в блоке «Что меняем».';
+  else if (S.compare) t = 'Потяните линию влево или вправо: слева исходное фото, справа результат.';
+  else if (S.tool === 'poly') t = 'Ставьте точки по углам стены, пола или зеркала. Замкните контур нажатием на первую (белую) точку или кнопкой «Замкнуть контур».';
+  else if (S.tool === 'brush') t = 'Закрасьте то, что нужно добавить в область. Размер кисти в «Дополнительно».';
+  else if (S.tool === 'erase') t = 'Сотрите всё, что не должно перекрашиваться (розетки, плинтус, рамы).';
+  else if (!z || !hasMask(z)) t = 'Нажмите на фото на то, что хотите изменить: стену, пол или мебель.';
+  else t = 'Выберите цвет или материал в блоке «Что меняем». ' + (z.simple ? 'Выделилось не то: нажмите «Меньше» или «Больше». ' : '') + 'Чтобы изменить другую часть, нажмите на неё на фото.';
   $('#hint').textContent = t;
 }
 
@@ -861,15 +871,28 @@ view.addEventListener('pointerdown', e => {
   view.setPointerCapture(e.pointerId);
   const p = pos(e);
   if (S.compare){ S.stroke = { cmp: true }; S.split = clamp(p.x / S.w, 0, 1); paintView(); return; }
-  const z = activeZone(); if (!z){ toast('Сначала добавьте зону справа'); return; }
   if (S.pm){ addPerspPoint(p); return; }
+  const fresh = S.tool === 'wand' && !S.sub && !S.addMode;
+  if (fresh){ // нажатие на уже выделенную область выбирает её, а не создаёт новую
+    const hit = zoneAt(p);
+    if (hit >= 0){
+      if (hit === S.active) toast('Эта область уже выбрана. Выберите цвет или материал в блоке «Что меняем»');
+      else { S.active = hit; renderZones(); renderInspector(); updateHint(); requestRender(); }
+      return;
+    }
+  }
+  let z = activeZone();
+  if (!z || (fresh && hasMask(z))){ addZone('Область'); z = activeZone(); }
   if (S.tool === 'poly'){ addPolyPoint(p); return; }
   pushHistory(z);
   if (S.tool === 'wand'){
+    const first = !hasMask(z) && !S.sub;
     const n = wand(z, Math.floor(p.x), Math.floor(p.y), S.sub);
-    if (n < 30 && !S.sub) toast('Выделилось слишком мало — увеличьте «Чувствительность»');
+    if (first){ z.seed = { x: Math.floor(p.x), y: Math.floor(p.y) }; z.tol = S.tol; z.simple = true; } else z.simple = false;
+    if (n < 30 && !S.sub) toast('Выделилось слишком мало. Нажмите «Больше»');
     maskChanged(z);
   } else {
+    z.simple = false;
     const er = S.tool === 'erase';
     S.stroke = { last: p, erase: er }; dab(z, p.x, p.y, er); requestRender();
   }
@@ -886,13 +909,48 @@ const endStroke = () => { if (S.stroke && S.stroke.last) maskChanged(activeZone(
 view.addEventListener('pointerup', endStroke);
 view.addEventListener('pointercancel', endStroke);
 
-function maskChanged(z){ renderZones(); updateHint(); updateSummary(); requestRender(); }
+function zoneAt(p){
+  const i = Math.floor(p.y) * S.w + Math.floor(p.x);
+  for (let k = S.zones.length - 1; k >= 0; k--){ const z = S.zones[k]; if (z.visible && z.mask[i] > 127) return k; }
+  return -1;
+}
+function quadFromMask(z){
+  const st = ensureStats(z); if (!st.count) return null;
+  const w = S.w, m = z.mask; let a = [1e9, null], b = [-1e9, null], c = [-1e9, null], d = [1e9, null];
+  for (let y = st.y0; y <= st.y1; y++) for (let x = st.x0, i = y * w + st.x0; x <= st.x1; x++, i++){
+    if (m[i] <= 127) continue;
+    const sum = x + y, dif = x - y;
+    if (sum < a[0]) a = [sum, { x, y }]; if (sum > b[0]) b = [sum, { x, y }]; if (dif > c[0]) c = [dif, { x, y }]; if (dif < d[0]) d = [dif, { x, y }];
+  }
+  return a[1] ? [a[1], c[1], b[1], d[1]] : null; // левый верх, правый верх, правый низ, левый низ
+}
+function setPersp(z, pts, auto){
+  const d = (a, c) => Math.hypot(a.x - c.x, a.y - c.y), wpx = (d(pts[0], pts[1]) + d(pts[3], pts[2])) / 2, hpx = (d(pts[0], pts[3]) + d(pts[1], pts[2])) / 2;
+  const keep = z.persp && z.persp.userDepth;
+  z.persp = { pts, auto: !!auto, userDepth: !!keep, depth: keep ? z.persp.depth : clamp(Math.round(1.6 * hpx / Math.max(1, wpx) * 100) / 100, .1, 1.5) };
+  buildH(z);
+}
+function autoPersp(z){
+  // для плитки, дерева и других рисунков перспектива подбирается по форме выделенной области
+  if (!z || z.noPersp || z.material === 'none' || (z.persp && !z.persp.auto)) return;
+  const q = quadFromMask(z), st = z.stats; if (!q || !st) return;
+  const area = Math.abs(q.reduce((s2, a, i) => { const b2 = q[(i + 1) % 4]; return s2 + a.x * b2.y - b2.x * a.y; }, 0)) / 2;
+  if (area < (st.x1 - st.x0) * (st.y1 - st.y0) * .3){ z.persp = null; z._H = null; return; }
+  setPersp(z, q, true);
+}
+function retune(d){
+  const z = activeZone(); if (!z || !z.seed || !z.simple) return;
+  z.tol = clamp((z.tol || S.tol) + d, 6, 90);
+  const keep = S.tol; S.tol = z.tol; z.mask.fill(0); wand(z, z.seed.x, z.seed.y, false); S.tol = keep;
+  touchMask(z); maskChanged(z);
+}
+function maskChanged(z){ if (z) autoPersp(z); renderZones(); renderInspector(); updateHint(); updateSummary(); requestRender(); }
 
 document.querySelectorAll('[data-tool]').forEach(b => b.addEventListener('click', () => {
   S.tool = b.dataset.tool; S.compare = false; $('#btnCmp').setAttribute('aria-pressed', 'false');
   document.querySelectorAll('[data-tool]').forEach(q => q.setAttribute('aria-pressed', String(q === b)));
   const bt = S.tool === 'brush' || S.tool === 'erase'; S.poly = null; S.pm = null;
-  $('#tolBox').classList.toggle('hide', S.tool !== 'wand'); $('#subBox').classList.toggle('hide', !(S.tool === 'wand' || S.tool === 'poly'));
+  $('#tolBox').classList.toggle('hide', S.tool !== 'wand'); $('#subBox').classList.toggle('hide', !(S.tool === 'wand' || S.tool === 'poly')); $('#addBox').classList.toggle('hide', S.tool !== 'wand');
   $('#brushBox').classList.toggle('hide', !bt); $('#btnClose').classList.toggle('hide', S.tool !== 'poly');
   view.style.cursor = bt ? 'none' : 'crosshair';
   updateHint(); paintView();
@@ -953,7 +1011,7 @@ MATERIALS.forEach(m => {
   b.appendChild(c); b.appendChild(document.createTextNode(m.name));
   b.addEventListener('click', () => {
     const z = activeZone(); if (!z) return;
-    z.material = m.id; if (m.color && !z.colorTouched) z.color = m.color;
+    z.material = m.id; if (m.color && !z.colorTouched) z.color = m.color; autoPersp(z);
     renderZones(); renderInspector(); updateSummary(); updateHint(); requestRender();
   });
   $('#mats').appendChild(b);
@@ -981,15 +1039,18 @@ $('#scale').addEventListener('input', e => {
   clearTimeout(scT); scT = setTimeout(requestRender, 120);
 });
 $('#perspSet').addEventListener('click', startPersp);
-$('#perspClear').addEventListener('click', () => { const z = activeZone(); if (!z) return; z.persp = null; z._H = null; renderInspector(); requestRender(); });
+$('#perspClear').addEventListener('click', () => { const z = activeZone(); if (!z) return; z.persp = null; z._H = null; z.noPersp = true; renderInspector(); requestRender(); });
+$('#tolLess').addEventListener('click', () => retune(-6));
+$('#tolMore').addEventListener('click', () => retune(6));
+$('#addMode').addEventListener('change', e => { S.addMode = e.target.checked; });
 let depT;
 $('#depth').addEventListener('input', e => {
-  const z = activeZone(); if (!z || !z.persp) return; z.persp.depth = +e.target.value; $('#depthV').textContent = '×' + z.persp.depth.toFixed(2);
+  const z = activeZone(); if (!z || !z.persp) return; z.persp.depth = +e.target.value; z.persp.userDepth = true; $('#depthV').textContent = '×' + z.persp.depth.toFixed(2);
   clearTimeout(depT); depT = setTimeout(() => { buildH(z); requestRender(); }, 140);
 });
 $('#rot').addEventListener('change', e => { const z = activeZone(); if (z){ z.rot = e.target.checked; requestRender(); } });
 $('#btnClear').addEventListener('click', () => {
-  const z = activeZone(); if (!z) return; pushHistory(z); z.mask = new Uint8Array(S.w * S.h); touchMask(z); maskChanged(z);
+  const z = activeZone(); if (!z) return; pushHistory(z); z.mask = new Uint8Array(S.w * S.h); z.simple = false; z.seed = null; z.persp = null; z._H = null; touchMask(z); maskChanged(z);
 });
 
 /* ====================== фирменный стиль ====================== */
