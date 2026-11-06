@@ -11,4 +11,4 @@ MAX_VARIANTS = "2"
 
 # Секреты не пишите сюда. Их задают командами:
 #   wrangler secret put OPENAI_API_KEY
-#   wrangler secret put APP_TOKENS      (необязательно, ключи доступа клиентов через запятую)
+#   wrangler secret put APP_TOKENS      (обязательно: ключи доступа клиентов через запятую)

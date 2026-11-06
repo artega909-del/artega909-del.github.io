@@ -8,8 +8,8 @@
 <meta name="description" content="Загрузите фото комнаты и примерьте другой цвет стен, пол, мебель и материалы.">
 <style>
 :root{
-  --bg:#f4f2ee; --panel:#fff; --ink:#1f2328; --muted:#6b7280; --line:#e3dfd7;
-  --accent:#c4562f; --accent-ink:#fff; --sel:#e0357a; --stage:#22252a;
+  --bg:#f4f2ee; --panel:#fff; --ink:#1f2328; --muted:#5c6370; --line:#e3dfd7;
+  --accent:#b94e28; --accent-ink:#fff; --sel:#e0357a; --stage:#22252a;
 }
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
@@ -36,7 +36,7 @@ label.btn{cursor:pointer;user-select:none;-webkit-user-select:none}
 .inl{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
 .inl input[type=range]{width:110px}
 .stage{position:relative;background:var(--stage);border-radius:5px;display:grid;place-items:center;min-height:320px;overflow:hidden}
-#view{display:block;max-width:100%;max-height:72vh;width:auto;height:auto;touch-action:none;cursor:crosshair}
+#view{display:block;max-width:100%;max-height:72vh;width:auto;height:auto;touch-action:pan-y;cursor:crosshair}
 .stage>*{grid-area:1/1}
 .empty .btn:not(.primary){color:var(--ink)}
 .empty{display:grid;place-items:center;text-align:center;padding:24px;color:#d6d8dc}
@@ -54,10 +54,10 @@ label.btn{cursor:pointer;user-select:none;-webkit-user-select:none}
 .dot{width:22px;height:22px;border-radius:6px;border:1px solid #0002;flex:none}
 .zone .nm{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .zone small{display:block;color:var(--muted);font-size:12px}
-.ico{border:0;background:none;padding:6px;border-radius:8px;min-width:32px;min-height:32px;color:var(--muted)}
+.ico{border:0;background:none;padding:6px;border-radius:8px;min-width:40px;min-height:40px;color:var(--muted)}
 .ico:hover{background:#0000000d;color:var(--ink)}
 .chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
-.chip{border:1px dashed #c9c3b6;background:none;border-radius:99px;padding:5px 11px;font-size:13px;color:var(--muted)}
+.chip{border:1px dashed #c9c3b6;background:none;border-radius:99px;padding:8px 13px;min-height:40px;font-size:13px;color:var(--muted)}
 .chip:hover{border-color:var(--accent);color:var(--accent)}
 .row{margin-top:12px}
 .row>label,.lbl{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);margin-bottom:6px}
@@ -73,7 +73,11 @@ input[type=color]{width:48px;height:40px;padding:2px;border:1px solid var(--line
 .mat{border:1px solid var(--line);background:#fff;border-radius:10px;padding:4px;font-size:11px;text-align:center}
 .mat canvas{width:100%;height:auto;border-radius:6px;display:block;margin-bottom:3px}
 .mat[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
-.chk{display:flex;gap:8px;align-items:center;font-size:14px}
+.chk{display:flex;gap:10px;align-items:center;font-size:14px;min-height:36px}
+input[type=checkbox]{width:20px;height:20px;flex:none}
+input[type=range]{height:28px}
+input[type=range],input[type=checkbox]{accent-color:var(--accent)}
+button:focus-visible,label.btn:focus-visible,.zone:focus-visible,summary:focus-visible,.mat:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 textarea{width:100%;min-height:110px;margin-top:10px;border:1px solid var(--line);border-radius:8px;padding:8px;font:13px/1.4 inherit;resize:vertical}
 details summary{cursor:pointer;color:var(--muted);font-size:13px;margin-top:10px}
 #toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(20px);background:#1f2328;color:#fff;padding:10px 16px;border-radius:10px;opacity:0;transition:.25s;pointer-events:none;max-width:90vw;z-index:9}
@@ -106,9 +110,12 @@ textarea.gtext{min-height:64px;resize:vertical;margin-top:0}
 .gal img{width:100%;height:100%;object-fit:cover;display:block}
 .hide{display:none!important}
 @media (max-width:900px){
-  .app{grid-template-columns:1fr}
-  #view{max-height:60vh}
+  .app{display:block}
+  .work{position:sticky;top:env(safe-area-inset-top,0px);z-index:6;background:var(--bg);padding-bottom:8px;margin-bottom:8px}
+  #view{max-height:42vh}
+  .hint{font-size:12.5px;margin-top:6px}
 }
+@media (max-width:900px) and (max-height:620px){ .work{position:static} #view{max-height:70vh} }
 </style>
 </head>
 <body>
@@ -129,13 +136,13 @@ textarea.gtext{min-height:64px;resize:vertical;margin-top:0}
 </header>
 
 <main class="app">
-  <section>
+  <section class="work">
     <div class="stage" id="stage">
-      <canvas id="view" width="4" height="3"></canvas>
+      <canvas id="view" width="4" height="3" role="img" aria-label="Фото комнаты. Нажмите на стену, пол или мебель, чтобы выбрать область"></canvas>
       <div class="empty" id="empty">
         <div>
           <h2>Загрузите фото комнаты</h2>
-          <p>Перетащите снимок сюда или выберите файл. Фото остаётся в вашем браузере и никуда не отправляется.</p>
+          <p>Перетащите снимок сюда или выберите файл. Фото обрабатывается в вашем браузере. Оно уходит на сервер, только если вы сами включите генерацию через сервер.</p>
           <div class="actions" style="justify-content:center">
             <label class="btn primary" for="file">Выбрать фото</label>
             <label class="btn" for="cam">Сфотографировать</label>
@@ -162,7 +169,7 @@ textarea.gtext{min-height:64px;resize:vertical;margin-top:0}
       <div id="inspector" class="hide">
         <div class="row">
           <div class="lbl"><span>Цвет</span><span class="hex" id="hex"></span></div>
-          <div class="colorline"><input type="color" id="color"><span style="font-size:13px;color:var(--muted)" id="cname"></span></div>
+          <div class="colorline"><input type="color" id="color" aria-label="Свой цвет"><span style="font-size:13px;color:var(--muted)" id="cname"></span></div>
           <div class="sw" id="swatches"></div>
         </div>
         <div class="row"><div class="lbl"><span>Материал</span></div><div class="mats" id="mats"></div></div>
@@ -181,7 +188,7 @@ textarea.gtext{min-height:64px;resize:vertical;margin-top:0}
         <button class="btn hide" id="btnShare" disabled>Отправить клиенту</button>
         <button class="btn" id="btnCopy" disabled>Копировать описание</button>
       </div>
-      <details><summary>Описание изменений для клиента</summary><textarea id="summary" readonly></textarea></details>
+      <details><summary>Описание изменений для клиента</summary><textarea id="summary" readonly aria-label="Описание изменений для клиента"></textarea></details>
     </div>
 
     <details class="card more" id="advCard"><summary>Дополнительно: свои инструменты и настройки</summary>
@@ -249,7 +256,7 @@ textarea.gtext{min-height:64px;resize:vertical;margin-top:0}
     <details class="card more" id="brandCard"><summary>Ваша компания: название, логотип, цвет</summary>
       <div class="row" style="margin-top:0"><label for="cName">Название</label><input type="text" id="cName" maxlength="40" placeholder="Например, СтройДом"></div>
       <div class="row"><label for="cContact">Телефон, сайт или Telegram</label><input type="text" id="cContact" maxlength="60" placeholder="+7 900 000-00-00"></div>
-      <div class="row"><div class="colorline"><input type="color" id="cColor" value="#c4562f"><span style="font-size:13px;color:var(--muted)">Фирменный цвет</span></div></div>
+      <div class="row"><div class="colorline"><input type="color" id="cColor" value="#b94e28" aria-label="Фирменный цвет"><span style="font-size:13px;color:var(--muted)">Фирменный цвет</span></div></div>
       <div class="row actions"><label class="btn" for="logoFile" id="btnLogo">Загрузить логотип</label><button class="btn hide" id="btnLogoDel">Убрать</button><input type="file" id="logoFile" class="vh" accept="image/*"></div>
       <p class="note">Название и логотип появятся в шапке, на скачанной картинке и в описании для клиента. Всё хранится только в вашем браузере.</p>
     </details>
@@ -386,13 +393,15 @@ function blurPlane(src, w, h, r){
   return out;
 }
 
+let onNewPhoto = null;
+function resetInteraction(){ S.pm = null; S.poly = null; S.stroke = null; S.tap = null; S.hover = null; }
 function setImage(source, sw, sh, opts){
   opts = opts || {};
   const k = Math.min(1, MAXSIDE / Math.max(sw, sh));
   const w = Math.max(2, Math.round(sw * k)), h = Math.max(2, Math.round(sh * k));
   for (const c of [view, orig, res, ovl]){ c.width = w; c.height = h; }
   octx.drawImage(source, 0, 0, w, h);
-  S.gen = opts.generated ? (opts.label || 'ИИ') : '';
+  S.gen = opts.generated ? (opts.label || 'ИИ') : ''; S.genSrc = opts.generated ? (opts.src || 'own') : '';
   if (!opts.generated){ photo.width = w; photo.height = h; pctx.drawImage(orig, 0, 0); S.hasPhoto = true; }
   S.hasBef = !!opts.generated && !!S.hasPhoto;
   if (S.hasBef){ bef.width = w; bef.height = h; bctx.clearRect(0, 0, w, h); coverDraw(bctx, photo, w, h); }
@@ -423,6 +432,8 @@ function setImage(source, sw, sh, opts){
     S.edge[i] = Math.min(255, Math.hypot(gx, gy) * 4);
   }
   S.zones = []; S.active = -1; S.history = []; S.compare = false;
+  resetInteraction(); S.ovlData = null; updateTouch();
+  if (!opts.generated){ S.photoId = (S.photoId || 0) + 1; if (onNewPhoto) onNewPhoto(); }
   $('#btnCmp').setAttribute('aria-pressed', 'false');
   $('#empty').classList.add('hide');
   $('#btnSave').disabled = false; $('#btnCopy').disabled = false; $('#btnShare').disabled = false;
@@ -445,12 +456,13 @@ async function loadFile(f){
   const nm = (f.name || '').toLowerCase(), ty = (f.type || '').toLowerCase();
   if (!ty.startsWith('image/') && !/\.(jpe?g|png|webp|gif|bmp|avif|heic|heif)$/.test(nm)){ toast('Нужен файл-изображение (JPG, PNG, WebP)'); return; }
   toast('Загружаю фото…');
-  let d;
+  const my = S.loadSeq = (S.loadSeq || 0) + 1; let d;
   try { d = await decodeImage(f); }
   catch (e) {
     toast(/hei[cf]/.test(nm + ty) ? 'Формат HEIC не открывается. В настройках камеры выберите «Наиболее совместимый» или отправьте снимок как JPG' : 'Не удалось открыть это фото. Попробуйте JPG или PNG');
     return;
   }
+  if (my !== S.loadSeq){ if (d.src.close) d.src.close(); return; } // пока грузилось, выбрали другое фото
   try { setImage(d.src, d.w, d.h); if (d.src.close) d.src.close(); toast('Фото загружено. Кликните по стене, чтобы выделить её'); }
   catch (e) { toast('Не получилось обработать фото: ' + (e && e.message ? e.message : 'ошибка')); }
 }
@@ -458,6 +470,7 @@ async function loadFile(f){
 function loadDemo(){
   const W = 1200, H = 800, c = document.createElement('canvas'); c.width = W; c.height = H;
   const g = c.getContext('2d');
+  const rr = (x, y, w, h, r) => { g.beginPath(); if (g.roundRect) g.roundRect(x, y, w, h, r); else { g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); } };
   const poly = (pts, fill) => { g.beginPath(); pts.forEach((p, i) => i ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1])); g.closePath(); g.fillStyle = fill; g.fill(); };
   const lg = (x0, y0, x1, y1, stops) => { const q = g.createLinearGradient(x0, y0, x1, y1); stops.forEach((s, i) => q.addColorStop(i / (stops.length - 1), s)); return q; };
   poly([[0, 0], [W, 0], [1010, 130], [190, 130]], lg(0, 0, 0, 130, ['#f7f7f5', '#ecebe8']));
@@ -478,17 +491,17 @@ function loadDemo(){
   // ковёр
   poly([[360, 640], [850, 640], [930, 760], [290, 760]], '#c9bfae');
   // диван
-  g.fillStyle = '#3f5a60'; g.beginPath(); g.roundRect(300, 400, 600, 150, 26); g.fill();
-  g.fillStyle = lg(0, 440, 0, 590, ['#5f8088', '#4d6970']); g.beginPath(); g.roundRect(290, 470, 620, 140, 30); g.fill();
-  g.fillStyle = '#6c8d95'; g.beginPath(); g.roundRect(318, 478, 280, 84, 18); g.fill(); g.beginPath(); g.roundRect(612, 478, 270, 84, 18); g.fill();
+  g.fillStyle = '#3f5a60'; rr(300, 400, 600, 150, 26); g.fill();
+  g.fillStyle = lg(0, 440, 0, 590, ['#5f8088', '#4d6970']); rr(290, 470, 620, 140, 30); g.fill();
+  g.fillStyle = '#6c8d95'; rr(318, 478, 280, 84, 18); g.fill(); rr(612, 478, 270, 84, 18); g.fill();
   g.fillStyle = '#2f464b'; g.fillRect(310, 606, 14, 26); g.fillRect(876, 606, 14, 26);
-  g.fillStyle = '#d7a35b'; g.beginPath(); g.roundRect(330, 430, 90, 82, 14); g.fill();
+  g.fillStyle = '#d7a35b'; rr(330, 430, 90, 82, 14); g.fill();
   // тени и пыль
   g.fillStyle = '#00000022'; g.fillRect(300, 612, 600, 14);
   const im = g.getImageData(0, 0, W, H), d = im.data;
   for (let i = 0; i < d.length; i += 4){ const n = (hash(i >> 2, 7, 1) - .5) * 9; d[i] += n; d[i + 1] += n; d[i + 2] += n; }
   g.putImageData(im, 0, 0);
-  setImage(c, W, H);
+  try { setImage(c, W, H); } catch (e) { toast('Не удалось собрать пример: ' + (e && e.message ? e.message : 'ошибка')); }
 }
 
 /* ====================== зоны ====================== */
@@ -515,8 +528,8 @@ function ensureStats(z){
     const o = y * w;
     for (let x = 0; x < w; x++){
       const a = m[o + x]; if (!a) continue;
-      cnt++; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
-      if (a > 127){ const p = (o + x) * 4; ls += .2126 * S.base[p] + .7152 * S.base[p + 1] + .0722 * S.base[p + 2]; lw++; }
+      if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
+      if (a > 127){ cnt++; const p = (o + x) * 4; ls += .2126 * S.base[p] + .7152 * S.base[p + 1] + .0722 * S.base[p + 2]; lw++; }
     }
   }
   return z.stats = { x0, y0, x1, y1, count: cnt, lum: lw ? ls / lw : 128 };
@@ -538,6 +551,7 @@ function addPerspPoint(p){
   S.pm.push({ x: p.x, y: p.y });
   if (S.pm.length < 4){ updateHint(); paintView(); return; }
   const z = activeZone(), pts = orderQuad(S.pm); S.pm = null;
+  if (!z) return;
   z.noPersp = false; setPersp(z, pts, false);
   renderInspector(); updateHint(); requestRender();
 }
@@ -620,7 +634,8 @@ function dab(z, cx, cy, erase){
     const f = d < R * .7 ? 255 : 255 * (R - d) / (R * .3), i = y * w + x;
     if (erase) m[i] = Math.min(m[i], 255 - f); else if (f > m[i]) m[i] = f;
   }
-  touchMask(z);
+  // во время мазка границы области расширяем на месте, а полный пересчёт делаем после отпускания
+  const st = z.stats; if (st && !erase){ st.x0 = Math.min(st.x0, x0); st.y0 = Math.min(st.y0, y0); st.x1 = Math.max(st.x1, x1); st.y1 = Math.max(st.y1, y1); st.count = Math.max(1, st.count); }
 }
 function stroke(z, a, b, erase){
   const step = Math.max(1, S.brush / 4), n = Math.ceil(Math.hypot(b.x - a.x, b.y - a.y) / step);
@@ -658,34 +673,34 @@ function buildH(z){
 const patCache = (z) => {
   const key = z.material + '|' + z.scale + '|' + z.rot + '|' + S.w + 'x' + S.h + '|' + (z.persp ? JSON.stringify(z.persp) : '');
   if (z._pk === key) return z._pat;
-  const n = S.w * S.h, lum = new Float32Array(n), mix = new Float32Array(n);
-  const f = PAT[z.material], o = { l: 1, m: 0 }, s = z.scale, fs = s * S.w / 2000;
-  const H = z.persp && z._H;
+  const n = S.w * S.h, pat = { lum: new Float32Array(n), mix: new Float32Array(n), done: new Uint8Array(n), calc: null };
+  const f = PAT[z.material], o = { l: 1, m: 0 }, s = z.scale, fs = s * S.w / 2000, H = z.persp && z._H;
   if (!H){
-    for (let y = 0, i = 0; y < S.h; y++) for (let x = 0; x < S.w; x++, i++){
+    pat.calc = (x, y, i) => {
       let u = x / fs, v = y / fs; if (z.rot){ const t = u; u = v; v = t; }
-      f(u, v, o); lum[i] = o.l; mix[i] = o.m;
-    }
+      f(u, v, o); pat.lum[i] = o.l; pat.mix[i] = o.m; pat.done[i] = 1;
+    };
   } else {
     // рисунок в перспективе: каждая точка кадра переводится в координаты плоской поверхности
     // знак знаменателя в центре области задаёт «сторону горизонта»; на другой стороне плоскость не определена
     const qc = z.persp.pts, cx = (qc[0].x + qc[2].x) / 2, cy = (qc[0].y + qc[2].y) / 2, sg = Math.sign(H[6] * cx + H[7] * cy + 1) || 1;
     const map = (x, y) => { const d = H[6] * x + H[7] * y + 1; return d * sg > 1e-6 ? [(H[0] * x + H[1] * y + H[2]) / d / s, (H[3] * x + H[4] * y + H[5]) / d / s] : null; };
-    for (let y = 0, i = 0; y < S.h; y++) for (let x = 0; x < S.w; x++, i++){
+    pat.calc = (x, y, i) => {
+      pat.done[i] = 1;
       const q = map(x + .5, y + .5);
-      if (!q){ lum[i] = 1; mix[i] = 0; continue; } // выше линии горизонта плоскость не определена
+      if (!q){ pat.lum[i] = 1; pat.mix[i] = 0; return; } // выше линии горизонта плоскость не определена
       const qx = map(x + 1.5, y + .5), qy = map(x + .5, y + 1.5);
       let fp = 1; if (qx && qy) fp = Math.max(Math.abs(qx[0] - q[0]) + Math.abs(qx[1] - q[1]), Math.abs(qy[0] - q[0]) + Math.abs(qy[1] - q[1]));
-      const n = clamp(Math.ceil(fp / 1.4), 1, 4); let sl = 0, sm = 0;
-      for (let a = 0; a < n; a++) for (let c = 0; c < n; c++){
-        const t = n === 1 ? q : map(x + (a + .5) / n, y + (c + .5) / n) || q;
+      const k = clamp(Math.ceil(fp / 1.4), 1, 4); let sl = 0, sm = 0;
+      for (let a = 0; a < k; a++) for (let c = 0; c < k; c++){
+        const t = k === 1 ? q : map(x + (a + .5) / k, y + (c + .5) / k) || q;
         let u = t[0], v = t[1]; if (z.rot){ const w2 = u; u = v; v = w2; }
         f(u, v, o); sl += o.l; sm += o.m;
       }
-      lum[i] = sl / (n * n); mix[i] = sm / (n * n);
-    }
+      pat.lum[i] = sl / (k * k); pat.mix[i] = sm / (k * k);
+    };
   }
-  z._pk = key; return z._pat = { lum, mix };
+  z._pk = key; return z._pat = pat;
 };
 
 function applyZone(z, out){
@@ -699,9 +714,11 @@ function applyZone(z, out){
   const ck = .3 * mk, tint = S.cast.map(c => 1 + (c - 1) * ck);
   // новый материал приносит свою фактуру: старый рисунок (дерево, швы) убираем, оставляя общий свет
   const flz = pat ? Math.max(fl, .8) : fl;
+  if (!pat){ z._pat = null; z._pk = null; } // рисунок не нужен — освобождаем память
   for (let y = st.y0; y <= st.y1; y++){
     for (let x = st.x0, i = y * w + st.x0; x <= st.x1; x++, i++){
       const a = m[i]; if (!a) continue;
+      if (pat && !pat.done[i]) pat.calc(x, y, i);
       const p = i * 4, r = base[p], g = base[p + 1], b = base[p + 2];
       let L = .2126 * r + .7152 * g + .0722 * b;
       if (flz) L = L * (1 - flz) + low[i] * flz; // убираем мелкие сколы и старую фактуру, оставляем общий свет
@@ -754,7 +771,8 @@ function paintView(){
   const z = activeZone();
   if (z && ensureStats(z).count){
     // контур выделения + лёгкая заливка, чтобы не искажать цвет результата
-    const id = ictx.createImageData(w, h), d = id.data, m = z.mask, st = z.stats;
+    if (!S.ovlData) S.ovlData = ictx.createImageData(w, h);
+    const id = S.ovlData, d = id.data, m = z.mask, st = z.stats; d.fill(0);
     const x0 = Math.max(1, st.x0 - 1), x1 = Math.min(w - 2, st.x1 + 1), y0 = Math.max(1, st.y0 - 1), y1 = Math.min(h - 2, st.y1 + 1);
     for (let y = y0; y <= y1; y++) for (let x = x0, i = y * w + x0; x <= x1; x++, i++){
       const on = m[i] > 127;
@@ -797,20 +815,22 @@ function renderZones(){
   S.zones.forEach((z, i) => {
     const el = document.createElement('div');
     el.className = 'zone' + (i === S.active ? ' on' : '');
+    el.setAttribute('role', 'button'); el.tabIndex = 0; el.setAttribute('aria-pressed', String(i === S.active));
+    el.addEventListener('keydown', ev => { if ((ev.key === 'Enter' || ev.key === ' ') && ev.target === el){ ev.preventDefault(); el.click(); } });
     const empty = !hasMask(z);
     el.innerHTML = '<span class="dot" style="background:' + z.color + '"></span>' +
       '<span class="nm">' + esc(z.name) + '<small>' + (empty ? 'выделите область на фото' : (MATERIALS.find(m => m.id === z.material).name)) + '</small></span>' +
-      '<button class="ico" data-a="eye" title="Показать / скрыть">' + (z.visible ? '👁' : '—') + '</button>' +
-      '<button class="ico" data-a="del" title="Удалить зону">✕</button>';
+      '<button class="ico" data-a="eye" title="Показать / скрыть" aria-label="Показать или скрыть область">' + (z.visible ? '👁' : '—') + '</button>' +
+      '<button class="ico" data-a="del" title="Удалить область" aria-label="Удалить область">✕</button>';
     el.addEventListener('click', e => {
       const a = e.target.closest('[data-a]') && e.target.closest('[data-a]').dataset.a;
-      if (a === 'eye'){ z.visible = !z.visible; renderZones(); requestRender(); return; }
+      if (a === 'eye'){ z.visible = !z.visible; renderZones(); updateSummary(); requestRender(); return; }
       if (a === 'del'){
-        S.zones.splice(i, 1); S.history = S.history.filter(h => h.id !== z.id);
+        S.zones.splice(i, 1); resetInteraction(); S.history = S.history.filter(h => h.id !== z.id);
         S.active = Math.min(S.active, S.zones.length - 1); if (i < S.active) S.active--;
         renderZones(); renderInspector(); requestRender(); updateHint(); updateSummary(); return;
       }
-      S.active = i; renderZones(); renderInspector(); requestRender(); updateHint();
+      S.active = i; resetInteraction(); renderZones(); renderInspector(); requestRender(); updateHint();
     });
     box.appendChild(el);
   });
@@ -854,7 +874,7 @@ function updateSummary(){
     return '• ' + z.name + ': ' + (z.material === 'none' ? 'покраска' : mt.name.toLowerCase()) + ', цвет ' + (nm ? '«' + nm + '» ' : '') + z.color.toUpperCase();
   });
   const head = (B.name || B.contact) ? [B.name, B.contact].filter(Boolean).join(' · ') + '\n\n' : '';
-  const gen = S.gen ? 'Идея в стиле «' + S.gen + '» создана нейросетью. Она показывает общее настроение, точные материалы и размеры согласуются отдельно.' : '';
+  const gen = S.gen ? (S.genSrc === 'server' ? 'Идея в стиле «' + S.gen + '» создана нейросетью. ' : 'Визуальная идея в стиле «' + S.gen + '». ') + 'Она показывает общее настроение, точные материалы и размеры согласуются отдельно.' : '';
   $('#summary').value = rows.length
     ? head + (gen ? gen + '\n\n' : '') + 'Предлагаемые изменения:\n' + rows.join('\n') + '\n\nВизуализация ориентировочная, итоговый вид зависит от освещения и фактуры материалов.'
     : (gen ? head + gen : 'Пока нет изменений.');
@@ -868,9 +888,15 @@ function pos(e){
 
 view.addEventListener('pointerdown', e => {
   if (!S.base) return;
-  view.setPointerCapture(e.pointerId);
+  if (!e.isPrimary || (e.pointerType === 'mouse' && e.button !== 0)) return; // второй палец и правая кнопка мыши не рисуют
   const p = pos(e);
-  if (S.compare){ S.stroke = { cmp: true }; S.split = clamp(p.x / S.w, 0, 1); paintView(); return; }
+  if (S.compare){ view.setPointerCapture(e.pointerId); S.stroke = { cmp: true, pid: e.pointerId }; S.split = clamp(p.x / S.w, 0, 1); paintView(); return; }
+  // пальцем: не реагируем сразу, чтобы фото можно было прокручивать; касание засчитывается при отпускании без сдвига
+  if (e.pointerType === 'touch' && S.tool !== 'brush' && S.tool !== 'erase'){ S.tap = { x: e.clientX, y: e.clientY, p, pid: e.pointerId }; return; }
+  view.setPointerCapture(e.pointerId); press(p);
+  if (S.stroke && S.stroke.pid === undefined) S.stroke.pid = e.pointerId;
+});
+function press(p){
   if (S.pm){ addPerspPoint(p); return; }
   const fresh = S.tool === 'wand' && !S.sub && !S.addMode;
   if (fresh){ // нажатие на уже выделенную область выбирает её, а не создаёт новую
@@ -896,18 +922,26 @@ view.addEventListener('pointerdown', e => {
     const er = S.tool === 'erase';
     S.stroke = { last: p, erase: er }; dab(z, p.x, p.y, er); requestRender();
   }
-});
+}
 view.addEventListener('pointermove', e => {
   if (!S.base) return;
   const p = pos(e); S.hover = p;
-  if (S.stroke && S.stroke.cmp){ S.split = clamp(p.x / S.w, 0, 1); paintView(); return; }
-  if (S.stroke && S.stroke.last){ stroke(activeZone(), S.stroke.last, p, S.stroke.erase); S.stroke.last = p; requestRender(); return; }
-  if (S.tool !== 'wand' && !S.compare) paintView();
+  if (S.stroke && S.stroke.cmp && e.pointerId === S.stroke.pid){ S.split = clamp(p.x / S.w, 0, 1); requestPaint(); return; }
+  if (S.stroke && S.stroke.last && e.pointerId === S.stroke.pid){ stroke(activeZone(), S.stroke.last, p, S.stroke.erase); S.stroke.last = p; requestRender(); return; }
+  if (S.tool !== 'wand' && !S.compare) requestPaint();
 });
-view.addEventListener('pointerleave', () => { S.hover = null; if (!S.stroke) paintView(); });
-const endStroke = () => { if (S.stroke && S.stroke.last) maskChanged(activeZone()); S.stroke = null; };
-view.addEventListener('pointerup', endStroke);
-view.addEventListener('pointercancel', endStroke);
+view.addEventListener('pointerleave', () => { S.hover = null; if (!S.stroke) requestPaint(); });
+const endStroke = () => { if (S.stroke && S.stroke.last){ const z = activeZone(); if (z){ touchMask(z); maskChanged(z); } } S.stroke = null; };
+view.addEventListener('pointerup', e => {
+  if (S.tap){ if (e.pointerId !== S.tap.pid) return; const t = S.tap; S.tap = null; if (Math.hypot(e.clientX - t.x, e.clientY - t.y) < 10) press(t.p); return; }
+  if (S.stroke && S.stroke.pid !== undefined && e.pointerId !== S.stroke.pid) return;
+  endStroke();
+});
+view.addEventListener('pointercancel', e => {
+  if (S.tap && e.pointerId === S.tap.pid) S.tap = null;
+  if (S.stroke && S.stroke.pid !== undefined && e.pointerId !== S.stroke.pid) return;
+  endStroke();
+});
 
 function zoneAt(p){
   const i = Math.floor(p.y) * S.w + Math.floor(p.x);
@@ -940,10 +974,14 @@ function autoPersp(z){
 }
 function retune(d){
   const z = activeZone(); if (!z || !z.seed || !z.simple) return;
+  pushHistory(z);
   z.tol = clamp((z.tol || S.tol) + d, 6, 90);
   const keep = S.tol; S.tol = z.tol; z.mask.fill(0); wand(z, z.seed.x, z.seed.y, false); S.tol = keep;
   touchMask(z); maskChanged(z);
 }
+let pRaf = 0;
+function requestPaint(){ if (!pRaf) pRaf = requestAnimationFrame(() => { pRaf = 0; paintView(); }); }
+function updateTouch(){ view.style.touchAction = ((S.tool === 'brush' || S.tool === 'erase') && !S.compare) ? 'none' : 'pan-y'; }
 function maskChanged(z){ if (z) autoPersp(z); renderZones(); renderInspector(); updateHint(); updateSummary(); requestRender(); }
 
 document.querySelectorAll('[data-tool]').forEach(b => b.addEventListener('click', () => {
@@ -952,23 +990,25 @@ document.querySelectorAll('[data-tool]').forEach(b => b.addEventListener('click'
   const bt = S.tool === 'brush' || S.tool === 'erase'; S.poly = null; S.pm = null;
   $('#tolBox').classList.toggle('hide', S.tool !== 'wand'); $('#subBox').classList.toggle('hide', !(S.tool === 'wand' || S.tool === 'poly')); $('#addBox').classList.toggle('hide', S.tool !== 'wand');
   $('#brushBox').classList.toggle('hide', !bt); $('#btnClose').classList.toggle('hide', S.tool !== 'poly');
-  view.style.cursor = bt ? 'none' : 'crosshair';
+  view.style.cursor = bt ? 'none' : 'crosshair'; updateTouch();
   updateHint(); paintView();
 }));
 $('#btnCmp').addEventListener('click', () => {
   if (!S.base) return;
   S.compare = !S.compare; $('#btnCmp').setAttribute('aria-pressed', String(S.compare));
-  view.style.cursor = S.compare ? 'ew-resize' : ((S.tool === 'brush' || S.tool === 'erase') ? 'none' : 'crosshair');
-  updateHint(); paintView();
+  view.style.cursor = S.compare ? 'ew-resize' : ((S.tool === 'brush' || S.tool === 'erase') ? 'none' : 'crosshair'); updateTouch();
+  updateHint(); updateTouch(); paintView();
 });
 $('#btnUndo').addEventListener('click', undo);
 $('#btnClose').addEventListener('click', closePoly);
 document.addEventListener('keydown', e => {
-  if (/INPUT|TEXTAREA/.test(document.activeElement.tagName)) return;
+  if (isTyping()) return;
   if (e.key === 'Enter' && S.poly) closePoly();
   if (e.key === 'Escape' && (S.poly || S.pm)){ S.poly = null; S.pm = null; updateHint(); paintView(); }
 });
-document.addEventListener('keydown', e => { if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && !/INPUT|TEXTAREA/.test(document.activeElement.tagName)){ e.preventDefault(); undo(); } });
+// печатаем текст — горячие клавиши не трогаем; ползунки и флажки печатью не считаются
+const isTyping = () => { const a = document.activeElement; return !!a && (a.tagName === 'TEXTAREA' || (a.tagName === 'INPUT' && !['range', 'checkbox', 'radio', 'button', 'color', 'file'].includes(a.type))); };
+document.addEventListener('keydown', e => { if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && !isTyping()){ e.preventDefault(); undo(); } });
 $('#tol').addEventListener('input', e => S.tol = +e.target.value);
 $('#brush').addEventListener('input', e => { S.brush = +e.target.value; paintView(); });
 $('#sub').addEventListener('change', e => S.sub = e.target.checked);
@@ -1030,7 +1070,7 @@ $('#color').addEventListener('input', e => {
 });
 $('#color').addEventListener('change', () => { renderZones(); updateSummary(); });
 $('#zname').addEventListener('input', e => { const z = activeZone(); if (z){ z.name = e.target.value || 'Зона'; renderZones(); updateSummary(); } });
-$('#strength').addEventListener('input', e => { const z = activeZone(); if (!z) return; z.strength = +e.target.value; $('#strengthV').textContent = z.strength + '%'; requestRender(); });
+$('#strength').addEventListener('input', e => { const z = activeZone(); if (!z) return; z.strength = +e.target.value; $('#strengthV').textContent = z.strength + '%'; updateSummary(); requestRender(); });
 let scT;
 $('#match').addEventListener('input', e => { const z = activeZone(); if (!z) return; z.match = +e.target.value; $('#matchV').textContent = z.match + '%'; requestRender(); });
 $('#flat').addEventListener('input', e => { const z = activeZone(); if (!z) return; z.flat = +e.target.value; $('#flatV').textContent = z.flat + '%'; requestRender(); });
@@ -1054,8 +1094,8 @@ $('#btnClear').addEventListener('click', () => {
 });
 
 /* ====================== фирменный стиль ====================== */
-const B = { name: '', contact: '', color: '#c4562f', logo: '', img: null };
-function saveBrand(){ try { localStorage.setItem('brand-v1', JSON.stringify({ name: B.name, contact: B.contact, color: B.color, logo: B.logo })); } catch (e) {} }
+const B = { name: '', contact: '', color: '#b94e28', logo: '', img: null };
+function saveBrand(){ try { localStorage.setItem('brand-v1', JSON.stringify({ name: B.name, contact: B.contact, color: B.color, logo: B.logo })); } catch (e) { if (!S.brandWarned){ S.brandWarned = true; toast('Данные компании не сохранятся после закрытия страницы: хранилище браузера недоступно'); } } }
 function applyBrand(){
   const root = document.documentElement.style, [r, g, b] = hex2rgb(B.color);
   root.setProperty('--accent', B.color);
@@ -1104,6 +1144,12 @@ function tagOn(g, t, x, y, al, u){
   g.fillStyle = '#000a'; g.fillRect(al === 'left' ? x : x - tw, y, tw, u * 26);
   g.fillStyle = '#fff'; g.fillText(t, al === 'left' ? x + u * 10 : x - u * 10, y + u * 13.5);
 }
+function fitText(g, text, size, weight, avail){
+  let sz = size; g.font = weight + ' ' + sz + 'px system-ui,sans-serif';
+  while (sz > size * .55 && g.measureText(text).width > avail){ sz -= 1; g.font = weight + ' ' + sz + 'px system-ui,sans-serif'; }
+  let t = text; while (t.length > 1 && g.measureText(t).width > avail){ t = t.slice(0, -1); text = t.trimEnd() + '…'; t = text.slice(0, -1); }
+  return text;
+}
 function buildExport(){
   const pair = $('#optPair').checked, brand = $('#optBrand').checked && (B.name || B.contact || B.img);
   const { w, h } = S, gap = pair ? 6 : 0, W = pair ? w * 2 + gap : w, u = W / 1000;
@@ -1125,10 +1171,11 @@ function buildExport(){
     }
     g.textAlign = 'left'; g.textBaseline = 'middle'; g.fillStyle = '#fff';
     if (B.name && B.contact){
-      g.font = '700 ' + fh * .3 + 'px system-ui,sans-serif'; g.fillText(B.name, x, h + fh * .42);
-      g.font = '400 ' + fh * .22 + 'px system-ui,sans-serif'; g.fillStyle = '#c9ced6'; g.fillText(B.contact, x, h + fh * .72);
+      const avail = W - x - pad;
+      g.fillText(fitText(g, B.name, fh * .3, '700', avail), x, h + fh * .42);
+      g.fillStyle = '#c9ced6'; g.fillText(fitText(g, B.contact, fh * .22, '400', avail), x, h + fh * .72);
     } else {
-      g.font = '700 ' + fh * .3 + 'px system-ui,sans-serif'; g.fillText(B.name || B.contact, x, h + fh * .55);
+      g.fillText(fitText(g, B.name || B.contact, fh * .3, '700', W - x - pad), x, h + fh * .55);
     }
   }
   return c;
@@ -1141,6 +1188,7 @@ if (canShareFiles) $('#btnShare').classList.remove('hide');
 $('#btnSave').addEventListener('click', () => {
   if (!S.base) return;
   buildExport().toBlob(b => {
+    if (!b){ toast('Не удалось собрать картинку. Попробуйте фото поменьше'); return; }
     const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'vizualizaciya-remonta.png';
     document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
   }, 'image/png');
@@ -1148,6 +1196,7 @@ $('#btnSave').addEventListener('click', () => {
 $('#btnShare').addEventListener('click', () => {
   if (!S.base) return;
   buildExport().toBlob(async b => {
+    if (!b){ toast('Не удалось собрать картинку. Попробуйте фото поменьше'); return; }
     try { await navigator.share({ files: [new File([b], 'vizualizaciya-remonta.png', { type: 'image/png' })], text: $('#summary').value }); }
     catch (e) { if (e && e.name !== 'AbortError') toast('Не удалось открыть «Поделиться». Скачайте PNG'); }
   }, 'image/png');
@@ -1161,12 +1210,21 @@ $('#btnCopy').addEventListener('click', async () => {
 /* ====================== генерация (ИИ) ====================== */
 // Адрес сервера можно задать здесь, тогда поле в настройках заполнится само.
 const GEN_DEFAULT_URL = '';
-const G = { url: GEN_DEFAULT_URL, token: '', busy: false, variants: [] };
+const G = { url: GEN_DEFAULT_URL, token: '', busy: false, variants: [], srcs: [], seq: 0, consent: false };
 try { const sv = JSON.parse(localStorage.getItem('gen-v1') || 'null'); if (sv){ G.url = String(sv.url || G.url); G.token = String(sv.token || ''); } } catch (e) {}
 const saveGen = () => { try { localStorage.setItem('gen-v1', JSON.stringify({ url: G.url, token: G.token })); } catch (e) {} };
 $('#gUrl').value = G.url; $('#gToken').value = G.token;
 $('#gUrl').addEventListener('input', e => { G.url = e.target.value.trim(); saveGen(); });
 $('#gToken').addEventListener('input', e => { G.token = e.target.value.trim(); saveGen(); });
+onNewPhoto = () => { // новое фото клиента: прошлые варианты к нему не относятся
+  G.variants = []; G.srcs = []; G.seq++; G.consent = false;
+  $('#gGal').innerHTML = ''; $('#gGal').classList.add('hide'); $('#gBackRow').classList.add('hide');
+  $('#gGo').textContent = 'Нарисовать 2 варианта'; gStatus('', false);
+};
+function confirmLose(){ // свой «подтвердить» на странице: confirm() в закрытой ссылке не работает
+  if (Date.now() < (S.loseUntil || 0)){ S.loseUntil = 0; return true; }
+  S.loseUntil = Date.now() + 5000; toast('Цвета и материалы на фото сбросятся. Нажмите ещё раз, чтобы продолжить'); return false;
+}
 function gStatus(t, err){ const el = $('#gStatus'); el.textContent = t; el.classList.toggle('err', !!err); }
 
 function showVariants(list){
@@ -1179,10 +1237,11 @@ function showVariants(list){
     box.appendChild(b);
   });
 }
-function useVariant(i){
+function useVariant(i, force){
+  if (!force && S.zones.some(hasMask) && !confirmLose()) return;
   const im = new Image(), label = $('#gStyle').selectedOptions[0].textContent;
   im.onload = () => {
-    setImage(im, im.naturalWidth, im.naturalHeight, { generated: true, label });
+    setImage(im, im.naturalWidth, im.naturalHeight, { generated: true, label, src: G.srcs[i] || 'own' });
     document.querySelectorAll('#gGal button').forEach((b, k) => b.setAttribute('aria-pressed', String(k === i)));
     $('#gBackRow').classList.remove('hide');
     updateSummary(); toast('Вариант в редакторе. Можно менять цвета и материалы, а «До / После» покажет исходное фото');
@@ -1192,6 +1251,7 @@ function useVariant(i){
 }
 $('#gBack').addEventListener('click', () => {
   if (!S.hasPhoto) return;
+  if (S.zones.some(hasMask) && !confirmLose()) return;
   setImage(photo, photo.width, photo.height);
   document.querySelectorAll('#gGal button').forEach(b => b.setAttribute('aria-pressed', 'false'));
   $('#gBackRow').classList.add('hide'); updateSummary();
@@ -1200,6 +1260,12 @@ async function generate(){
   if (!S.base){ toast('Сначала загрузите фото'); return; }
   if (!G.url){ $('#gSettings').open = true; $('#gUrl').focus(); gStatus('Укажите адрес сервера генерации в настройках ниже.', true); return; }
   if (G.busy) return;
+  if (!G.consent){ // фото клиента уходит на сервер и в нейросеть: спрашиваем явно
+    G.consent = true; $('#gGo').textContent = 'Подтверждаю: отправить фото на сервер';
+    gStatus('Фото уйдёт на ваш сервер и в нейросеть. Если клиент согласен, нажмите кнопку ещё раз.', false); return;
+  }
+  $('#gGo').textContent = 'Нарисовать 2 варианта';
+  const seq = ++G.seq, pid = S.photoId;
   const k = Math.min(1, 1024 / Math.max(photo.width, photo.height)), c = document.createElement('canvas');
   c.width = Math.round(photo.width * k); c.height = Math.round(photo.height * k);
   c.getContext('2d').drawImage(photo, 0, 0, c.width, c.height);
@@ -1212,8 +1278,9 @@ async function generate(){
       headers: Object.assign({ 'content-type': 'application/json' }, G.token ? { 'x-app-token': G.token } : {})
     });
     let d = null; try { d = await r.json(); } catch (e) {}
+    if (seq !== G.seq || pid !== S.photoId) return; // пока рисовалось, фото сменили
     if (!r.ok || !d || !d.images || !d.images.length) throw new Error((d && d.error) || 'Сервер ответил ошибкой (' + r.status + ')');
-    showVariants(d.images); gStatus('Готово. Нажмите на вариант, чтобы открыть его в редакторе.', false);
+    G.srcs = d.images.map(() => 'server'); showVariants(d.images); gStatus('Готово. Нажмите на вариант, чтобы открыть его в редакторе.', false);
   } catch (e) {
     gStatus(e.name === 'AbortError' ? 'Слишком долго. Повторите попытку.' : e instanceof TypeError ? 'Не удалось связаться с сервером. Проверьте адрес и интернет.' : e.message, true);
   } finally { clearTimeout(to); G.busy = false; $('#gGo').disabled = false; }
@@ -1242,8 +1309,16 @@ $('#gOwn').addEventListener('change', async e => {
   const k = Math.min(1, MAXSIDE / Math.max(d.w, d.h)), c = document.createElement('canvas');
   c.width = Math.round(d.w * k); c.height = Math.round(d.h * k); c.getContext('2d').drawImage(d.src, 0, 0, c.width, c.height);
   if (d.src.close) d.src.close();
-  G.variants.push(c.toDataURL('image/jpeg', .92)); showVariants(G.variants); useVariant(G.variants.length - 1);
+  G.variants.push(c.toDataURL('image/jpeg', .92)); G.srcs.push('own');
+  if (G.variants.length > 6){ G.variants.shift(); G.srcs.shift(); }
+  showVariants(G.variants);
+  if (S.zones.some(hasMask)) toast('Вариант добавлен в список. Нажмите на него, чтобы открыть (цвета и материалы на фото сбросятся)');
+  else useVariant(G.variants.length - 1, true);
 });
+
+/* кнопки-метки выбора файла доступны с клавиатуры */
+document.querySelectorAll('label.btn[for]').forEach(l => { l.tabIndex = 0; l.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); const f = document.getElementById(l.getAttribute('for')); if (f) f.click(); } }); });
+document.querySelectorAll('.vh').forEach(i => { i.tabIndex = -1; });
 
 /* старт */
 $('#inspector').classList.add('hide');
