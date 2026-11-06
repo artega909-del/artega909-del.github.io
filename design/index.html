@@ -1,0 +1,743 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Визуализатор ремонта</title>
+<meta name="description" content="Загрузите фото комнаты и примерьте другой цвет стен, пол, мебель и материалы.">
+<style>
+:root{
+  --bg:#f4f2ee; --panel:#fff; --ink:#1f2328; --muted:#6b7280; --line:#e3dfd7;
+  --accent:#c4562f; --accent-ink:#fff; --sel:#e0357a; --stage:#22252a;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;font:15px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--ink)}
+button{font:inherit;color:inherit;cursor:pointer}
+h1{font-size:20px;margin:0}
+h2{font-size:13px;margin:0 0 10px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600}
+.top{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:14px 16px;max-width:1500px;margin:0 auto}
+.top p{margin:2px 0 0;color:var(--muted);font-size:13px}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+.btn{border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:9px 14px;min-height:40px}
+.btn:hover{border-color:#cfc9bd}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
+.btn.primary:hover{filter:brightness(1.07)}
+.btn[disabled]{opacity:.45;cursor:default}
+.app{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:16px;padding:0 16px 24px;max-width:1500px;margin:0 auto}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
+.toolbar{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+.tool{border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:8px 12px;min-height:40px}
+.tool[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
+.sep{width:1px;align-self:stretch;background:var(--line);margin:0 4px}
+.inl{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
+.inl input[type=range]{width:110px}
+.stage{position:relative;background:var(--stage);border-radius:14px;display:grid;place-items:center;min-height:320px;overflow:hidden}
+#view{display:block;max-width:100%;max-height:72vh;width:auto;height:auto;touch-action:none;cursor:crosshair}
+.empty{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:24px;color:#d6d8dc}
+.empty.drag{outline:2px dashed #fff8;outline-offset:-12px}
+.empty h2{color:#fff;font-size:18px;text-transform:none;letter-spacing:0;margin-bottom:8px}
+.empty p{margin:0 0 14px;color:#aeb2ba;max-width:420px}
+.steps{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-top:16px;font-size:12px;color:#aeb2ba}
+.steps span{border:1px solid #fff3;border-radius:99px;padding:3px 10px}
+.hint{margin:10px 2px 0;color:var(--muted);font-size:13px;min-height:1.4em}
+.zone{display:flex;align-items:center;gap:8px;padding:8px;border:1px solid transparent;border-radius:10px;cursor:pointer}
+.zone:hover{background:#faf8f5}
+.zone.on{border-color:var(--accent);background:#fdf6f3}
+.dot{width:22px;height:22px;border-radius:6px;border:1px solid #0002;flex:none}
+.zone .nm{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.zone small{display:block;color:var(--muted);font-size:12px}
+.ico{border:0;background:none;padding:6px;border-radius:8px;min-width:32px;min-height:32px;color:var(--muted)}
+.ico:hover{background:#0000000d;color:var(--ink)}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.chip{border:1px dashed #c9c3b6;background:none;border-radius:99px;padding:5px 11px;font-size:13px;color:var(--muted)}
+.chip:hover{border-color:var(--accent);color:var(--accent)}
+.row{margin-top:12px}
+.row>label,.lbl{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);margin-bottom:6px}
+.row input[type=text]{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;font:inherit}
+.row input[type=range]{width:100%}
+.colorline{display:flex;gap:10px;align-items:center}
+input[type=color]{width:48px;height:40px;padding:2px;border:1px solid var(--line);border-radius:8px;background:#fff;cursor:pointer}
+.hex{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;color:var(--muted)}
+.sw{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-top:8px}
+.sw button{aspect-ratio:1;border-radius:8px;border:1px solid #0002;padding:0}
+.sw button[aria-pressed="true"]{outline:2px solid var(--ink);outline-offset:1px}
+.mats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.mat{border:1px solid var(--line);background:#fff;border-radius:10px;padding:4px;font-size:11px;text-align:center}
+.mat canvas{width:100%;height:auto;border-radius:6px;display:block;margin-bottom:3px}
+.mat[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.chk{display:flex;gap:8px;align-items:center;font-size:14px}
+textarea{width:100%;min-height:110px;margin-top:10px;border:1px solid var(--line);border-radius:8px;padding:8px;font:13px/1.4 inherit;resize:vertical}
+details summary{cursor:pointer;color:var(--muted);font-size:13px;margin-top:10px}
+#toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(20px);background:#1f2328;color:#fff;padding:10px 16px;border-radius:10px;opacity:0;transition:.25s;pointer-events:none;max-width:90vw;z-index:9}
+#toast.on{opacity:1;transform:translateX(-50%)}
+.hide{display:none!important}
+@media (max-width:900px){
+  .app{grid-template-columns:1fr}
+  #view{max-height:60vh}
+}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div>
+    <h1>Визуализатор ремонта</h1>
+    <p>Загрузите фото, выделите стены, пол или мебель и примерьте цвет и материал</p>
+  </div>
+  <div class="actions">
+    <button class="btn primary" id="btnOpen">Загрузить фото</button>
+    <button class="btn" id="btnDemo">Пример комнаты</button>
+    <input type="file" id="file" accept="image/*" hidden>
+  </div>
+</header>
+
+<main class="app">
+  <section>
+    <div class="toolbar" id="toolbar">
+      <button class="tool" data-tool="wand" aria-pressed="true" title="Клик по стене выделяет всю область похожего цвета">Умная заливка</button>
+      <button class="tool" data-tool="brush" aria-pressed="false" title="Дорисовать выделение">Кисть</button>
+      <button class="tool" data-tool="erase" aria-pressed="false" title="Стереть лишнее из выделения">Ластик</button>
+      <button class="tool" id="btnUndo" title="Ctrl+Z">Отменить</button>
+      <span class="sep"></span>
+      <label class="inl" id="tolBox">Чувствительность <input type="range" id="tol" min="6" max="90" value="24"></label>
+      <label class="inl hide" id="brushBox">Размер <input type="range" id="brush" min="6" max="120" value="36"></label>
+      <label class="inl" id="subBox"><input type="checkbox" id="sub"> вычитать</label>
+      <span class="sep"></span>
+      <button class="tool" id="btnCmp" aria-pressed="false" title="Потяните линию, чтобы сравнить с исходным фото">До / После</button>
+    </div>
+    <div class="stage" id="stage">
+      <canvas id="view" width="4" height="3"></canvas>
+      <div class="empty" id="empty">
+        <div>
+          <h2>Загрузите фото комнаты</h2>
+          <p>Перетащите снимок сюда или выберите файл. Фото остаётся в вашем браузере и никуда не отправляется.</p>
+          <div class="actions" style="justify-content:center">
+            <button class="btn primary" id="btnOpen2">Выбрать фото</button>
+            <button class="btn" id="btnDemo2">Попробовать на примере</button>
+          </div>
+          <div class="steps"><span>1 · Фото</span><span>2 · Выделить зону</span><span>3 · Цвет и материал</span><span>4 · Скачать</span></div>
+        </div>
+      </div>
+    </div>
+    <p class="hint" id="hint"></p>
+  </section>
+
+  <aside>
+    <div class="card">
+      <h2>Зоны</h2>
+      <div id="zoneList"></div>
+      <div class="chips" id="addZone"></div>
+    </div>
+
+    <div class="card" id="inspector">
+      <h2>Что меняем</h2>
+      <div class="row" style="margin-top:0"><label for="zname">Название зоны</label><input type="text" id="zname" maxlength="30"></div>
+      <div class="row">
+        <div class="lbl"><span>Цвет</span><span class="hex" id="hex"></span></div>
+        <div class="colorline"><input type="color" id="color"><span style="font-size:13px;color:var(--muted)" id="cname"></span></div>
+        <div class="sw" id="swatches"></div>
+      </div>
+      <div class="row"><div class="lbl"><span>Материал</span></div><div class="mats" id="mats"></div></div>
+      <div class="row"><label for="strength"><span>Интенсивность</span><span id="strengthV"></span></label><input type="range" id="strength" min="0" max="100"></div>
+      <div class="row" id="scaleRow"><label for="scale"><span>Размер рисунка</span><span id="scaleV"></span></label><input type="range" id="scale" min="0.4" max="3" step="0.1"></div>
+      <div class="row chk" id="rotRow"><input type="checkbox" id="rot"><label for="rot">Повернуть рисунок на 90°</label></div>
+      <div class="row"><button class="btn" id="btnClear" style="width:100%">Очистить выделение зоны</button></div>
+    </div>
+
+    <div class="card">
+      <h2>Результат</h2>
+      <div class="actions">
+        <button class="btn primary" id="btnSave" disabled>Скачать PNG</button>
+        <button class="btn" id="btnCopy" disabled>Копировать описание</button>
+      </div>
+      <details><summary>Описание изменений для клиента</summary><textarea id="summary" readonly></textarea></details>
+    </div>
+  </aside>
+</main>
+<div id="toast" role="status"></div>
+
+<script>
+'use strict';
+/* ====================== утилиты ====================== */
+const $ = s => document.querySelector(s);
+const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+const hex2rgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+const MAXSIDE = 1280;
+
+let toastT;
+function toast(msg){
+  const t = $('#toast'); t.textContent = msg; t.classList.add('on');
+  clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('on'), 2600);
+}
+
+/* ====================== палитра и материалы ====================== */
+const PALETTE = [
+  ['Тёплый белый', '#EFEBE3'], ['Слоновая кость', '#E8DFC8'], ['Песочный', '#D8C3A0'],
+  ['Греж', '#B8B2A7'], ['Графит', '#3A3D42'], ['Пыльная роза', '#D8A9A4'],
+  ['Шалфей', '#9CAF9A'], ['Изумруд', '#2F6B5A'], ['Тёмно-синий', '#2F3E55'],
+  ['Терракота', '#C26B4A'], ['Горчичный', '#D2A33B'], ['Бордо', '#6D2E3A']
+];
+const MATERIALS = [
+  { id: 'none',     name: 'Краска',     color: null },
+  { id: 'plaster',  name: 'Штукатурка', color: '#D9D2C4' },
+  { id: 'concrete', name: 'Бетон',      color: '#9A9A98' },
+  { id: 'wood',     name: 'Дерево',     color: '#A9743F' },
+  { id: 'marble',   name: 'Мрамор',     color: '#E9E7E3' },
+  { id: 'brick',    name: 'Кирпич',     color: '#A8553A' },
+  { id: 'tile',     name: 'Плитка',     color: '#D7D9D9' },
+  { id: 'fabric',   name: 'Ткань',      color: '#6F8A8C' }
+];
+const ZONE_PRESETS = {
+  'Стены':   { color: '#9CAF9A', material: 'none' },
+  'Пол':     { color: '#A9743F', material: 'wood' },
+  'Потолок': { color: '#F4F2EE', material: 'none' },
+  'Мебель':  { color: '#2F6B5A', material: 'fabric' },
+  'Другое':  { color: '#C26B4A', material: 'none' }
+};
+const MIXC = [216, 212, 204]; // цвет шва/раствора
+
+/* ====================== процедурные текстуры ====================== */
+function hash(x, y, s){
+  let h = (Math.imul(x | 0, 374761393) + Math.imul(y | 0, 668265263) + Math.imul(s | 0, 1442695041)) | 0;
+  h = Math.imul(h ^ (h >>> 13), 1274126177);
+  return ((h ^ (h >>> 16)) >>> 0) / 4294967295;
+}
+function vnoise(x, y, s){
+  const xi = Math.floor(x), yi = Math.floor(y), xf = x - xi, yf = y - yi;
+  const u = xf * xf * (3 - 2 * xf), v = yf * yf * (3 - 2 * yf);
+  const a = hash(xi, yi, s), b = hash(xi + 1, yi, s), c = hash(xi, yi + 1, s), d = hash(xi + 1, yi + 1, s);
+  return a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v;
+}
+function fbm(x, y, s, o){
+  let v = 0, a = .5, f = 1;
+  for (let i = 0; i < o; i++){ v += a * vnoise(x * f, y * f, s + i); f *= 2; a *= .5; }
+  return v;
+}
+/* каждая функция пишет в o.l — множитель яркости (≈1) и o.m — доля «шва» (0..1) */
+const PAT = {
+  plaster(u, v, o){ o.l = 1 + (fbm(u / 40, v / 40, 1, 4) - .47) * .22 + (hash(u, v, 9) - .5) * .08; o.m = 0; },
+  concrete(u, v, o){
+    let l = 1 + (fbm(u / 70, v / 70, 2, 5) - .47) * .5 + (hash(u, v, 3) - .5) * .12;
+    if (hash(u / 2, v / 2, 4) > .985) l -= .25;
+    o.l = l; o.m = 0;
+  },
+  wood(u, v, o){
+    const PH = 60, PL = 420, row = Math.floor(v / PH), off = hash(row, 0, 5) * PL;
+    const uu = u + off, col = Math.floor(uu / PL), id = hash(row, col, 6);
+    const grain = fbm(uu / 260, v / 3.2, 8, 3);
+    let l = (.8 + .35 * id) * (.78 + .5 * grain);
+    if (v - row * PH < 1.6 || uu - col * PL < 1.6) l *= .4;
+    o.l = l; o.m = 0;
+  },
+  marble(u, v, o){
+    const t = fbm(u / 220, v / 220, 10, 5);
+    const v1 = Math.pow(1 - Math.abs(Math.sin((u * .0045 + v * .0032 + t * 3.4) * Math.PI)), 14);
+    const t2 = fbm(u / 90, v / 90, 11, 3);
+    const v2 = Math.pow(1 - Math.abs(Math.sin((-u * .003 + v * .006 + t2 * 2.2) * Math.PI)), 22) * .6;
+    o.l = 1.06 - .55 * Math.max(v1, v2) + (fbm(u / 30, v / 30, 12, 3) - .47) * .12; o.m = 0;
+  },
+  brick(u, v, o){
+    const BH = 26, BW = 64, row = Math.floor(v / BH), off = (row & 1) * BW / 2;
+    const uu = u + off, col = Math.floor(uu / BW), ux = uu - col * BW, uy = v - row * BH;
+    if (ux < 3 || uy < 3){ o.l = .96 + (hash(u, v, 14) - .5) * .06; o.m = .85; return; }
+    o.l = .78 + .4 * hash(row, col, 11) + (fbm(u / 6, v / 6, 12, 2) - .4) * .2; o.m = 0;
+  },
+  tile(u, v, o){
+    const T = 90, i = Math.floor(u / T), j = Math.floor(v / T), ux = u - i * T, uy = v - j * T;
+    if (ux < 3 || uy < 3){ o.l = .94; o.m = .7; return; }
+    o.l = .95 + .1 * hash(i, j, 13) + (fbm(u / 60, v / 60, 15, 2) - .47) * .08; o.m = 0;
+  },
+  fabric(u, v, o){ o.l = 1 + .09 * Math.sin(u * 1.8) + .09 * Math.sin(v * 1.8) + (hash(u, v, 16) - .5) * .1; o.m = 0; }
+};
+
+/* ====================== состояние ====================== */
+const view = $('#view'), vctx = view.getContext('2d');
+const orig = document.createElement('canvas'), octx = orig.getContext('2d');
+const res = document.createElement('canvas'), rctx = res.getContext('2d');
+const ovl = document.createElement('canvas'), ictx = ovl.getContext('2d');
+
+const S = {
+  w: 0, h: 0, base: null, smooth: null,
+  zones: [], active: -1, uid: 1,
+  tool: 'wand', tol: 24, brush: 36, sub: false,
+  compare: false, split: .5, hover: null, history: [], stroke: null
+};
+
+/* ====================== загрузка изображения ====================== */
+function blurPlane(src, w, h, r){
+  const n = 2 * r + 1, tmp = new Float32Array(w * h), out = new Uint8Array(w * h);
+  for (let y = 0; y < h; y++){
+    const o = y * w; let s = 0;
+    for (let x = -r; x <= r; x++) s += src[o + clamp(x, 0, w - 1)];
+    for (let x = 0; x < w; x++){ tmp[o + x] = s / n; s += src[o + Math.min(w - 1, x + r + 1)] - src[o + Math.max(0, x - r)]; }
+  }
+  for (let x = 0; x < w; x++){
+    let s = 0;
+    for (let y = -r; y <= r; y++) s += tmp[clamp(y, 0, h - 1) * w + x];
+    for (let y = 0; y < h; y++){ out[y * w + x] = s / n + .5; s += tmp[Math.min(h - 1, y + r + 1) * w + x] - tmp[Math.max(0, y - r) * w + x]; }
+  }
+  return out;
+}
+
+function setImage(source, sw, sh){
+  const k = Math.min(1, MAXSIDE / Math.max(sw, sh));
+  const w = Math.max(2, Math.round(sw * k)), h = Math.max(2, Math.round(sh * k));
+  for (const c of [view, orig, res, ovl]){ c.width = w; c.height = h; }
+  octx.drawImage(source, 0, 0, w, h);
+  const id = octx.getImageData(0, 0, w, h);
+  S.w = w; S.h = h; S.base = id.data;
+  // сглаженная копия — по ней «умная заливка» не цепляется за шум и фактуру стен
+  const n = w * h, planes = [0, 1, 2].map(() => new Uint8Array(n));
+  for (let i = 0; i < n; i++){ planes[0][i] = S.base[i * 4]; planes[1][i] = S.base[i * 4 + 1]; planes[2][i] = S.base[i * 4 + 2]; }
+  const b = planes.map(p => blurPlane(p, w, h, 2));
+  S.smooth = new Uint8ClampedArray(n * 4);
+  for (let i = 0; i < n; i++){ S.smooth[i * 4] = b[0][i]; S.smooth[i * 4 + 1] = b[1][i]; S.smooth[i * 4 + 2] = b[2][i]; S.smooth[i * 4 + 3] = 255; }
+  // карта границ: заливка останавливается там, где яркость резко меняется (рамы, углы, мебель)
+  S.edge = new Uint8Array(n);
+  const Ls = new Float32Array(n);
+  for (let i = 0; i < n; i++) Ls[i] = .2126 * S.smooth[i * 4] + .7152 * S.smooth[i * 4 + 1] + .0722 * S.smooth[i * 4 + 2];
+  for (let y = 1; y < h - 1; y++) for (let x = 1, i = y * w + 1; x < w - 1; x++, i++){
+    const gx = (Ls[i + 1] - Ls[i - 1]) / 2, gy = (Ls[i + w] - Ls[i - w]) / 2;
+    S.edge[i] = Math.min(255, Math.hypot(gx, gy) * 4);
+  }
+  S.zones = []; S.active = -1; S.history = []; S.compare = false;
+  $('#btnCmp').setAttribute('aria-pressed', 'false');
+  $('#empty').classList.add('hide');
+  $('#btnSave').disabled = false; $('#btnCopy').disabled = false;
+  addZone('Стены');
+  render();
+}
+
+function loadFile(f){
+  if (!f || !f.type.startsWith('image/')){ toast('Нужен файл-изображение (JPG, PNG, WebP)'); return; }
+  const url = URL.createObjectURL(f), im = new Image();
+  im.onload = () => { setImage(im, im.naturalWidth, im.naturalHeight); URL.revokeObjectURL(url); };
+  im.onerror = () => { toast('Не удалось открыть этот файл. Попробуйте JPG или PNG'); URL.revokeObjectURL(url); };
+  im.src = url;
+}
+
+function loadDemo(){
+  const W = 1200, H = 800, c = document.createElement('canvas'); c.width = W; c.height = H;
+  const g = c.getContext('2d');
+  const poly = (pts, fill) => { g.beginPath(); pts.forEach((p, i) => i ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1])); g.closePath(); g.fillStyle = fill; g.fill(); };
+  const lg = (x0, y0, x1, y1, stops) => { const q = g.createLinearGradient(x0, y0, x1, y1); stops.forEach((s, i) => q.addColorStop(i / (stops.length - 1), s)); return q; };
+  poly([[0, 0], [W, 0], [1010, 130], [190, 130]], lg(0, 0, 0, 130, ['#f7f7f5', '#ecebe8']));
+  poly([[190, 130], [1010, 130], [1010, 520], [190, 520]], lg(0, 130, 0, 520, ['#e9e0cf', '#dcd2bf']));
+  poly([[0, 0], [190, 130], [190, 520], [0, 640]], lg(0, 0, 190, 0, ['#cfc4ae', '#d9cfba']));
+  poly([[W, 0], [1010, 130], [1010, 520], [W, 640]], lg(1010, 0, W, 0, ['#e6dcc9', '#efe7d8']));
+  poly([[0, 640], [190, 520], [1010, 520], [W, 640], [W, H], [0, H]], lg(0, 520, 0, H, ['#9c8a74', '#b9a58a']));
+  g.strokeStyle = '#b7ac98'; g.lineWidth = 4;
+  g.beginPath(); g.moveTo(0, 0); g.lineTo(190, 130); g.lineTo(1010, 130); g.lineTo(W, 0); g.moveTo(190, 130); g.lineTo(190, 520); g.moveTo(1010, 130); g.lineTo(1010, 520); g.stroke();
+  g.strokeStyle = '#6f624f'; g.lineWidth = 5;
+  g.beginPath(); g.moveTo(0, 640); g.lineTo(190, 520); g.lineTo(1010, 520); g.lineTo(W, 640); g.stroke();
+  g.strokeStyle = '#0000001c'; g.lineWidth = 2;
+  for (let i = 1; i < 8; i++){ const y = 520 + (H - 520) * Math.pow(i / 8, 1.6); g.beginPath(); g.moveTo(190 - 190 * (y - 520) / 120, y); g.lineTo(1010 + 190 * (y - 520) / 120, y); g.stroke(); }
+  // окно
+  g.fillStyle = '#5a4d3c'; g.fillRect(410, 190, 300, 250);
+  g.fillStyle = lg(0, 200, 0, 430, ['#e8f4ff', '#bcdcf5']); g.fillRect(422, 202, 276, 226);
+  g.fillStyle = '#5a4d3c'; g.fillRect(556, 202, 8, 226);
+  // ковёр
+  poly([[360, 640], [850, 640], [930, 760], [290, 760]], '#c9bfae');
+  // диван
+  g.fillStyle = '#3f5a60'; g.beginPath(); g.roundRect(300, 400, 600, 150, 26); g.fill();
+  g.fillStyle = lg(0, 440, 0, 590, ['#5f8088', '#4d6970']); g.beginPath(); g.roundRect(290, 470, 620, 140, 30); g.fill();
+  g.fillStyle = '#6c8d95'; g.beginPath(); g.roundRect(318, 478, 280, 84, 18); g.fill(); g.beginPath(); g.roundRect(612, 478, 270, 84, 18); g.fill();
+  g.fillStyle = '#2f464b'; g.fillRect(310, 606, 14, 26); g.fillRect(876, 606, 14, 26);
+  g.fillStyle = '#d7a35b'; g.beginPath(); g.roundRect(330, 430, 90, 82, 14); g.fill();
+  // тени и пыль
+  g.fillStyle = '#00000022'; g.fillRect(300, 612, 600, 14);
+  const im = g.getImageData(0, 0, W, H), d = im.data;
+  for (let i = 0; i < d.length; i += 4){ const n = (hash(i >> 2, 7, 1) - .5) * 9; d[i] += n; d[i + 1] += n; d[i + 2] += n; }
+  g.putImageData(im, 0, 0);
+  setImage(c, W, H);
+}
+
+/* ====================== зоны ====================== */
+const activeZone = () => S.zones[S.active] || null;
+
+function addZone(name){
+  const p = ZONE_PRESETS[name] || ZONE_PRESETS['Другое'];
+  const same = S.zones.filter(z => z.base === name).length;
+  S.zones.push({
+    id: S.uid++, base: name, name: same ? name + ' ' + (same + 1) : name,
+    mask: new Uint8Array(S.w * S.h), color: p.color, material: p.material, colorTouched: false,
+    strength: 100, scale: 1, rot: false, visible: true, stats: null, _pk: null, _pat: null
+  });
+  S.active = S.zones.length - 1;
+  renderZones(); renderInspector(); updateHint(); updateSummary();
+}
+
+function hasMask(z){ ensureStats(z); return z.stats.count > 0; }
+
+function ensureStats(z){
+  if (z.stats) return z.stats;
+  const { w, h } = S, m = z.mask; let x0 = w, y0 = h, x1 = -1, y1 = -1, cnt = 0, ls = 0, lw = 0;
+  for (let y = 0; y < h; y++){
+    const o = y * w;
+    for (let x = 0; x < w; x++){
+      const a = m[o + x]; if (!a) continue;
+      cnt++; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
+      if (a > 127){ const p = (o + x) * 4; ls += .2126 * S.base[p] + .7152 * S.base[p + 1] + .0722 * S.base[p + 2]; lw++; }
+    }
+  }
+  return z.stats = { x0, y0, x1, y1, count: cnt, lum: lw ? ls / lw : 128 };
+}
+
+function touchMask(z){ z.stats = null; }
+
+function pushHistory(z){
+  S.history.push({ id: z.id, mask: z.mask.slice() });
+  if (S.history.length > 20) S.history.shift();
+}
+function undo(){
+  const h = S.history.pop(); if (!h){ toast('Отменять пока нечего'); return; }
+  const z = S.zones.find(q => q.id === h.id); if (!z) return;
+  z.mask = h.mask; touchMask(z); S.active = S.zones.indexOf(z);
+  renderZones(); renderInspector(); requestRender(); updateHint();
+}
+
+/* ====================== выделение ====================== */
+function wand(z, sx, sy, subtract){
+  const { w, h } = S, sm = S.smooth, m = z.mask;
+  sx = clamp(sx, 0, w - 1); sy = clamp(sy, 0, h - 1);
+  const feat = i => { const p = i * 4, r = sm[p], g = sm[p + 1], b = sm[p + 2]; return [r - b, (r + b) / 2 - g, (r + g + b) / 3]; };
+  // эталон — среднее по маленькому окну вокруг клика
+  let a0 = 0, b0 = 0, y0 = 0, n0 = 0;
+  for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++){
+    const f = feat(clamp(sy + dy, 0, h - 1) * w + clamp(sx + dx, 0, w - 1)); a0 += f[0]; b0 += f[1]; y0 += f[2]; n0++;
+  }
+  a0 /= n0; b0 /= n0; y0 /= n0;
+  const lim = S.tol * S.tol * 3, edgeT = (2 + S.tol * .12) * 4, edge = S.edge;
+  const seen = new Uint8Array(w * h), stack = new Int32Array(w * h); let sp = 0;
+  const ok = i => { if (edge[i] > edgeT) return false; const f = feat(i), da = f[0] - a0, db = f[1] - b0, dy = f[2] - y0; return da * da + db * db + dy * dy * .35 <= lim; };
+  const start = sy * w + sx; stack[sp++] = start; seen[start] = 1;
+  const out = new Uint8Array(w * h); let cnt = 0;
+  while (sp){
+    const i = stack[--sp]; out[i] = 255; cnt++;
+    const x = i % w;
+    if (x > 0 && !seen[i - 1]){ seen[i - 1] = 1; if (ok(i - 1)) stack[sp++] = i - 1; }
+    if (x < w - 1 && !seen[i + 1]){ seen[i + 1] = 1; if (ok(i + 1)) stack[sp++] = i + 1; }
+    if (i >= w && !seen[i - w]){ seen[i - w] = 1; if (ok(i - w)) stack[sp++] = i - w; }
+    if (i < w * (h - 1) && !seen[i + w]){ seen[i + w] = 1; if (ok(i + w)) stack[sp++] = i + w; }
+  }
+  // расширяем на 1–2 px, чтобы закрыть тонкую линию границы, и смягчаем край
+  const grown = blurPlane(out, w, h, 2);
+  for (let i = 0; i < w * h; i++) grown[i] = grown[i] > 40 ? 255 : 0;
+  const soft = blurPlane(grown, w, h, 1);
+  for (let i = 0; i < w * h; i++){
+    if (subtract) m[i] = Math.min(m[i], 255 - soft[i]); else if (soft[i] > m[i]) m[i] = soft[i];
+  }
+  touchMask(z);
+  return cnt;
+}
+
+function dab(z, cx, cy, erase){
+  const { w, h } = S, R = S.brush, m = z.mask;
+  const x0 = Math.max(0, Math.floor(cx - R)), x1 = Math.min(w - 1, Math.ceil(cx + R));
+  const y0 = Math.max(0, Math.floor(cy - R)), y1 = Math.min(h - 1, Math.ceil(cy + R));
+  for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++){
+    const d = Math.hypot(x - cx, y - cy); if (d > R) continue;
+    const f = d < R * .7 ? 255 : 255 * (R - d) / (R * .3), i = y * w + x;
+    if (erase) m[i] = Math.min(m[i], 255 - f); else if (f > m[i]) m[i] = f;
+  }
+  touchMask(z);
+}
+function stroke(z, a, b, erase){
+  const step = Math.max(1, S.brush / 4), n = Math.ceil(Math.hypot(b.x - a.x, b.y - a.y) / step);
+  for (let k = 1; k <= n; k++) dab(z, a.x + (b.x - a.x) * k / n, a.y + (b.y - a.y) * k / n, erase);
+}
+
+/* ====================== рендер ====================== */
+const patCache = (z) => {
+  const key = z.material + '|' + z.scale + '|' + z.rot + '|' + S.w + 'x' + S.h;
+  if (z._pk === key) return z._pat;
+  const n = S.w * S.h, lum = new Float32Array(n), mix = new Float32Array(n);
+  const f = PAT[z.material], o = { l: 1, m: 0 }, s = z.scale;
+  for (let y = 0, i = 0; y < S.h; y++) for (let x = 0; x < S.w; x++, i++){
+    let u = x / s, v = y / s; if (z.rot){ const t = u; u = v; v = t; }
+    f(u, v, o); lum[i] = o.l; mix[i] = o.m;
+  }
+  z._pk = key; return z._pat = { lum, mix };
+};
+
+function applyZone(z, out){
+  const st = ensureStats(z); if (!st.count || !z.strength) return;
+  const { w } = S, base = S.base, m = z.mask, k = z.strength / 100;
+  const [cr, cg, cb] = hex2rgb(z.color);
+  const pat = z.material === 'none' ? null : patCache(z), Lm = st.lum + 10;
+  for (let y = st.y0; y <= st.y1; y++){
+    for (let x = st.x0, i = y * w + st.x0; x <= st.x1; x++, i++){
+      const a = m[i]; if (!a) continue;
+      const p = i * 4, r = base[p], g = base[p + 1], b = base[p + 2];
+      const L = .2126 * r + .7152 * g + .0722 * b;
+      let ratio = clamp((L + 10) / Lm, .25, 2.2), tr = cr, tg = cg, tb = cb;
+      if (pat){
+        ratio *= pat.lum[i]; const mx = pat.mix[i];
+        if (mx){ tr += (MIXC[0] - tr) * mx; tg += (MIXC[1] - tg) * mx; tb += (MIXC[2] - tb) * mx; }
+      }
+      const q = k * a / 255;
+      out[p] = r + (tr * ratio - r) * q; out[p + 1] = g + (tg * ratio - g) * q; out[p + 2] = b + (tb * ratio - b) * q;
+    }
+  }
+}
+
+let raf = 0;
+function requestRender(){ if (!raf) raf = requestAnimationFrame(() => { raf = 0; render(); }); }
+
+function render(){
+  if (!S.base) return;
+  const out = new Uint8ClampedArray(S.base);
+  for (const z of S.zones) if (z.visible) applyZone(z, out);
+  rctx.putImageData(new ImageData(out, S.w, S.h), 0, 0);
+  paintView();
+}
+
+function paintView(){
+  if (!S.base) return;
+  const { w, h } = S;
+  vctx.drawImage(res, 0, 0);
+  const u = w / (view.clientWidth || w), lw = 2 * u; // размеры в экранных пикселях, а не пикселях фото
+  if (S.compare){
+    const sx = S.split * w;
+    vctx.save(); vctx.beginPath(); vctx.rect(0, 0, sx, h); vctx.clip(); vctx.drawImage(orig, 0, 0); vctx.restore();
+    vctx.fillStyle = '#fff'; vctx.fillRect(sx - lw / 2, 0, lw, h);
+    vctx.beginPath(); vctx.arc(sx, h / 2, lw * 8, 0, 7); vctx.fillStyle = '#fff'; vctx.fill();
+    vctx.fillStyle = '#1f2328'; vctx.font = '600 ' + lw * 8 + 'px system-ui,sans-serif'; vctx.textAlign = 'center'; vctx.textBaseline = 'middle';
+    vctx.fillText('⇆', sx, h / 2 + 1);
+    const tag = (t, x, al) => {
+      vctx.font = '600 ' + lw * 6.5 + 'px system-ui,sans-serif'; vctx.textAlign = al; vctx.textBaseline = 'middle';
+      const tw = vctx.measureText(t).width + lw * 10;
+      vctx.fillStyle = '#000a'; vctx.fillRect(al === 'left' ? x : x - tw, lw * 6, tw, lw * 13);
+      vctx.fillStyle = '#fff'; vctx.fillText(t, al === 'left' ? x + lw * 5 : x - lw * 5, lw * 12.5);
+    };
+    tag('ДО', lw * 6, 'left'); tag('ПОСЛЕ', w - lw * 6, 'right');
+    return;
+  }
+  const z = activeZone();
+  if (z && ensureStats(z).count){
+    // контур выделения + лёгкая заливка, чтобы не искажать цвет результата
+    const id = ictx.createImageData(w, h), d = id.data, m = z.mask, st = z.stats;
+    const x0 = Math.max(1, st.x0 - 1), x1 = Math.min(w - 2, st.x1 + 1), y0 = Math.max(1, st.y0 - 1), y1 = Math.min(h - 2, st.y1 + 1);
+    for (let y = y0; y <= y1; y++) for (let x = x0, i = y * w + x0; x <= x1; x++, i++){
+      const on = m[i] > 127;
+      if (on && (m[i - 1] <= 127 || m[i + 1] <= 127 || m[i - w] <= 127 || m[i + w] <= 127)){ const p = i * 4; d[p] = 255; d[p + 1] = 255; d[p + 2] = 255; d[p + 3] = 255; }
+      else if (on && ((x + y) & 7) < 1){ const p = i * 4; d[p] = 224; d[p + 1] = 53; d[p + 2] = 122; d[p + 3] = 140; }
+    }
+    ictx.putImageData(id, 0, 0); vctx.drawImage(ovl, 0, 0);
+  }
+  if (S.hover && S.tool !== 'wand'){
+    vctx.beginPath(); vctx.arc(S.hover.x, S.hover.y, S.brush, 0, 7);
+    vctx.lineWidth = lw; vctx.strokeStyle = '#fff'; vctx.stroke();
+    vctx.lineWidth = lw / 2; vctx.strokeStyle = '#000'; vctx.stroke();
+  }
+}
+
+/* ====================== панели ====================== */
+function nearestName(hex){
+  const f = PALETTE.find(p => p[1].toLowerCase() === hex.toLowerCase());
+  return f ? f[0] : '';
+}
+function esc(s){ return s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+
+function renderZones(){
+  const box = $('#zoneList'); box.innerHTML = '';
+  S.zones.forEach((z, i) => {
+    const el = document.createElement('div');
+    el.className = 'zone' + (i === S.active ? ' on' : '');
+    const empty = !hasMask(z);
+    el.innerHTML = '<span class="dot" style="background:' + z.color + '"></span>' +
+      '<span class="nm">' + esc(z.name) + '<small>' + (empty ? 'выделите область на фото' : (MATERIALS.find(m => m.id === z.material).name)) + '</small></span>' +
+      '<button class="ico" data-a="eye" title="Показать / скрыть">' + (z.visible ? '👁' : '—') + '</button>' +
+      '<button class="ico" data-a="del" title="Удалить зону">✕</button>';
+    el.addEventListener('click', e => {
+      const a = e.target.closest('[data-a]') && e.target.closest('[data-a]').dataset.a;
+      if (a === 'eye'){ z.visible = !z.visible; renderZones(); requestRender(); return; }
+      if (a === 'del'){
+        S.zones.splice(i, 1); S.history = S.history.filter(h => h.id !== z.id);
+        S.active = Math.min(S.active, S.zones.length - 1); if (i < S.active) S.active--;
+        renderZones(); renderInspector(); requestRender(); updateHint(); updateSummary(); return;
+      }
+      S.active = i; renderZones(); renderInspector(); requestRender(); updateHint();
+    });
+    box.appendChild(el);
+  });
+  if (!S.zones.length) box.innerHTML = '<p style="margin:0;color:var(--muted);font-size:13px">Добавьте зону: стены, пол, мебель…</p>';
+}
+
+function renderInspector(){
+  const z = activeZone(), ins = $('#inspector');
+  ins.classList.toggle('hide', !z); if (!z) return;
+  $('#zname').value = z.name;
+  $('#color').value = z.color; $('#hex').textContent = z.color.toUpperCase(); $('#cname').textContent = nearestName(z.color);
+  $('#strength').value = z.strength; $('#strengthV').textContent = z.strength + '%';
+  $('#scale').value = z.scale; $('#scaleV').textContent = '×' + z.scale.toFixed(1);
+  $('#rot').checked = z.rot;
+  const tex = z.material !== 'none';
+  $('#scaleRow').classList.toggle('hide', !tex); $('#rotRow').classList.toggle('hide', !tex);
+  document.querySelectorAll('#swatches button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.c.toLowerCase() === z.color.toLowerCase())));
+  document.querySelectorAll('#mats button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.m === z.material)));
+}
+
+function updateHint(){
+  const z = activeZone(); let t = '';
+  if (!S.base) t = '';
+  else if (S.compare) t = 'Потяните линию влево или вправо — слева исходное фото, справа результат.';
+  else if (!z) t = 'Добавьте зону справа, затем выделите её на фото.';
+  else if (!hasMask(z)) t = 'Кликните по «' + z.name.toLowerCase() + '» на фото — выделится вся область похожего цвета.';
+  else if (S.tool === 'wand') t = 'Захватило лишнее — уменьшите «Чувствительность» и нажмите «Отменить». Не хватает куска — кликните по нему ещё раз или дорисуйте кистью.';
+  else if (S.tool === 'brush') t = 'Закрасьте то, что нужно добавить в зону. Размер кисти — слева.';
+  else t = 'Сотрите всё, что не должно перекрашиваться (розетки, плинтус, рамы).';
+  $('#hint').textContent = t;
+}
+
+function updateSummary(){
+  const rows = S.zones.filter(z => hasMask(z) && z.visible && z.strength > 0).map(z => {
+    const mt = MATERIALS.find(m => m.id === z.material), nm = nearestName(z.color);
+    return '• ' + z.name + ': ' + (z.material === 'none' ? 'покраска' : mt.name.toLowerCase()) + ', цвет ' + (nm ? '«' + nm + '» ' : '') + z.color.toUpperCase();
+  });
+  $('#summary').value = rows.length ? 'Предлагаемые изменения:\n' + rows.join('\n') + '\n\nВизуализация ориентировочная, итоговый вид зависит от освещения и фактуры материалов.' : 'Пока нет изменений.';
+}
+
+/* ====================== события ====================== */
+function pos(e){
+  const r = view.getBoundingClientRect();
+  return { x: (e.clientX - r.left) * S.w / r.width, y: (e.clientY - r.top) * S.h / r.height };
+}
+
+view.addEventListener('pointerdown', e => {
+  if (!S.base) return;
+  view.setPointerCapture(e.pointerId);
+  const p = pos(e);
+  if (S.compare){ S.stroke = { cmp: true }; S.split = clamp(p.x / S.w, 0, 1); paintView(); return; }
+  const z = activeZone(); if (!z){ toast('Сначала добавьте зону справа'); return; }
+  pushHistory(z);
+  if (S.tool === 'wand'){
+    const n = wand(z, Math.floor(p.x), Math.floor(p.y), S.sub);
+    if (n < 30 && !S.sub) toast('Выделилось слишком мало — увеличьте «Чувствительность»');
+    maskChanged(z);
+  } else {
+    const er = S.tool === 'erase';
+    S.stroke = { last: p, erase: er }; dab(z, p.x, p.y, er); requestRender();
+  }
+});
+view.addEventListener('pointermove', e => {
+  if (!S.base) return;
+  const p = pos(e); S.hover = p;
+  if (S.stroke && S.stroke.cmp){ S.split = clamp(p.x / S.w, 0, 1); paintView(); return; }
+  if (S.stroke && S.stroke.last){ stroke(activeZone(), S.stroke.last, p, S.stroke.erase); S.stroke.last = p; requestRender(); return; }
+  if (S.tool !== 'wand' && !S.compare) paintView();
+});
+view.addEventListener('pointerleave', () => { S.hover = null; if (!S.stroke) paintView(); });
+const endStroke = () => { if (S.stroke && S.stroke.last) maskChanged(activeZone()); S.stroke = null; };
+view.addEventListener('pointerup', endStroke);
+view.addEventListener('pointercancel', endStroke);
+
+function maskChanged(z){ renderZones(); updateHint(); updateSummary(); requestRender(); }
+
+document.querySelectorAll('[data-tool]').forEach(b => b.addEventListener('click', () => {
+  S.tool = b.dataset.tool; S.compare = false; $('#btnCmp').setAttribute('aria-pressed', 'false');
+  document.querySelectorAll('[data-tool]').forEach(q => q.setAttribute('aria-pressed', String(q === b)));
+  $('#tolBox').classList.toggle('hide', S.tool !== 'wand'); $('#subBox').classList.toggle('hide', S.tool !== 'wand');
+  $('#brushBox').classList.toggle('hide', S.tool === 'wand');
+  view.style.cursor = S.tool === 'wand' ? 'crosshair' : 'none';
+  updateHint(); paintView();
+}));
+$('#btnCmp').addEventListener('click', () => {
+  if (!S.base) return;
+  S.compare = !S.compare; $('#btnCmp').setAttribute('aria-pressed', String(S.compare));
+  view.style.cursor = S.compare ? 'ew-resize' : (S.tool === 'wand' ? 'crosshair' : 'none');
+  updateHint(); paintView();
+});
+$('#btnUndo').addEventListener('click', undo);
+document.addEventListener('keydown', e => { if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && !/INPUT|TEXTAREA/.test(document.activeElement.tagName)){ e.preventDefault(); undo(); } });
+$('#tol').addEventListener('input', e => S.tol = +e.target.value);
+$('#brush').addEventListener('input', e => { S.brush = +e.target.value; paintView(); });
+$('#sub').addEventListener('change', e => S.sub = e.target.checked);
+
+/* файл / drag&drop / вставка */
+const fileIn = $('#file');
+['#btnOpen', '#btnOpen2'].forEach(s => $(s).addEventListener('click', () => fileIn.click()));
+['#btnDemo', '#btnDemo2'].forEach(s => $(s).addEventListener('click', loadDemo));
+fileIn.addEventListener('change', () => { loadFile(fileIn.files[0]); fileIn.value = ''; });
+const stage = $('#stage');
+stage.addEventListener('dragover', e => { e.preventDefault(); $('#empty').classList.add('drag'); });
+stage.addEventListener('dragleave', () => $('#empty').classList.remove('drag'));
+stage.addEventListener('drop', e => { e.preventDefault(); $('#empty').classList.remove('drag'); loadFile(e.dataTransfer.files[0]); });
+document.addEventListener('paste', e => { const f = [...(e.clipboardData ? e.clipboardData.files : [])][0]; if (f) loadFile(f); });
+
+/* зоны и инспектор */
+Object.keys(ZONE_PRESETS).forEach(n => {
+  const b = document.createElement('button'); b.className = 'chip'; b.textContent = '+ ' + n;
+  b.addEventListener('click', () => { if (!S.base){ toast('Сначала загрузите фото'); return; } addZone(n); });
+  $('#addZone').appendChild(b);
+});
+PALETTE.forEach(([n, c]) => {
+  const b = document.createElement('button'); b.style.background = c; b.title = n; b.dataset.c = c; b.setAttribute('aria-label', n);
+  b.addEventListener('click', () => setColor(c)); $('#swatches').appendChild(b);
+});
+MATERIALS.forEach(m => {
+  const b = document.createElement('button'); b.className = 'mat'; b.dataset.m = m.id;
+  const c = document.createElement('canvas'); c.width = 64; c.height = 44;
+  const g = c.getContext('2d'), id = g.createImageData(64, 44), col = hex2rgb(m.color || '#B8B2A7'), o = { l: 1, m: 0 };
+  for (let y = 0, i = 0; y < 44; y++) for (let x = 0; x < 64; x++, i += 4){
+    let l = 1, mx = 0; if (m.id !== 'none'){ PAT[m.id](x * 2.2, y * 2.2, o); l = o.l; mx = o.m; }
+    for (let k = 0; k < 3; k++){ const t = col[k] + (MIXC[k] - col[k]) * mx; id.data[i + k] = clamp(t * l, 0, 255); }
+    id.data[i + 3] = 255;
+  }
+  g.putImageData(id, 0, 0);
+  b.appendChild(c); b.appendChild(document.createTextNode(m.name));
+  b.addEventListener('click', () => {
+    const z = activeZone(); if (!z) return;
+    z.material = m.id; if (m.color && !z.colorTouched) z.color = m.color;
+    renderZones(); renderInspector(); updateSummary(); requestRender();
+  });
+  $('#mats').appendChild(b);
+});
+
+function setColor(c){
+  const z = activeZone(); if (!z) return;
+  z.color = c; z.colorTouched = true; renderZones(); renderInspector(); updateSummary(); requestRender();
+}
+$('#color').addEventListener('input', e => {
+  const z = activeZone(); if (!z) return;
+  z.color = e.target.value; z.colorTouched = true;
+  $('#hex').textContent = z.color.toUpperCase(); $('#cname').textContent = nearestName(z.color);
+  document.querySelectorAll('#swatches button').forEach(b => b.setAttribute('aria-pressed', 'false'));
+  requestRender();
+});
+$('#color').addEventListener('change', () => { renderZones(); updateSummary(); });
+$('#zname').addEventListener('input', e => { const z = activeZone(); if (z){ z.name = e.target.value || 'Зона'; renderZones(); updateSummary(); } });
+$('#strength').addEventListener('input', e => { const z = activeZone(); if (!z) return; z.strength = +e.target.value; $('#strengthV').textContent = z.strength + '%'; requestRender(); });
+let scT;
+$('#scale').addEventListener('input', e => {
+  const z = activeZone(); if (!z) return; z.scale = +e.target.value; $('#scaleV').textContent = '×' + z.scale.toFixed(1);
+  clearTimeout(scT); scT = setTimeout(requestRender, 120);
+});
+$('#rot').addEventListener('change', e => { const z = activeZone(); if (z){ z.rot = e.target.checked; requestRender(); } });
+$('#btnClear').addEventListener('click', () => {
+  const z = activeZone(); if (!z) return; pushHistory(z); z.mask = new Uint8Array(S.w * S.h); touchMask(z); maskChanged(z);
+});
+
+/* результат */
+$('#btnSave').addEventListener('click', () => {
+  if (!S.base) return;
+  res.toBlob(b => {
+    const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'vizualizaciya-remonta.png';
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  }, 'image/png');
+});
+$('#btnCopy').addEventListener('click', async () => {
+  const t = $('#summary').value;
+  try { await navigator.clipboard.writeText(t); toast('Описание скопировано'); }
+  catch { const ta = $('#summary'); ta.closest('details').open = true; ta.select(); toast('Выделено — нажмите Ctrl+C'); }
+});
+
+/* старт */
+$('#inspector').classList.add('hide');
+$('#brushBox').classList.add('hide');
+renderZones(); updateSummary();
+</script>
+</body>
+</html>
