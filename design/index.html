@@ -148,6 +148,27 @@ input[type=color]{width:52px;height:44px;padding:3px;border:1px solid var(--line
 .chips{display:flex;gap:8px;flex-wrap:wrap}
 .chip{border:1px dashed var(--line-strong);background:none;border-radius:999px;padding:8px 14px;min-height:44px;font-size:13px;color:var(--muted)}
 .chip:hover{border-color:var(--accent);color:var(--accent)}
+/* ползунки цвета и готовые стили */
+.slrow{display:grid;grid-template-columns:104px 1fr;align-items:center;gap:10px;margin-top:6px}
+.slrow label{font-size:13.5px;color:var(--ink);font-weight:550}
+input.sl{-webkit-appearance:none;appearance:none;background:transparent;width:100%;height:36px;margin:0;touch-action:pan-y}
+input.sl::-webkit-slider-runnable-track{height:14px;border-radius:99px;background:var(--trk,var(--surface-2));border:1px solid var(--line-strong)}
+input.sl::-moz-range-track{height:12px;border-radius:99px;background:var(--trk,var(--surface-2));border:1px solid var(--line-strong)}
+input.sl::-webkit-slider-thumb{-webkit-appearance:none;width:30px;height:30px;margin-top:-9px;border-radius:50%;background:var(--thumb,#fff);border:3px solid #fff;box-shadow:0 0 0 1.5px #000a,0 2px 6px #0005}
+input.sl::-moz-range-thumb{width:24px;height:24px;border-radius:50%;background:var(--thumb,#fff);border:3px solid #fff;box-shadow:0 0 0 1.5px #000a,0 2px 6px #0005}
+input.sl:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:99px}
+.looks-wrap{display:none;margin-top:12px}
+body.has-photo .looks-wrap{display:block}
+.looks{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 6px;-webkit-overflow-scrolling:touch}
+.look{flex:none;display:flex;flex-direction:column;align-items:center;gap:6px;border:1px solid var(--line-strong);background:var(--surface);border-radius:14px;padding:8px 10px 7px;min-width:82px;font-size:12.5px;font-weight:600}
+.look .lk{display:flex;height:24px;width:62px;border-radius:7px;overflow:hidden;border:1px solid var(--line-strong)}
+.look .lk i{flex:1}
+.look[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
+.hint{color:var(--ink);font-size:13.5px;font-weight:550}
+.hint b{display:inline-block;background:var(--accent);color:var(--accent-ink);border-radius:999px;padding:1px 9px;font-size:12px;margin-right:6px;font-weight:700}
+.nudge{animation:nudge 1.6s ease-in-out infinite}
+@keyframes nudge{0%,100%{box-shadow:0 0 0 0 color-mix(in srgb,var(--accent) 55%,transparent)}50%{box-shadow:0 0 0 9px transparent}}
+@media (prefers-reduced-motion:reduce){.nudge{animation:none;outline:3px solid color-mix(in srgb,var(--accent) 50%,transparent)}}
 /* нижняя панель */
 .dock{position:fixed;left:0;right:0;bottom:0;z-index:20;display:flex;gap:4px;align-items:center;padding:8px var(--gutter-r) calc(8px + env(safe-area-inset-bottom,0px)) var(--gutter-l);background:color-mix(in srgb,var(--surface) 90%,transparent);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border-top:1px solid var(--line)}
 .dock .spacer{flex:1}
@@ -238,6 +259,7 @@ body.ui-all .sheet[hidden]{display:block!important}
 
   <aside class="side">
     <div id="zoneList"></div>
+    <div class="looks-wrap"><div class="sec-t"><span>Готовые стили для всей комнаты</span></div><div class="looks" id="looks" role="group" aria-label="Готовые стили"></div></div>
     <div class="tabs" role="tablist" aria-label="Что настроить">
       <button class="tab" role="tab" id="tab-color" aria-controls="tp-color" aria-selected="true" data-tab="color">Цвет</button>
       <button class="tab" role="tab" id="tab-material" aria-controls="tp-material" aria-selected="false" tabindex="-1" data-tab="material">Материал</button>
@@ -250,6 +272,10 @@ body.ui-all .sheet[hidden]{display:block!important}
       <div class="needs-zone">
         <div class="sec">
           <div class="sec-t"><span>Цвет</span><span class="hex" id="hex"></span></div>
+          <div class="slrow"><label for="sH">Оттенок</label><input type="range" id="sH" class="sl" min="0" max="360" aria-label="Оттенок"></div>
+          <div class="slrow"><label for="sS">Насыщенность</label><input type="range" id="sS" class="sl" min="0" max="100" aria-label="Насыщенность"></div>
+          <div class="slrow"><label for="sL">Светлота</label><input type="range" id="sL" class="sl" min="4" max="96" aria-label="Светлота"></div>
+          <div class="sec-t" style="margin-top:16px"><span>Или выберите готовый цвет</span></div>
           <div class="sw" id="swatches"></div>
           <div class="colorline"><input type="color" id="color" aria-label="Свой цвет"><span class="note" style="margin:0" id="cname"></span></div>
         </div>
@@ -570,7 +596,8 @@ function setImage(source, sw, sh, opts){
   computeDerived();
   S.zones = []; S.active = -1; S.history = []; S.compare = false;
   resetInteraction(); S.ovlData = null; updateTouch();
-  if (!opts.generated){ S.photoId = (S.photoId || 0) + 1; if (onNewPhoto) onNewPhoto(); }
+  if (!opts.generated){ S.photoId = (S.photoId || 0) + 1; S.moved = false; S.look = null; S.pendingLook = null; $('#btnDone').classList.remove('nudge'); markLooks(); if (onNewPhoto) onNewPhoto(); }
+  startCoach();
   $('#btnCmp').setAttribute('aria-pressed', 'false');
   $('#empty').classList.add('hide');
   $('#btnSave').disabled = false; $('#btnCopy').disabled = false; $('#btnShare').disabled = false; $('#btnDone').disabled = false; document.body.classList.add('has-photo');
@@ -736,6 +763,7 @@ function undo(){
   if (S.pm && S.pm.length){ S.pm.pop(); if (!S.pm.length) S.pm = null; updateHint(); paintView(); return; }
   if (S.poly && S.poly.length){ S.poly.pop(); if (!S.poly.length) S.poly = null; paintView(); return; }
   const h = S.history.pop(); if (!h){ toast('Отменять пока нечего'); return; }
+  if (h.type === 'look'){ undoLook(h); toast('Стиль отменён'); return; }
   if (h.type === 'auto'){ // отмена автопоиска: возвращаем области, какие были до него
     S.zones = h.prev; S.active = Math.min(h.prevActive, S.zones.length - 1); S.showAuto = 0; resetInteraction();
     renderZones(); renderInspector(); updateHint(); updateSummary(); render(); toast('Результат автопоиска отменён'); return;
@@ -937,6 +965,33 @@ function render(){
   paintView();
 }
 
+const reduceMotion = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+function suggestSpot(){
+  const w = S.w, h = S.h, B = 24; let best = 1e9, bx = w / 2, by = h * .3;
+  for (let y0 = Math.round(h * .22); y0 < h * .6 - B; y0 += B) for (let x0 = B; x0 < w - 2 * B; x0 += B){
+    let sum = 0, n = 0; for (let y = y0; y < y0 + B; y += 3) for (let x = x0; x < x0 + B; x += 3){ sum += S.edge[y * w + x]; n++; }
+    const e = sum / n + Math.abs(x0 + B / 2 - w / 2) / w * 2; if (e < best){ best = e; bx = x0 + B / 2; by = y0 + B / 2; }
+  }
+  return { x: bx, y: by };
+}
+let coachRaf = 0;
+function startCoach(){
+  S.coach = suggestSpot(); cancelAnimationFrame(coachRaf);
+  if (reduceMotion) return;
+  const loop = () => { if (!S.coach || S.zones.some(hasMask) || S.compare){ coachRaf = 0; return; } paintView(); coachRaf = requestAnimationFrame(loop); };
+  coachRaf = requestAnimationFrame(loop);
+}
+function drawCoach(lw){
+  if (!S.coach || S.compare || S.zones.some(hasMask) || S.pm || S.poly) return;
+  const t = reduceMotion ? 0 : (performance.now() % 1500) / 1500, { x, y } = S.coach;
+  vctx.save(); vctx.lineWidth = lw * 2;
+  for (let k = 0; k < 2; k++){ const f = (t + k * .5) % 1; vctx.globalAlpha = (1 - f) * .9; vctx.strokeStyle = '#fff'; vctx.beginPath(); vctx.arc(x, y, lw * (9 + f * 22), 0, 7); vctx.stroke(); }
+  vctx.globalAlpha = 1; vctx.fillStyle = '#fff'; vctx.beginPath(); vctx.arc(x, y, lw * 6, 0, 7); vctx.fill(); vctx.fillStyle = '#0f6b5a'; vctx.beginPath(); vctx.arc(x, y, lw * 3.2, 0, 7); vctx.fill();
+  const txt = 'Нажмите сюда'; vctx.font = '700 ' + lw * 7 + 'px system-ui,sans-serif'; vctx.textAlign = 'center'; vctx.textBaseline = 'middle';
+  const tw = vctx.measureText(txt).width + lw * 14, ty = y + lw * 24 < S.h - lw * 10 ? y + lw * 24 : y - lw * 24, tx = clamp(x, tw / 2 + 4, S.w - tw / 2 - 4);
+  vctx.fillStyle = 'rgba(14,17,19,.82)'; vctx.fillRect(tx - tw / 2, ty - lw * 8, tw, lw * 16); vctx.fillStyle = '#fff'; vctx.fillText(txt, tx, ty);
+  vctx.restore();
+}
 function paintView(){
   if (!S.base) return;
   const { w, h } = S;
@@ -958,6 +1013,7 @@ function paintView(){
     tag('ДО', lw * 6, 'left'); tag('ПОСЛЕ', w - lw * 6, 'right');
     return;
   }
+  drawCoach(lw);
   const z = activeZone();
   if (z && ensureStats(z).count){
     // контур выделения + лёгкая заливка, чтобы не искажать цвет результата
@@ -1057,7 +1113,7 @@ function renderInspector(){
   $('#smoothRow').classList.toggle('hide', !(z.rough > ROUGH_T && z.material === 'none'));
   $('#smoothBtn').textContent = z.flat >= 50 ? 'Вернуть как на фото' : 'Сгладить сколы и трещины';
   $('#zname').value = z.name;
-  $('#color').value = z.color; $('#hex').textContent = z.color.toUpperCase(); $('#cname').textContent = nearestName(z.color);
+  $('#color').value = z.color; $('#hex').textContent = z.color.toUpperCase(); $('#cname').textContent = nearestName(z.color); syncSliders(z);
   $('#match').value = z.match; $('#matchV').textContent = z.match + '%'; $('#flat').value = z.flat; $('#flatV').textContent = z.flat + '%'; $('#strength').value = z.strength; $('#strengthV').textContent = z.strength + '%';
   $('#scale').value = z.scale; $('#scaleV').textContent = '×' + z.scale.toFixed(1);
   $('#rot').checked = z.rot;
@@ -1079,9 +1135,12 @@ function updateHint(){
   else if (S.tool === 'poly') t = 'Ставьте точки по углам стены, пола или зеркала. Замкните контур нажатием на первую (белую) точку или кнопкой «Замкнуть контур».';
   else if (S.tool === 'brush') t = 'Закрасьте то, что нужно добавить в область. Размер кисти в «Дополнительно».';
   else if (S.tool === 'erase') t = 'Сотрите всё, что не должно перекрашиваться (розетки, плинтус, рамы).';
-  else if (!z || !hasMask(z)) t = ''; // подсказку показывает вкладка «Цвет»
-  else t = 'Выберите цвет или материал во вкладках ниже. ' + (z.simple ? 'Выделилось не то: вкладка «Область». ' : '') + 'Другая часть: нажмите на неё на фото.';
-  $('#hint').textContent = t;
+  else if (!S.zones.some(hasMask)) t = '1|Нажмите на то, что хотите изменить: стену, пол или мебель. Или сразу выберите готовый стиль ниже.';
+  else if (!S.moved) t = '2|Двигайте ползунки ниже: цвет меняется сразу. Другая часть комнаты: нажмите на неё на фото.' + (z && z.simple ? ' Выделилось не то: вкладка «Область».' : '');
+  else t = '3|Нравится? Нажмите «Готово». Или нажмите на другую часть комнаты, чтобы изменить и её.';
+  const hint = $('#hint'); hint.textContent = '';
+  const m = /^(\d)\|(.*)$/.exec(t);
+  if (m){ const b = document.createElement('b'); b.textContent = 'Шаг ' + m[1] + ' из 3'; hint.appendChild(b); hint.appendChild(document.createTextNode(m[2])); } else hint.textContent = t;
 }
 
 function updateSummary(){
@@ -1271,19 +1330,51 @@ MATERIALS.forEach(m => {
   b.appendChild(c); b.appendChild(document.createTextNode(m.name));
   b.addEventListener('click', () => {
     const z = activeZone(); if (!z) return;
-    z.fresh = false; z.material = m.id; if (m.color && !z.colorTouched) z.color = m.color; autoPersp(z);
+    z.fresh = false; z.material = m.id; if (m.color && !z.colorTouched) z.color = m.color; autoPersp(z); S.look = null; markLooks(); markMoved();
     renderZones(); renderInspector(); updateSummary(); updateHint(); requestRender();
   });
   $('#mats').appendChild(b);
 });
 
+function rgb2hsl(r, g, b){
+  r /= 255; g /= 255; b /= 255; const mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2, d = mx - mn; let h = 0, sat = 0;
+  if (d){ sat = d / (1 - Math.abs(2 * l - 1)); h = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; h *= 60; if (h < 0) h += 360; }
+  return [h, sat * 100, l * 100];
+}
+function hsl2hex(h, sat, l){
+  sat /= 100; l /= 100; const c = (1 - Math.abs(2 * l - 1)) * sat, x = c * (1 - Math.abs((h / 60) % 2 - 1)), m = l - c / 2; let r = 0, g = 0, b = 0;
+  if (h < 60){ r = c; g = x; } else if (h < 120){ r = x; g = c; } else if (h < 180){ g = c; b = x; } else if (h < 240){ g = x; b = c; } else if (h < 300){ r = x; b = c; } else { r = c; b = x; }
+  return '#' + [r, g, b].map(v => Math.round((v + m) * 255).toString(16).padStart(2, '0')).join('');
+}
+function paintSliderTracks(z){
+  const h = +$('#sH').value, sat = +$('#sS').value, l = +$('#sL').value, st = (id, v) => $(id).style.setProperty('--trk', v);
+  st('#sH', 'linear-gradient(90deg,' + [0, 60, 120, 180, 240, 300, 360].map(x => 'hsl(' + x + ' ' + Math.max(40, sat) + '% ' + Math.min(70, Math.max(35, l)) + '%)').join(',') + ')');
+  st('#sS', 'linear-gradient(90deg,hsl(' + h + ' 0% ' + l + '%),hsl(' + h + ' 100% ' + l + '%))');
+  st('#sL', 'linear-gradient(90deg,#000,hsl(' + h + ' ' + sat + '% 50%),#fff)');
+  ['#sH', '#sS', '#sL'].forEach(id => $(id).style.setProperty('--thumb', z.color));
+}
+function syncSliders(z){
+  const [r, g, b] = hex2rgb(z.color); let [h, sat, l] = rgb2hsl(r, g, b);
+  if (sat < 3 && z.h != null) h = z.h; else z.h = h;
+  $('#sH').value = Math.round(h); $('#sS').value = Math.round(sat); $('#sL').value = Math.round(l); paintSliderTracks(z);
+}
+function markMoved(){ if (!S.moved){ S.moved = true; $('#btnDone').classList.add('nudge'); updateHint(); } }
+function onSlider(){
+  const z = activeZone(); if (!z) return;
+  z.h = +$('#sH').value; z.color = hsl2hex(z.h, +$('#sS').value, +$('#sL').value); z.fresh = false; z.colorTouched = true; S.look = null; markLooks();
+  $('#hex').textContent = z.color.toUpperCase(); $('#cname').textContent = nearestName(z.color); $('#color').value = z.color;
+  document.querySelectorAll('#swatches button').forEach(b => b.setAttribute('aria-pressed', 'false'));
+  const dot = document.querySelector('.zone.on .dot'); if (dot) dot.style.background = z.color;
+  paintSliderTracks(z); markMoved(); requestRender();
+}
+['#sH', '#sS', '#sL'].forEach(id => { $(id).addEventListener('input', onSlider); $(id).addEventListener('change', () => { updateSummary(); renderZones(); }); });
 function setColor(c){
   const z = activeZone(); if (!z) return;
-  z.fresh = false; z.color = c; z.colorTouched = true; renderZones(); renderInspector(); updateSummary(); requestRender();
+  z.fresh = false; z.color = c; z.colorTouched = true; S.look = null; markLooks(); markMoved(); renderZones(); renderInspector(); updateSummary(); requestRender();
 }
 $('#color').addEventListener('input', e => {
   const z = activeZone(); if (!z) return;
-  z.fresh = false; z.color = e.target.value; z.colorTouched = true;
+  z.fresh = false; z.color = e.target.value; z.colorTouched = true; S.look = null; markLooks(); markMoved(); syncSliders(z);
   $('#hex').textContent = z.color.toUpperCase(); $('#cname').textContent = nearestName(z.color);
   document.querySelectorAll('#swatches button').forEach(b => b.setAttribute('aria-pressed', 'false'));
   requestRender();
@@ -1598,6 +1689,7 @@ function zonesFromSegments(segs, W, H){
   out.sort((a, b) => { const ia = SEG_ORDER.indexOf(a.name), ib = SEG_ORDER.indexOf(b.name); return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib) || b.area - a.area; });
   return out.slice(0, 8);
 }
+function zonesFromAutoReady(){ S.zones.forEach(z => { if (z.auto) z.fresh = false; }); }
 async function autoSegment(){
   if (!S.base){ toast('Сначала загрузите фото'); return; }
   if (G.busy) return; G.busy = true; $('#autoSegBtn').disabled = true; const pid = S.photoId;
@@ -1612,6 +1704,7 @@ async function autoSegment(){
       .filter(x => x.p >= 1).sort((a, b) => b.p - a.p).slice(0, 10);
     $('#autoSegSeen').textContent = seen.length ? 'Модель увидела: ' + seen.map(x => x.l + ' ' + Math.round(x.p) + '%').join(', ') : '';
     const found = zonesFromSegments(segs, S.w, S.h);
+    if (!found.length && S.pendingLook){ S.pendingLook = null; toast('Ничего не нашлось. Нажмите на стену или пол на фото и выберите стиль снова'); }
     if (!found.length){ segStatus('Ничего уверенно не нашлось. Нажмите на нужное место на фото, и область создастся вручную.', true); return; }
     const prevZones = S.zones.slice(), prevActive = S.active;
     S.zones = S.zones.filter(z => !(z.auto && z.fresh)); // прошлый результат поиска заменяем
@@ -1620,9 +1713,11 @@ async function autoSegment(){
     S.history.push({ type: 'auto', prev: prevZones, prevActive }); if (S.history.length > 20) S.history.shift();
     S.showAuto = Date.now() + 7000; setTimeout(requestPaint, 7100);
     renderZones(); renderInspector(); updateHint(); updateSummary(); render();
-    toast('Найдено элементов: ' + found.length + ' (' + segUsed + ' модель)');
+    if (S.pendingLook){ const L = S.pendingLook; S.pendingLook = null; zonesFromAutoReady(); applyLook(L); }
+    else toast('Найдено элементов: ' + found.length + ' (' + segUsed + ' модель)');
     segStatus('Нашёл (' + segUsed + ' модель): ' + found.map(f => f.name.toLowerCase()).join(', ') + '. Нажмите на нужную область и выберите цвет или материал.', false);
   } catch (e) {
+    if (S.pendingLook){ S.pendingLook = null; toast('Не удалось найти элементы автоматически. Нажмите на стену или пол на фото и выберите стиль снова'); }
     segStatus(e && e.message === 'timeout' ? 'Модель слишком долго загружается. Проверьте интернет и повторите.' : 'Не удалось запустить поиск (нет интернета или браузер не поддерживает). Остальное работает: нажимайте на фото как обычно.', true);
   } finally { G.busy = false; $('#autoSegBtn').disabled = false; }
 }
@@ -1739,6 +1834,51 @@ $('#gOwn').addEventListener('change', async e => {
   else useVariant(G.variants.length - 1, true);
 });
 
+/* ====================== готовые стили для всей комнаты ====================== */
+const LOOKS = [
+  { name: 'Светлая',   wall: ['#EFEBE3'], ceiling: ['#F8F6F1'], floor: ['#CDB58E', 'wood'], cabinet: ['#E8DFC8'], soft: ['#B8B2A7'], rug: ['#D8D2C6'], door: ['#EFEBE3'], curtain: ['#E8DFC8'], accent: ['#D8C3A0'] },
+  { name: 'Тёплая',    wall: ['#D8C3A0'], ceiling: ['#F1E9DA'], floor: ['#A9743F', 'wood'], cabinet: ['#8A5A38'], soft: ['#C26B4A'], rug: ['#E8DFC8'], door: ['#8A5A38'], curtain: ['#D2A33B'], accent: ['#C26B4A'] },
+  { name: 'Природа',   wall: ['#9CAF9A'], ceiling: ['#EFEBE3'], floor: ['#A9743F', 'wood'], cabinet: ['#E8DFC8'], soft: ['#2F6B5A'], rug: ['#D8C3A0'], door: ['#EFEBE3'], curtain: ['#9CAF9A'], accent: ['#2F6B5A'] },
+  { name: 'Тёмная',    wall: ['#3A3D42'], ceiling: ['#2B2E33'], floor: ['#55585C', 'tile'], cabinet: ['#1F2226'], soft: ['#2F3E55'], rug: ['#6B6F75'], door: ['#1F2226'], curtain: ['#2F3E55'], accent: ['#D2A33B'] },
+  { name: 'Контраст',  wall: ['#EFEBE3'], ceiling: ['#F8F6F1'], floor: ['#2F3237', 'tile'], cabinet: ['#2F3E55'], soft: ['#D2A33B'], rug: ['#3A3D42'], door: ['#2F3E55'], curtain: ['#D2A33B'], accent: ['#C26B4A'] },
+  { name: 'Серая',     wall: ['#B8B2A7'], ceiling: ['#EFEBE3'], floor: ['#8F8A80', 'concrete'], cabinet: ['#EFEBE3'], soft: ['#3A3D42'], rug: ['#D8D2C6'], door: ['#EFEBE3'], curtain: ['#B8B2A7'], accent: ['#3A3D42'] },
+];
+function roleOf(z, i){
+  const n = (z.name || '').toLowerCase();
+  if (/стен/.test(n)) return 'wall'; if (/потол/.test(n)) return 'ceiling'; if (/^пол|плитка пола/.test(n)) return 'floor'; if (/ковёр|ковер/.test(n)) return 'rug';
+  if (/тумб|столеш|шкаф|комод|стеллаж|полк|буфет|остров|раковин|холодил|радиатор/.test(n)) return 'cabinet';
+  if (/диван|кресл|кроват|стул|пуф|стол/.test(n)) return 'soft'; if (/дверь/.test(n)) return 'door'; if (/штор/.test(n)) return 'curtain';
+  return ['wall', 'floor', 'accent'][i % 3];
+}
+function markLooks(){ document.querySelectorAll('#looks .look').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.look === S.look))); }
+function applyLook(look){
+  const zs = S.zones.filter(hasMask); if (!zs.length) return false;
+  S.history.push({ type: 'look', snap: S.zones.map(z => ({ z, color: z.color, material: z.material, colorTouched: z.colorTouched, fresh: z.fresh, strength: z.strength, visible: z.visible, persp: z.persp, noPersp: z.noPersp, h: z.h })), look: S.look });
+  if (S.history.length > 20) S.history.shift();
+  zs.forEach(z => {
+    const spec = look[roleOf(z, S.zones.indexOf(z))] || look.accent;
+    z.color = spec[0]; z.material = spec[1] || 'none'; z.colorTouched = true; z.fresh = false; z.strength = 100; z.visible = true; z.noPersp = false; z.persp = null; z._H = null; z._pat = null; z._pk = null; z.h = null;
+    autoPersp(z);
+  });
+  S.look = look.name; markLooks(); markMoved(); renderZones(); renderInspector(); updateSummary(); updateHint(); requestRender(); return true;
+}
+function undoLook(h){
+  h.snap.forEach(o => { Object.assign(o.z, { color: o.color, material: o.material, colorTouched: o.colorTouched, fresh: o.fresh, strength: o.strength, visible: o.visible, persp: o.persp, noPersp: o.noPersp, h: o.h, _pat: null, _pk: null }); if (o.z.persp) buildH(o.z); else o.z._H = null; });
+  S.look = h.look || null; markLooks(); renderZones(); renderInspector(); updateSummary(); updateHint(); requestRender();
+}
+LOOKS.forEach(L => {
+  const b = document.createElement('button'); b.className = 'look'; b.dataset.look = L.name; b.setAttribute('aria-pressed', 'false');
+  b.innerHTML = '<span class="lk">' + [L.wall, L.floor, L.cabinet, L.soft].map(c => '<i style="background:' + c[0] + '"></i>').join('') + '</span>' + L.name;
+  b.addEventListener('click', () => {
+    if (!S.base) return;
+    if (!S.zones.some(hasMask)){ // областей ещё нет: сначала находим их автоматически, потом применяем стиль
+      S.pendingLook = L; toast('Ищу стены, пол и мебель…'); $('#autoSegBtn').click(); return;
+    }
+    applyLook(L);
+  });
+  $('#looks').appendChild(b);
+});
+
 /* ====================== вкладки и окна ====================== */
 const UI = (() => {
   const tabs = [...document.querySelectorAll('.tab')], panels = tabs.map(t => document.getElementById(t.getAttribute('aria-controls')));
@@ -1753,7 +1893,7 @@ const UI = (() => {
   document.querySelectorAll('.sheet').forEach(sh => sh.addEventListener('click', e => { if (e.target === sh) closeSheets(); }));
   document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', closeSheets));
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSheets(); });
-  $('#btnDone').addEventListener('click', () => openSheet('done'));
+  $('#btnDone').addEventListener('click', () => { $('#btnDone').classList.remove('nudge'); openSheet('done'); });
   $('#autoSegProxy').addEventListener('click', () => $('#autoSegBtn').click());
   $('#btnSettings').addEventListener('click', () => openSheet('settings'));
   $('#pasteToggle').addEventListener('click', () => { const t = $('#pasteBox'); t.hidden = !t.hidden; if (!t.hidden) t.focus(); });
