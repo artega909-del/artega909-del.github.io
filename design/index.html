@@ -167,6 +167,7 @@ textarea.gtext{min-height:64px;resize:vertical;margin-top:0}
       <div class="row" id="autoSegRow" style="margin:0 0 12px">
         <button class="btn" id="autoSegBtn" style="width:100%">Найти элементы автоматически</button>
         <p class="gstatus" id="autoSegStatus" role="status"></p>
+        <p class="note" id="autoSegSeen" style="margin:4px 0 0"></p>
         <p class="note" id="autoSegNote">Необязательно. Модель работает в вашем браузере, фото никуда не отправляется. При первом запуске она скачивается (десятки мегабайт), потом хранится в браузере.</p>
       </div>
       <p class="lead" id="noZone">Нажмите на фото на то, что хотите изменить: стену, пол или мебель.</p>
@@ -1316,7 +1317,7 @@ onNewPhoto = () => { // новое фото клиента: прошлые ва�
   G.variants = []; G.srcs = []; G.seq++; G.consent = false;
   $('#gGal').innerHTML = ''; $('#gGal').classList.add('hide'); $('#gBackRow').classList.add('hide');
   $('#gGo').textContent = 'Нарисовать 2 варианта'; gStatus('', false);
-  $('#aiEditBtn').textContent = 'Перерисовать область (ИИ)'; aiStatus('', false); segStatus('', false); S.showAuto = 0;
+  $('#aiEditBtn').textContent = 'Перерисовать область (ИИ)'; aiStatus('', false); segStatus('', false); $('#autoSegSeen').textContent = ''; S.showAuto = 0;
 };
 function confirmLose(){ // свой «подтвердить» на странице: confirm() в закрытой ссылке не работает
   if (Date.now() < (S.loseUntil || 0)){ S.loseUntil = 0; return true; }
@@ -1454,6 +1455,10 @@ async function autoSegment(){
     c.getContext('2d').drawImage(orig, 0, 0, c.width, c.height);
     const segs = await seg(c.toDataURL('image/jpeg', .9));
     if (pid !== S.photoId) return; // пока считалось, фото сменили
+    // что именно увидела модель (в том числе то, что мы пропускаем): помогает подстроить правила
+    const seen = segs.map(sg => { let n = 0, m = sg.mask, ch = m.channels || 1, tot = m.width * m.height; for (let i = 0; i < tot; i++) if (m.data[i * ch] > 127) n++; return { l: String(sg.label || '?').trim(), p: n / tot * 100 }; })
+      .filter(x => x.p >= 1).sort((a, b) => b.p - a.p).slice(0, 10);
+    $('#autoSegSeen').textContent = seen.length ? 'Модель увидела: ' + seen.map(x => x.l + ' ' + Math.round(x.p) + '%').join(', ') : '';
     const found = zonesFromSegments(segs, S.w, S.h);
     if (!found.length){ segStatus('Ничего уверенно не нашлось. Нажмите на нужное место на фото, и область создастся вручную.', true); return; }
     S.zones = S.zones.filter(z => !(z.auto && z.fresh)); // прошлый результат поиска заменяем
