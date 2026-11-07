@@ -164,6 +164,11 @@ textarea.gtext{min-height:64px;resize:vertical;margin-top:0}
   <aside>
     <div class="card" id="editCard">
       <h2>Что меняем</h2>
+      <div class="row" id="autoSegRow" style="margin:0 0 12px">
+        <button class="btn" id="autoSegBtn" style="width:100%">Найти элементы автоматически</button>
+        <p class="gstatus" id="autoSegStatus" role="status"></p>
+        <p class="note" id="autoSegNote">Необязательно. Модель работает в вашем браузере, фото никуда не отправляется. При первом запуске она скачивается (десятки мегабайт), потом хранится в браузере.</p>
+      </div>
       <p class="lead" id="noZone">Нажмите на фото на то, что хотите изменить: стену, пол или мебель.</p>
       <div id="zoneList"></div>
       <div id="inspector" class="hide">
@@ -804,7 +809,7 @@ function requestRender(){ if (!raf) raf = requestAnimationFrame(() => { raf = 0;
 function render(){
   if (!S.base) return;
   const out = new Uint8ClampedArray(S.base);
-  for (const z of S.zones) if (z.visible) applyZone(z, out);
+  for (const z of S.zones) if (z.visible && !z.fresh) applyZone(z, out);
   rctx.putImageData(new ImageData(out, S.w, S.h), 0, 0);
   paintView();
 }
@@ -841,6 +846,23 @@ function paintView(){
       if (on && (m[i - 1] <= 127 || m[i + 1] <= 127 || m[i - w] <= 127 || m[i + w] <= 127)){ const p = i * 4; d[p] = 255; d[p + 1] = 255; d[p + 2] = 255; d[p + 3] = 255; }
     }
     ictx.putImageData(id, 0, 0); vctx.drawImage(ovl, 0, 0);
+  }
+  if (S.showAuto && S.showAuto > Date.now()){ // сразу после поиска показываем все найденные области с названиями
+    const cols = ['#e0357a', '#2f9bff', '#2fc27a', '#f2a23a', '#9b6bff', '#18b8b8', '#e8594a', '#7a8b99'];
+    S.zones.forEach((z, k) => {
+      if (!z.auto || !hasMask(z)) return; const st = z.stats, m = z.mask, col = cols[k % cols.length];
+      const id = ictx.createImageData(w, h), d = id.data, [cr, cg, cb] = hex2rgb(col);
+      for (let y = Math.max(1, st.y0); y <= Math.min(h - 2, st.y1); y++) for (let x = Math.max(1, st.x0), i = y * w + Math.max(1, st.x0); x <= Math.min(w - 2, st.x1); x++, i++){
+        if (m[i] > 127){ const edge = m[i - 1] <= 127 || m[i + 1] <= 127 || m[i - w] <= 127 || m[i + w] <= 127; const p = i * 4; d[p] = cr; d[p + 1] = cg; d[p + 2] = cb; d[p + 3] = edge ? 255 : 46; }
+      }
+      ictx.putImageData(id, 0, 0); vctx.drawImage(ovl, 0, 0);
+      // подпись ставим в точку внутри области, ближайшую к её центру тяжести
+      let sx = 0, sy = 0, sn = 0; for (let y = st.y0; y <= st.y1; y += 4) for (let x = st.x0; x <= st.x1; x += 4) if (m[y * w + x] > 127){ sx += x; sy += y; sn++; }
+      let tx = sn ? sx / sn : (st.x0 + st.x1) / 2, ty = sn ? sy / sn : (st.y0 + st.y1) / 2;
+      if (m[Math.round(ty) * w + Math.round(tx)] <= 127){ let best = 1e18; for (let y = st.y0; y <= st.y1; y += 4) for (let x = st.x0; x <= st.x1; x += 4) if (m[y * w + x] > 127){ const d2 = (x - tx) ** 2 + (y - ty) ** 2; if (d2 < best){ best = d2; sx = x; sy = y; } } tx = sx; ty = sy; }
+      vctx.font = '700 ' + lw * 7 + 'px system-ui,sans-serif'; vctx.textAlign = 'center'; vctx.textBaseline = 'middle';
+      const tw = vctx.measureText(z.name).width + lw * 10; vctx.fillStyle = col; vctx.fillRect(tx - tw / 2, ty - lw * 7, tw, lw * 14); vctx.fillStyle = '#fff'; vctx.fillText(z.name, tx, ty);
+    });
   }
   const zp = activeZone();
   if (!S.pm && zp && zp.persp){
@@ -881,7 +903,7 @@ function renderZones(){
     el.addEventListener('keydown', ev => { if ((ev.key === 'Enter' || ev.key === ' ') && ev.target === el){ ev.preventDefault(); el.click(); } });
     const empty = !hasMask(z);
     el.innerHTML = '<span class="dot" style="background:' + z.color + '"></span>' +
-      '<span class="nm">' + esc(z.name) + '<small>' + (empty ? 'выделите область на фото' : (MATERIALS.find(m => m.id === z.material).name)) + '</small></span>' +
+      '<span class="nm">' + esc(z.name) + '<small>' + (empty ? 'выделите область на фото' : z.fresh ? 'найдено автоматически: выберите цвет' : (MATERIALS.find(m => m.id === z.material).name)) + '</small></span>' +
       '<button class="ico" data-a="eye" title="Показать / скрыть" aria-label="Показать или скрыть область">' + (z.visible ? '👁' : '—') + '</button>' +
       '<button class="ico" data-a="del" title="Удалить область" aria-label="Удалить область">✕</button>';
     el.addEventListener('click', e => {
@@ -935,7 +957,7 @@ function updateHint(){
 }
 
 function updateSummary(){
-  const rows = S.zones.filter(z => hasMask(z) && z.visible && z.strength > 0).map(z => {
+  const rows = S.zones.filter(z => hasMask(z) && z.visible && z.strength > 0 && !z.fresh).map(z => {
     const mt = MATERIALS.find(m => m.id === z.material), nm = nearestName(z.color);
     return '• ' + z.name + ': ' + (z.material === 'none' ? 'покраска' : mt.name.toLowerCase()) + ', цвет ' + (nm ? '«' + nm + '» ' : '') + z.color.toUpperCase();
   });
@@ -1121,7 +1143,7 @@ MATERIALS.forEach(m => {
   b.appendChild(c); b.appendChild(document.createTextNode(m.name));
   b.addEventListener('click', () => {
     const z = activeZone(); if (!z) return;
-    z.material = m.id; if (m.color && !z.colorTouched) z.color = m.color; autoPersp(z);
+    z.fresh = false; z.material = m.id; if (m.color && !z.colorTouched) z.color = m.color; autoPersp(z);
     renderZones(); renderInspector(); updateSummary(); updateHint(); requestRender();
   });
   $('#mats').appendChild(b);
@@ -1129,11 +1151,11 @@ MATERIALS.forEach(m => {
 
 function setColor(c){
   const z = activeZone(); if (!z) return;
-  z.color = c; z.colorTouched = true; renderZones(); renderInspector(); updateSummary(); requestRender();
+  z.fresh = false; z.color = c; z.colorTouched = true; renderZones(); renderInspector(); updateSummary(); requestRender();
 }
 $('#color').addEventListener('input', e => {
   const z = activeZone(); if (!z) return;
-  z.color = e.target.value; z.colorTouched = true;
+  z.fresh = false; z.color = e.target.value; z.colorTouched = true;
   $('#hex').textContent = z.color.toUpperCase(); $('#cname').textContent = nearestName(z.color);
   document.querySelectorAll('#swatches button').forEach(b => b.setAttribute('aria-pressed', 'false'));
   requestRender();
@@ -1294,7 +1316,7 @@ onNewPhoto = () => { // новое фото клиента: прошлые ва�
   G.variants = []; G.srcs = []; G.seq++; G.consent = false;
   $('#gGal').innerHTML = ''; $('#gGal').classList.add('hide'); $('#gBackRow').classList.add('hide');
   $('#gGo').textContent = 'Нарисовать 2 варианта'; gStatus('', false);
-  $('#aiEditBtn').textContent = 'Перерисовать область (ИИ)'; aiStatus('', false);
+  $('#aiEditBtn').textContent = 'Перерисовать область (ИИ)'; aiStatus('', false); segStatus('', false); S.showAuto = 0;
 };
 function confirmLose(){ // свой «подтвердить» на странице: confirm() в закрытой ссылке не работает
   if (Date.now() < (S.loseUntil || 0)){ S.loseUntil = 0; return true; }
@@ -1361,6 +1383,90 @@ async function generate(){
   } finally { clearTimeout(to); G.busy = false; $('#gGo').disabled = false; }
 }
 $('#gGo').addEventListener('click', generate);
+
+/* ====================== автоматический поиск элементов (необязательно) ====================== */
+const SEG_MODEL = 'Xenova/segformer-b0-finetuned-ade-512-512';        // семантическая разметка ADE20K, работает в браузере
+const SEG_LIB = 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.7.6';
+// метки ADE20K → название области
+const SEG_NAMES = { wall: 'Стены', floor: 'Пол', ceiling: 'Потолок', rug: 'Ковёр', cabinet: 'Шкаф', 'chest of drawers': 'Комод', wardrobe: 'Шкаф', shelf: 'Полка', bookcase: 'Стеллаж',
+  counter: 'Столешница', countertop: 'Столешница', 'kitchen island': 'Остров', buffet: 'Буфет', desk: 'Стол', table: 'Стол', 'coffee table': 'Журнальный столик', bed: 'Кровать',
+  sofa: 'Диван', armchair: 'Кресло', chair: 'Стул', 'swivel chair': 'Кресло', ottoman: 'Пуф', bathtub: 'Ванна', sink: 'Раковина', toilet: 'Унитаз', door: 'Дверь', curtain: 'Шторы',
+  refrigerator: 'Холодильник', stairs: 'Лестница', radiator: 'Радиатор' };
+const SEG_ORDER = ['Стены', 'Пол', 'Потолок'];
+let segPipe = null;
+function segStatus(t, err){ const el = $('#autoSegStatus'); el.textContent = t; el.classList.toggle('err', !!err); }
+async function getSegmenter(onProgress){
+  if (window.__segmenter) return window.__segmenter; // подмена для проверок
+  if (segPipe) return segPipe;
+  const mod = await import(SEG_LIB);
+  const prog = {};
+  segPipe = await mod.pipeline('image-segmentation', SEG_MODEL, { progress_callback: ev => {
+    if (ev && ev.file && ev.total){ prog[ev.file] = { l: ev.loaded || 0, t: ev.total }; let l = 0, t = 0; for (const k in prog){ l += prog[k].l; t += prog[k].t; } onProgress(Math.min(99, Math.round(l / t * 100))); }
+  } });
+  return segPipe;
+}
+// маски классов → области: крупные куски, без мелкой крошки, максимум 8 областей
+function zonesFromSegments(segs, W, H){
+  const groups = new Map();
+  for (const sg of segs){
+    const name = SEG_NAMES[String(sg.label || '').trim().toLowerCase()]; if (!name || !sg.mask) continue;
+    const m = sg.mask, mw = m.width, mh = m.height, ch = m.channels || 1;
+    let g = groups.get(name); if (!g){ g = { name, w: mw, h: mh, data: new Uint8Array(mw * mh) }; groups.set(name, g); }
+    if (g.w !== mw || g.h !== mh) continue;
+    for (let i = 0; i < mw * mh; i++) if (m.data[i * ch] > 127) g.data[i] = 255;
+  }
+  const out = [];
+  for (const g of groups.values()){
+    // оставляем связные куски не мельче 0,4% кадра, остальное считаем шумом
+    const n = g.w * g.h, lab = new Int32Array(n), sizes = [0]; let cur = 0; const stack = new Int32Array(n);
+    for (let s0 = 0; s0 < n; s0++){
+      if (!g.data[s0] || lab[s0]) continue; cur++; let sp = 0, cnt = 0; stack[sp++] = s0; lab[s0] = cur;
+      while (sp){ const i = stack[--sp]; cnt++; const x = i % g.w;
+        if (x > 0 && g.data[i - 1] && !lab[i - 1]){ lab[i - 1] = cur; stack[sp++] = i - 1; }
+        if (x < g.w - 1 && g.data[i + 1] && !lab[i + 1]){ lab[i + 1] = cur; stack[sp++] = i + 1; }
+        if (i >= g.w && g.data[i - g.w] && !lab[i - g.w]){ lab[i - g.w] = cur; stack[sp++] = i - g.w; }
+        if (i < n - g.w && g.data[i + g.w] && !lab[i + g.w]){ lab[i + g.w] = cur; stack[sp++] = i + g.w; } }
+      sizes.push(cnt);
+    }
+    const keep = new Uint8Array(n); let total = 0;
+    for (let i = 0; i < n; i++) if (lab[i] && sizes[lab[i]] >= n * .004){ keep[i] = 255; total++; }
+    if (total < n * .012) continue; // всего меньше 1,2% кадра — не область
+    // увеличиваем до размера фото с плавным краем
+    const c = document.createElement('canvas'); c.width = g.w; c.height = g.h; const cg = c.getContext('2d'), id = cg.createImageData(g.w, g.h);
+    for (let i = 0; i < n; i++){ id.data[i * 4] = id.data[i * 4 + 1] = id.data[i * 4 + 2] = keep[i]; id.data[i * 4 + 3] = 255; }
+    cg.putImageData(id, 0, 0);
+    const c2 = document.createElement('canvas'); c2.width = W; c2.height = H; const g2 = c2.getContext('2d'); g2.imageSmoothingQuality = 'high'; g2.drawImage(c, 0, 0, W, H);
+    const px = g2.getImageData(0, 0, W, H).data, mask = new Uint8Array(W * H);
+    for (let i = 0; i < W * H; i++) mask[i] = clamp((px[i * 4] - 90) * 2.4, 0, 255);
+    out.push({ name: g.name, mask: blurPlane(mask, W, H, 1), area: total / n });
+  }
+  out.sort((a, b) => { const ia = SEG_ORDER.indexOf(a.name), ib = SEG_ORDER.indexOf(b.name); return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib) || b.area - a.area; });
+  return out.slice(0, 8);
+}
+async function autoSegment(){
+  if (!S.base){ toast('Сначала загрузите фото'); return; }
+  if (G.busy) return; G.busy = true; $('#autoSegBtn').disabled = true; const pid = S.photoId;
+  try {
+    segStatus('Готовлю модель… ' + (segPipe || window.__segmenter ? '' : 'Первый запуск скачивает её, это займёт время.'), false);
+    const seg = await Promise.race([getSegmenter(p => segStatus('Загрузка модели: ' + p + '%', false)), new Promise((_, no) => setTimeout(() => no(new Error('timeout')), 240000))]);
+    segStatus('Ищу стены, пол и мебель…', false);
+    const k = Math.min(1, 640 / Math.max(S.w, S.h)), c = document.createElement('canvas'); c.width = Math.round(S.w * k); c.height = Math.round(S.h * k);
+    c.getContext('2d').drawImage(orig, 0, 0, c.width, c.height);
+    const segs = await seg(c.toDataURL('image/jpeg', .9));
+    if (pid !== S.photoId) return; // пока считалось, фото сменили
+    const found = zonesFromSegments(segs, S.w, S.h);
+    if (!found.length){ segStatus('Ничего уверенно не нашлось. Нажмите на нужное место на фото, и область создастся вручную.', true); return; }
+    S.zones = S.zones.filter(z => !(z.auto && z.fresh)); // прошлый результат поиска заменяем
+    for (const f of found){ addZone('Область'); const z = activeZone(); z.name = f.name; z.mask = f.mask; z.auto = true; z.fresh = true; z.simple = false; touchMask(z); }
+    S.active = -1; resetInteraction(); S.zones.forEach(z => { if (z.auto) measureRough(z); });
+    S.showAuto = Date.now() + 7000; setTimeout(requestPaint, 7100);
+    renderZones(); renderInspector(); updateHint(); updateSummary(); render();
+    segStatus('Нашёл: ' + found.map(f => f.name.toLowerCase()).join(', ') + '. Нажмите на нужную область и выберите цвет или материал.', false);
+  } catch (e) {
+    segStatus(e && e.message === 'timeout' ? 'Модель слишком долго загружается. Проверьте интернет и повторите.' : 'Не удалось запустить поиск (нет интернета или браузер не поддерживает). Остальное работает: нажимайте на фото как обычно.', true);
+  } finally { G.busy = false; $('#autoSegBtn').disabled = false; }
+}
+$('#autoSegBtn').addEventListener('click', autoSegment);
 
 /* ====================== перерисовка выбранной области нейросетью ====================== */
 const EDIT_SIZES = [[1024, 1024], [1536, 1024], [1024, 1536]]; // размеры, которые принимает нейросеть при редактировании
