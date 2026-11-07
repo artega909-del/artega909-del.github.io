@@ -619,6 +619,10 @@ function undo(){
   if (S.pm && S.pm.length){ S.pm.pop(); if (!S.pm.length) S.pm = null; updateHint(); paintView(); return; }
   if (S.poly && S.poly.length){ S.poly.pop(); if (!S.poly.length) S.poly = null; paintView(); return; }
   const h = S.history.pop(); if (!h){ toast('Отменять пока нечего'); return; }
+  if (h.type === 'auto'){ // отмена автопоиска: возвращаем области, какие были до него
+    S.zones = h.prev; S.active = Math.min(h.prevActive, S.zones.length - 1); S.showAuto = 0; resetInteraction();
+    renderZones(); renderInspector(); updateHint(); updateSummary(); render(); toast('Результат автопоиска отменён'); return;
+  }
   if (h.type === 'ai'){ // вернуть участок фото, который перерисовала нейросеть, вместе с областью
     octx.putImageData(h.before, h.x0, h.y0); S.base = octx.getImageData(0, 0, S.w, S.h).data; computeDerived();
     const zi = Math.min(h.zi, S.zones.length); S.zones.splice(zi, 0, h.zone); S.active = zi;
@@ -850,7 +854,7 @@ function paintView(){
     ictx.putImageData(id, 0, 0); vctx.drawImage(ovl, 0, 0);
   }
   if (S.showAuto && S.showAuto > Date.now()){ // сразу после поиска показываем все найденные области с названиями
-    const cols = ['#e0357a', '#2f9bff', '#2fc27a', '#f2a23a', '#9b6bff', '#18b8b8', '#e8594a', '#7a8b99'];
+    const cols = ['#e0357a', '#2f9bff', '#2fc27a', '#f2a23a', '#9b6bff', '#18b8b8', '#e8594a', '#7a8b99'], placed = [];
     S.zones.forEach((z, k) => {
       if (!z.auto || !hasMask(z)) return; const st = z.stats, m = z.mask, col = cols[k % cols.length];
       const id = ictx.createImageData(w, h), d = id.data, [cr, cg, cb] = hex2rgb(col);
@@ -863,7 +867,12 @@ function paintView(){
       let tx = sn ? sx / sn : (st.x0 + st.x1) / 2, ty = sn ? sy / sn : (st.y0 + st.y1) / 2;
       if (m[Math.round(ty) * w + Math.round(tx)] <= 127){ let best = 1e18; for (let y = st.y0; y <= st.y1; y += 4) for (let x = st.x0; x <= st.x1; x += 4) if (m[y * w + x] > 127){ const d2 = (x - tx) ** 2 + (y - ty) ** 2; if (d2 < best){ best = d2; sx = x; sy = y; } } tx = sx; ty = sy; }
       vctx.font = '700 ' + lw * 7 + 'px system-ui,sans-serif'; vctx.textAlign = 'center'; vctx.textBaseline = 'middle';
-      const tw = vctx.measureText(z.name).width + lw * 10; vctx.fillStyle = col; vctx.fillRect(tx - tw / 2, ty - lw * 7, tw, lw * 14); vctx.fillStyle = '#fff'; vctx.fillText(z.name, tx, ty);
+      const tw = vctx.measureText(z.name).width + lw * 10, th = lw * 14;
+      // если подпись задевает уже поставленную, сдвигаем её вниз и вверх, пока не освободится место
+      const hit = (cy) => placed.some(r => Math.abs(r.x - tx) < (r.w + tw) / 2 + lw && Math.abs(r.y - cy) < th + lw);
+      for (let t = 1; t <= 10 && hit(ty); t++){ const dy = Math.ceil(t / 2) * (th + lw) * (t % 2 ? 1 : -1); if (!hit(ty + dy) && ty + dy > th / 2 && ty + dy < h - th / 2){ ty += dy; break; } }
+      placed.push({ x: tx, y: ty, w: tw });
+      vctx.fillStyle = col; vctx.fillRect(clamp(tx - tw / 2, 0, w - tw), ty - th / 2, tw, th); vctx.fillStyle = '#fff'; vctx.fillText(z.name, clamp(tx, tw / 2, w - tw / 2), ty);
     });
   }
   const zp = activeZone();
@@ -1486,11 +1495,14 @@ async function autoSegment(){
     $('#autoSegSeen').textContent = seen.length ? 'Модель увидела: ' + seen.map(x => x.l + ' ' + Math.round(x.p) + '%').join(', ') : '';
     const found = zonesFromSegments(segs, S.w, S.h);
     if (!found.length){ segStatus('Ничего уверенно не нашлось. Нажмите на нужное место на фото, и область создастся вручную.', true); return; }
+    const prevZones = S.zones.slice(), prevActive = S.active;
     S.zones = S.zones.filter(z => !(z.auto && z.fresh)); // прошлый результат поиска заменяем
     for (const f of found){ addZone('Область'); const z = activeZone(); z.name = f.name; z.mask = f.mask; z.auto = true; z.fresh = true; z.simple = false; touchMask(z); }
     S.active = -1; resetInteraction(); S.zones.forEach(z => { if (z.auto) measureRough(z); });
+    S.history.push({ type: 'auto', prev: prevZones, prevActive }); if (S.history.length > 20) S.history.shift();
     S.showAuto = Date.now() + 7000; setTimeout(requestPaint, 7100);
     renderZones(); renderInspector(); updateHint(); updateSummary(); render();
+    toast('Найдено элементов: ' + found.length + ' (' + segUsed + ' модель)');
     segStatus('Нашёл (' + segUsed + ' модель): ' + found.map(f => f.name.toLowerCase()).join(', ') + '. Нажмите на нужную область и выберите цвет или материал.', false);
   } catch (e) {
     segStatus(e && e.message === 'timeout' ? 'Модель слишком долго загружается. Проверьте интернет и повторите.' : 'Не удалось запустить поиск (нет интернета или браузер не поддерживает). Остальное работает: нажимайте на фото как обычно.', true);
