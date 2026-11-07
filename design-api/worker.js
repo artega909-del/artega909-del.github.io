@@ -30,6 +30,7 @@ const ROOMS = {
 };
 const MAX_BODY = 7 * 1024 * 1024;   // тело запроса целиком, символов
 const MAX_IMAGE = 5 * 1024 * 1024; // сама картинка, байт
+const MAX_MASK = 4 * 1024 * 1024;  // маска PNG, байт (предел провайдера)
 const MAX_SIDE = 6000, MAX_PIXELS = 24e6; // защита от «мелких по размеру файла, огромных по размерам» картинок
 const hits = new Map();             // ключ → времена последних запросов (на один экземпляр воркера)
 
@@ -63,6 +64,20 @@ function safeEq(a, b) {
 }
 const tokenOk = (given, list) => { let ok = false; for (const t of list) if (safeEq(given, t)) ok = true; return ok; };
 
+// читает тело потоком и прекращает на лимите, не доверяя заголовку Content-Length
+async function readLimited(request, max) {
+  if (!request.body) return '';
+  const reader = request.body.getReader(), dec = new TextDecoder(); let total = 0, out = '';
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.length;
+    if (total > max) { try { await reader.cancel(); } catch { /* уже закрыт */ } return null; }
+    out += dec.decode(value, { stream: true });
+  }
+  return out + dec.decode();
+}
+
 function rateLimited(key, perMin) {
   const now = Date.now(), arr = (hits.get(key) || []).filter(t => now - t < 60000);
   if (arr.length >= perMin) { hits.set(key, arr); return true; }
@@ -74,7 +89,9 @@ function rateLimited(key, perMin) {
 // размеры PNG и JPEG из заголовка файла; null, если прочитать не удалось
 function imageSize(b, type) {
   if (type === 'image/png') {
-    if (b.length < 24 || b[0] !== 0x89 || b[1] !== 0x50) return null;
+    // подпись PNG целиком и блок IHDR на своём месте
+    const sig = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
+    if (b.length < 33 || sig.some((v, i) => b[i] !== v) || b[12] !== 0x49 || b[13] !== 0x48 || b[14] !== 0x44 || b[15] !== 0x52) return null;
     return { w: ((b[16] << 24) | (b[17] << 16) | (b[18] << 8) | b[19]) >>> 0, h: ((b[20] << 24) | (b[21] << 16) | (b[22] << 8) | b[23]) >>> 0 };
   }
   if (type === 'image/jpeg') {
@@ -171,14 +188,16 @@ async function handle(request, env, cors) {
   }
 
   const perMin = Math.max(1, Number(env.RATE_LIMIT_PER_MIN || 6));
-  if (rateLimited(given ? 'k:' + given : 'ip:' + (request.headers.get('cf-connecting-ip') || 'unknown'), perMin)) {
+  const ip = request.headers.get('cf-connecting-ip') || 'unknown';
+  // с ключом считаем по ключу (он уже проверен), без ключей (открытый режим) только по IP: подставляя случайные заголовки, лимит не обойти
+  if (rateLimited(tokens.length ? 'k:' + given : 'ip:' + ip, perMin)) {
     return json({ error: 'Слишком много запросов подряд. Подождите минуту.' }, 429, cors.headers);
   }
 
   // тело читаем целиком с лимитом, не доверяя заголовку Content-Length
   if (Number(request.headers.get('content-length') || 0) > MAX_BODY) return json({ error: 'Фото слишком большое. Уменьшите его и повторите.' }, 413, cors.headers);
-  const raw = await request.text();
-  if (raw.length > MAX_BODY) return json({ error: 'Фото слишком большое. Уменьшите его и повторите.' }, 413, cors.headers);
+  const raw = await readLimited(request, MAX_BODY);
+  if (raw === null) return json({ error: 'Фото слишком большое. Уменьшите его и повторите.' }, 413, cors.headers);
   let body;
   try { body = JSON.parse(raw); } catch { return json({ error: 'Некорректный запрос.' }, 400, cors.headers); }
   if (!body || typeof body !== 'object' || Array.isArray(body)) return json({ error: 'Некорректный запрос.' }, 400, cors.headers);
@@ -199,6 +218,7 @@ async function handle(request, env, cors) {
     if (typeof body.desc !== 'string' || body.desc.trim().length < 3) return json({ error: 'Напишите, что должно быть на этом месте.' }, 400, cors.headers);
     mask = parseDataUrl(body.mask);
     if (!mask || mask.type !== 'image/png') return json({ error: 'Нужна маска участка в формате PNG.' }, 400, cors.headers);
+    if (mask.bytes.length > MAX_MASK) return json({ error: 'Маска слишком большая.' }, 413, cors.headers);
     const md = imageSize(mask.bytes, 'image/png');
     if (!md || md.w !== dim.w || md.h !== dim.h) return json({ error: 'Маска должна быть того же размера, что и фото.' }, 400, cors.headers);
     if (mask.bytes[25] !== 4 && mask.bytes[25] !== 6) return json({ error: 'Маска должна быть PNG с прозрачностью.' }, 400, cors.headers);

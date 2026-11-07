@@ -61,7 +61,7 @@ body.has-photo .stage{min-height:0}
 .stage>*{grid-area:1/1}
 .stage>.stage-actions{grid-area:auto;position:absolute;top:10px;left:10px;right:10px;display:flex;gap:8px;pointer-events:none;z-index:2}
 .stage-actions>*{pointer-events:auto}
-.pill{display:none;align-items:center;gap:6px;border:0;border-radius:999px;padding:8px 14px 8px 11px;min-height:38px;background:rgba(14,17,19,.74);color:#fff;font-weight:600;font-size:13px;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+.pill{display:none;align-items:center;gap:6px;border:0;border-radius:999px;padding:8px 14px 8px 11px;min-height:44px;background:rgba(14,17,19,.74);color:#fff;font-weight:600;font-size:13px;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
 body.has-photo .pill{display:inline-flex}
 .pill:disabled{opacity:.6}
 .hint{margin:8px 2px 0;color:var(--muted);font-size:12.5px;line-height:1.3}
@@ -88,7 +88,7 @@ body.has-photo .pill{display:inline-flex}
 .zone .dot{width:22px;height:22px;border-radius:50%;border:1px solid var(--line-strong);flex:none}
 .zone .nm{white-space:nowrap;font-weight:600}
 .zone small{display:none}
-.zone .ico{min-width:30px;min-height:30px;padding:0;margin-right:-6px}
+.zone .ico{min-width:40px;min-height:40px;padding:0;margin:-4px -8px -4px -2px}
 .zone:not(.on) .ico{display:none}
 .ico{border:0;background:none;border-radius:50%;color:var(--muted);display:inline-grid;place-items:center}
 .ico:hover{background:var(--surface-2);color:var(--ink)}
@@ -113,10 +113,10 @@ body.has-zone .no-zone{display:none}
 select.gtext{min-height:44px}
 textarea.gtext{min-height:72px;resize:vertical}
 textarea{width:100%;border:1px solid var(--line-strong);border-radius:10px;padding:10px;font:13px/1.4 inherit;background:var(--surface);color:var(--ink);resize:vertical}
-input[type=range]{width:100%;height:28px;accent-color:var(--accent)}
+input[type=range]{width:100%;height:36px;accent-color:var(--accent)}
 input[type=checkbox]{width:20px;height:20px;flex:none;accent-color:var(--accent)}
-.chk{display:flex;gap:10px;align-items:center;font-size:14px;min-height:40px}
-.inl{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);min-height:36px}
+.chk{display:flex;gap:10px;align-items:center;font-size:14px;min-height:44px}
+.inl{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);min-height:44px}
 .inl input[type=range]{width:130px}
 .colorline{display:flex;gap:10px;align-items:center;margin-top:10px}
 input[type=color]{width:52px;height:44px;padding:3px;border:1px solid var(--line-strong);border-radius:10px;background:var(--surface);cursor:pointer}
@@ -176,10 +176,10 @@ body.has-photo .looks-wrap{display:block}
 /* окна */
 .sheet{position:fixed;inset:0;z-index:40;display:flex;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.5)}
 .sheet[hidden]{display:none}
-.sheet-card{background:var(--surface);width:min(580px,100%);max-height:90vh;overflow:auto;border-radius:20px 20px 0 0;padding:16px var(--gutter-r) calc(18px + env(safe-area-inset-bottom,0px)) var(--gutter-l);box-shadow:var(--shadow)}
+.sheet-card{overscroll-behavior:contain;background:var(--surface);width:min(580px,100%);max-height:90vh;overflow:auto;border-radius:20px 20px 0 0;padding:16px var(--gutter-r) calc(18px + env(safe-area-inset-bottom,0px)) var(--gutter-l);box-shadow:var(--shadow)}
 .sheet-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;position:sticky;top:-16px;background:var(--surface);padding:4px 0 8px;z-index:1}
 .sheet-head h2{font-size:18px;margin:0;text-transform:none;letter-spacing:-.01em;color:var(--ink)}
-details summary{cursor:pointer;color:var(--muted);font-size:13px;margin-top:10px;min-height:36px}
+details summary{cursor:pointer;color:var(--muted);font-size:13px;margin-top:10px;min-height:44px;display:flex;align-items:center}
 /* уведомление */
 #toast{position:fixed;left:50%;bottom:calc(var(--dock-h) + env(safe-area-inset-bottom,0px) + 12px);transform:translateX(-50%) translateY(20px);background:var(--ink);color:var(--bg);padding:11px 16px;border-radius:12px;opacity:0;transition:.25s;pointer-events:none;max-width:min(92vw,520px);z-index:60;box-shadow:var(--shadow)}
 #toast.on{opacity:1;transform:translateX(-50%)}
@@ -267,7 +267,7 @@ body.ui-all .sheet[hidden]{display:block!important}
       <button class="tab" role="tab" id="tab-ai" aria-controls="tp-ai" aria-selected="false" tabindex="-1" data-tab="ai">ИИ</button>
     </div>
 
-    <div class="tabpanel" id="tp-color" role="tabpanel" aria-labelledby="tab-color">
+    <div class="tabpanel" tabindex="0" id="tp-color" role="tabpanel" aria-labelledby="tab-color">
       <div class="no-zone"><p class="lead" id="noZone">Нажмите на фото на то, что хотите изменить: стену, пол или мебель.</p><button class="btn" id="autoSegProxy" style="margin-top:12px"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg> Найти элементы автоматически</button></div>
       <div class="needs-zone">
         <div class="sec">
@@ -284,7 +284,7 @@ body.ui-all .sheet[hidden]{display:block!important}
       </div>
     </div>
 
-    <div class="tabpanel" id="tp-material" role="tabpanel" aria-labelledby="tab-material" hidden>
+    <div class="tabpanel" tabindex="0" id="tp-material" role="tabpanel" aria-labelledby="tab-material" hidden>
       <div class="no-zone"><p class="lead">Сначала выберите область на фото.</p></div>
       <div class="needs-zone">
         <div class="sec"><div class="sec-t">Материал</div><div class="mats" id="mats"></div></div>
@@ -299,7 +299,7 @@ body.ui-all .sheet[hidden]{display:block!important}
       </div>
     </div>
 
-    <div class="tabpanel" id="tp-area" role="tabpanel" aria-labelledby="tab-area" hidden>
+    <div class="tabpanel" tabindex="0" id="tp-area" role="tabpanel" aria-labelledby="tab-area" hidden>
       <div class="sec" id="autoSegSection">
         <div class="sec-t">Автоматический поиск</div>
         <p class="lead" style="font-size:13px">Модель в браузере находит стены, пол, потолок и мебель и создаёт области. Запускается кнопкой над фото.</p>
@@ -338,7 +338,7 @@ body.ui-all .sheet[hidden]{display:block!important}
       <div class="sec"><div class="sec-t">Новая область вручную</div><div class="chips" id="addZone"></div></div>
     </div>
 
-    <div class="tabpanel" id="tp-ai" role="tabpanel" aria-labelledby="tab-ai" hidden>
+    <div class="tabpanel" tabindex="0" id="tp-ai" role="tabpanel" aria-labelledby="tab-ai" hidden>
       <div class="needs-zone">
         <div class="sec hide" id="aiEditRow">
           <div class="sec-t">Заменить область с помощью ИИ</div>
@@ -412,8 +412,8 @@ body.ui-all .sheet[hidden]{display:block!important}
     <div class="sec" id="serverSection">
       <div class="sec-t">Сервер генерации (необязательно)</div>
       <div class="row" style="margin-top:0"><label for="gUrl"><span>Адрес сервера</span></label><input type="text" id="gUrl" class="gtext" placeholder="https://design-visualizer-api.имя.workers.dev" autocomplete="off" autocapitalize="off" spellcheck="false"></div>
-      <div class="row"><label for="gToken"><span>Ключ доступа</span></label><input type="text" id="gToken" class="gtext" autocomplete="off" autocapitalize="off" spellcheck="false"></div>
-      <p class="note">Ключ нейросети хранится на сервере, а не на странице. Инструкция по запуску лежит в папке design-api.</p>
+      <div class="row"><label for="gToken"><span>Ключ доступа</span></label><input type="password" id="gToken" class="gtext" autocomplete="off" autocapitalize="off" spellcheck="false"></div>
+      <p class="note">Ключ нейросети хранится на сервере, а не на странице. Ключ доступа выше сохраняется в этом браузере: вводите его только на своём устройстве. Инструкция по запуску лежит в папке design-api.</p>
     </div>
   </div>
 </div>
@@ -596,7 +596,8 @@ function setImage(source, sw, sh, opts){
   computeDerived();
   S.zones = []; S.active = -1; S.history = []; S.compare = false;
   resetInteraction(); S.ovlData = null; updateTouch();
-  if (!opts.generated){ S.photoId = (S.photoId || 0) + 1; S.moved = false; S.look = null; S.pendingLook = null; $('#btnDone').classList.remove('nudge'); markLooks(); if (onNewPhoto) onNewPhoto(); }
+  S.imgId = (S.imgId || 0) + 1; S.moved = false; S.look = null; S.pendingLook = null; S.arm = null; $('#btnDone').classList.remove('nudge'); markLooks(); // любая смена картинки, в том числе открытие варианта
+  if (!opts.generated){ S.photoId = (S.photoId || 0) + 1; if (onNewPhoto && !opts.keepGallery) onNewPhoto(); }
   startCoach();
   $('#btnCmp').setAttribute('aria-pressed', 'false');
   $('#empty').classList.add('hide');
@@ -747,7 +748,7 @@ function pushHistory(z){
 }
 function startPersp(){
   const z = activeZone(); if (!z) return;
-  S.compare = false; $('#btnCmp').setAttribute('aria-pressed', 'false'); S.poly = null; S.pm = [];
+  S.compare = false; $('#btnCmp').setAttribute('aria-pressed', 'false'); S.poly = null; S.arm = null; S.pm = []; updateTouch();
   view.style.cursor = 'crosshair'; updateHint(); paintView();
   view.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
 }
@@ -760,7 +761,7 @@ function addPerspPoint(p){
   renderInspector(); updateHint(); requestRender();
 }
 function undo(){
-  if (S.pm && S.pm.length){ S.pm.pop(); if (!S.pm.length) S.pm = null; updateHint(); paintView(); return; }
+  if (S.pm){ S.pm.pop(); if (!S.pm.length) S.pm = null; updateHint(); paintView(); return; }
   if (S.poly && S.poly.length){ S.poly.pop(); if (!S.poly.length) S.poly = null; paintView(); return; }
   const h = S.history.pop(); if (!h){ toast('Отменять пока нечего'); return; }
   if (h.type === 'look'){ undoLook(h); toast('Стиль отменён'); return; }
@@ -959,9 +960,22 @@ function requestRender(){ if (!raf) raf = requestAnimationFrame(() => { raf = 0;
 
 function render(){
   if (!S.base) return;
-  const out = new Uint8ClampedArray(S.base);
-  for (const z of S.zones) if (z.visible && !z.fresh) applyZone(z, out);
-  rctx.putImageData(new ImageData(out, S.w, S.h), 0, 0);
+  const W = S.w, H = S.h, n4 = W * H * 4;
+  let full = false;
+  if (!S.outBuf || S.outBuf.length !== n4 || S.outBase !== S.base || S.outDirty === 'all'){ S.outBuf = new Uint8ClampedArray(S.base); S.outImg = new ImageData(S.outBuf, W, H); S.outBase = S.base; S.lastBox = null; full = true; S.outDirty = null; }
+  // участок, где что-то может меняться: области сейчас и в прошлый раз
+  let box = null; const add = (b, a) => a ? { x0: Math.min(a.x0, b.x0), y0: Math.min(a.y0, b.y0), x1: Math.max(a.x1, b.x1), y1: Math.max(a.y1, b.y1) } : b;
+  const act = S.zones.filter(z => z.visible && !z.fresh && hasMask(z));
+  for (const z of act){ const st = z.stats; box = add({ x0: st.x0, y0: st.y0, x1: st.x1, y1: st.y1 }, box); }
+  if (S.lastBox) box = add(S.lastBox, box);
+  if (full) box = { x0: 0, y0: 0, x1: W - 1, y1: H - 1 };
+  if (box){
+    const out = S.outBuf, base = S.base;
+    if (!full) for (let y = box.y0; y <= box.y1; y++){ const o = (y * W + box.x0) * 4, e = (y * W + box.x1 + 1) * 4; out.set(base.subarray(o, e), o); }
+    for (const z of act) applyZone(z, out);
+    rctx.putImageData(S.outImg, 0, 0, box.x0, box.y0, box.x1 - box.x0 + 1, box.y1 - box.y0 + 1);
+  }
+  S.lastBox = act.length ? act.reduce((b, z) => add({ x0: z.stats.x0, y0: z.stats.y0, x1: z.stats.x1, y1: z.stats.y1 }, b), null) : null;
   paintView();
 }
 
@@ -974,15 +988,18 @@ function suggestSpot(){
   }
   return { x: bx, y: by };
 }
-let coachRaf = 0;
-function startCoach(){
-  S.coach = suggestSpot(); cancelAnimationFrame(coachRaf);
-  if (reduceMotion) return;
-  const loop = () => { if (!S.coach || S.zones.some(hasMask) || S.compare){ coachRaf = 0; return; } paintView(); coachRaf = requestAnimationFrame(loop); };
-  coachRaf = requestAnimationFrame(loop);
+let coachRaf = 0, coachLast = 0;
+const sheetOpen = () => !document.body.classList.contains('ui-all') && !!document.querySelector('.sheet:not([hidden])');
+function coachVisible(){ return !!(S.base && S.coach && !S.compare && !S.pm && !S.poly && !S.arm && !sheetOpen() && !S.zones.some(hasMask)); }
+function coachLoop(t){
+  if (!coachVisible()){ coachRaf = 0; return; }
+  if (t - coachLast > 48){ coachLast = t; paintView(); }
+  coachRaf = requestAnimationFrame(coachLoop);
 }
+function kickCoach(){ if (!reduceMotion && !coachRaf && coachVisible()) coachRaf = requestAnimationFrame(coachLoop); }
+function startCoach(){ S.coach = suggestSpot(); cancelAnimationFrame(coachRaf); coachRaf = 0; kickCoach(); }
 function drawCoach(lw){
-  if (!S.coach || S.compare || S.zones.some(hasMask) || S.pm || S.poly) return;
+  if (!coachVisible()) return;
   const t = reduceMotion ? 0 : (performance.now() % 1500) / 1500, { x, y } = S.coach;
   vctx.save(); vctx.lineWidth = lw * 2;
   for (let k = 0; k < 2; k++){ const f = (t + k * .5) % 1; vctx.globalAlpha = (1 - f) * .9; vctx.strokeStyle = '#fff'; vctx.beginPath(); vctx.arc(x, y, lw * (9 + f * 22), 0, 7); vctx.stroke(); }
@@ -1017,36 +1034,51 @@ function paintView(){
   const z = activeZone();
   if (z && ensureStats(z).count){
     // контур выделения + лёгкая заливка, чтобы не искажать цвет результата
-    if (!S.ovlData) S.ovlData = ictx.createImageData(w, h);
-    const id = S.ovlData, d = id.data, m = z.mask, st = z.stats; d.fill(0);
+    const ovKey = z.id + ':' + z._mv + ':' + S.imgId;
+    if (S.ovlData && S.ovlKey === ovKey){ vctx.drawImage(ovl, 0, 0); } else {
+    S.ovlKey = ovKey;
+    let fullOvl = false; if (!S.ovlData){ S.ovlData = ictx.createImageData(w, h); S.ovlBox = null; fullOvl = true; }
+    const id = S.ovlData, d = id.data, m = z.mask, st = z.stats, pb = S.ovlBox;
+    if (pb) for (let y = pb.y0; y <= pb.y1; y++) d.fill(0, (y * w + pb.x0) * 4, (y * w + pb.x1 + 1) * 4); // стираем только прошлый контур
     const x0 = Math.max(1, st.x0 - 1), x1 = Math.min(w - 2, st.x1 + 1), y0 = Math.max(1, st.y0 - 1), y1 = Math.min(h - 2, st.y1 + 1);
     for (let y = y0; y <= y1; y++) for (let x = x0, i = y * w + x0; x <= x1; x++, i++){
       const on = m[i] > 127;
       if (on && (m[i - 1] <= 127 || m[i + 1] <= 127 || m[i - w] <= 127 || m[i + w] <= 127)){ const p = i * 4; d[p] = 255; d[p + 1] = 255; d[p + 2] = 255; d[p + 3] = 255; }
     }
-    ictx.putImageData(id, 0, 0); vctx.drawImage(ovl, 0, 0);
+    const cb = { x0, y0, x1, y1 }, ub = pb ? { x0: Math.min(pb.x0, x0), y0: Math.min(pb.y0, y0), x1: Math.max(pb.x1, x1), y1: Math.max(pb.y1, y1) } : cb;
+    S.ovlBox = cb;
+    if (fullOvl) ictx.putImageData(id, 0, 0); else ictx.putImageData(id, 0, 0, ub.x0, ub.y0, ub.x1 - ub.x0 + 1, ub.y1 - ub.y0 + 1);
+    vctx.drawImage(ovl, 0, 0);
+    }
   }
   if (S.showAuto && S.showAuto > Date.now()){ // сразу после поиска показываем все найденные области с названиями
-    const cols = ['#e0357a', '#2f9bff', '#2fc27a', '#f2a23a', '#9b6bff', '#18b8b8', '#e8594a', '#7a8b99'], placed = [];
-    S.zones.forEach((z, k) => {
-      if (!z.auto || !hasMask(z)) return; const st = z.stats, m = z.mask, col = cols[k % cols.length];
-      const id = ictx.createImageData(w, h), d = id.data, [cr, cg, cb] = hex2rgb(col);
-      for (let y = Math.max(1, st.y0); y <= Math.min(h - 2, st.y1); y++) for (let x = Math.max(1, st.x0), i = y * w + Math.max(1, st.x0); x <= Math.min(w - 2, st.x1); x++, i++){
-        if (m[i] > 127){ const edge = m[i - 1] <= 127 || m[i + 1] <= 127 || m[i - w] <= 127 || m[i + w] <= 127; const p = i * 4; d[p] = cr; d[p + 1] = cg; d[p + 2] = cb; d[p + 3] = edge ? 255 : 46; }
-      }
-      ictx.putImageData(id, 0, 0); vctx.drawImage(ovl, 0, 0);
-      // подпись ставим в точку внутри области, ближайшую к её центру тяжести
-      let sx = 0, sy = 0, sn = 0; for (let y = st.y0; y <= st.y1; y += 4) for (let x = st.x0; x <= st.x1; x += 4) if (m[y * w + x] > 127){ sx += x; sy += y; sn++; }
-      let tx = sn ? sx / sn : (st.x0 + st.x1) / 2, ty = sn ? sy / sn : (st.y0 + st.y1) / 2;
-      if (m[Math.round(ty) * w + Math.round(tx)] <= 127){ let best = 1e18; for (let y = st.y0; y <= st.y1; y += 4) for (let x = st.x0; x <= st.x1; x += 4) if (m[y * w + x] > 127){ const d2 = (x - tx) ** 2 + (y - ty) ** 2; if (d2 < best){ best = d2; sx = x; sy = y; } } tx = sx; ty = sy; }
-      vctx.font = '700 ' + lw * 7 + 'px system-ui,sans-serif'; vctx.textAlign = 'center'; vctx.textBaseline = 'middle';
-      const tw = vctx.measureText(z.name).width + lw * 10, th = lw * 14;
-      // если подпись задевает уже поставленную, сдвигаем её вниз и вверх, пока не освободится место
-      const hit = (cy) => placed.some(r => Math.abs(r.x - tx) < (r.w + tw) / 2 + lw && Math.abs(r.y - cy) < th + lw);
+    // слой подсветки и места подписей считаются один раз на результат поиска, а не на каждом кадре
+    const ck = S.showAuto + ':' + S.imgId;
+    if (!S.autoCache || S.autoCache.key !== ck){
+      const cols = ['#e0357a', '#2f9bff', '#2fc27a', '#f2a23a', '#9b6bff', '#18b8b8', '#e8594a', '#7a8b99'];
+      const cv = document.createElement('canvas'); cv.width = w; cv.height = h; const cg = cv.getContext('2d'), id = cg.createImageData(w, h), d = id.data, labels = [];
+      S.zones.forEach((z, k) => {
+        if (!z.auto || !hasMask(z)) return; const st = z.stats, m = z.mask, col = cols[k % cols.length], [cr, cgc, cb] = hex2rgb(col);
+        for (let y = Math.max(1, st.y0); y <= Math.min(h - 2, st.y1); y++) for (let x = Math.max(1, st.x0), i = y * w + Math.max(1, st.x0); x <= Math.min(w - 2, st.x1); x++, i++){
+          if (m[i] > 127){ const edge = m[i - 1] <= 127 || m[i + 1] <= 127 || m[i - w] <= 127 || m[i + w] <= 127; const p = i * 4; d[p] = cr; d[p + 1] = cgc; d[p + 2] = cb; d[p + 3] = edge ? 255 : 46; }
+        }
+        // подпись ставим в точку внутри области, ближайшую к её центру тяжести
+        let sx = 0, sy = 0, sn = 0; for (let y = st.y0; y <= st.y1; y += 4) for (let x = st.x0; x <= st.x1; x += 4) if (m[y * w + x] > 127){ sx += x; sy += y; sn++; }
+        let tx = sn ? sx / sn : (st.x0 + st.x1) / 2, ty = sn ? sy / sn : (st.y0 + st.y1) / 2;
+        if (m[Math.round(ty) * w + Math.round(tx)] <= 127){ let best = 1e18; for (let y = st.y0; y <= st.y1; y += 4) for (let x = st.x0; x <= st.x1; x += 4) if (m[y * w + x] > 127){ const d2 = (x - tx) ** 2 + (y - ty) ** 2; if (d2 < best){ best = d2; sx = x; sy = y; } } tx = sx; ty = sy; }
+        labels.push({ name: z.name, col, tx, ty });
+      });
+      cg.putImageData(id, 0, 0); S.autoCache = { key: ck, cv, labels };
+    }
+    vctx.drawImage(S.autoCache.cv, 0, 0);
+    const placed = []; vctx.font = '700 ' + lw * 7 + 'px system-ui,sans-serif'; vctx.textAlign = 'center'; vctx.textBaseline = 'middle';
+    for (const L of S.autoCache.labels){
+      let { tx, ty } = L; const tw = vctx.measureText(L.name).width + lw * 10, th = lw * 14;
+      const hit = (cy) => placed.some(r => Math.abs(r.x - tx) < (r.w + tw) / 2 + lw && Math.abs(r.y - cy) < th + lw); // подпись, задевающая другую, сдвигается
       for (let t = 1; t <= 10 && hit(ty); t++){ const dy = Math.ceil(t / 2) * (th + lw) * (t % 2 ? 1 : -1); if (!hit(ty + dy) && ty + dy > th / 2 && ty + dy < h - th / 2){ ty += dy; break; } }
       placed.push({ x: tx, y: ty, w: tw });
-      vctx.fillStyle = col; vctx.fillRect(clamp(tx - tw / 2, 0, w - tw), ty - th / 2, tw, th); vctx.fillStyle = '#fff'; vctx.fillText(z.name, clamp(tx, tw / 2, w - tw / 2), ty);
-    });
+      vctx.fillStyle = L.col; vctx.fillRect(clamp(tx - tw / 2, 0, w - tw), ty - th / 2, tw, th); vctx.fillStyle = '#fff'; vctx.fillText(L.name, clamp(tx, tw / 2, w - tw / 2), ty);
+    }
   }
   const zp = activeZone();
   if (!S.pm && zp && zp.persp){
@@ -1084,7 +1116,7 @@ function renderZones(){
     const el = document.createElement('div');
     el.className = 'zone' + (i === S.active ? ' on' : '') + (z.fresh ? ' fresh' : '');
     el.setAttribute('role', 'button'); el.tabIndex = 0; el.setAttribute('aria-pressed', String(i === S.active));
-    el.addEventListener('keydown', ev => { if ((ev.key === 'Enter' || ev.key === ' ') && ev.target === el){ ev.preventDefault(); el.click(); } });
+    el.addEventListener('keydown', ev => { if ((ev.key === 'Enter' || ev.key === ' ') && ev.target === el){ ev.preventDefault(); S.focusZone = i; el.click(); } });
     const empty = !hasMask(z);
     el.innerHTML = '<span class="dot" style="background:' + z.color + '"></span>' +
       '<span class="nm">' + esc(z.name) + '<small>' + (empty ? 'выделите область на фото' : z.fresh ? 'найдено автоматически: выберите цвет' : (MATERIALS.find(m => m.id === z.material).name)) + '</small></span>' +
@@ -1095,6 +1127,7 @@ function renderZones(){
       if (a === 'eye'){ z.visible = !z.visible; renderZones(); updateSummary(); requestRender(); return; }
       if (a === 'del'){
         S.zones.splice(i, 1); resetInteraction(); S.history = S.history.filter(h => h.id !== z.id);
+        S.history.forEach(h => { if (h.type === 'auto') h.prev = h.prev.filter(q => q !== z); if (h.type === 'look') h.snap = h.snap.filter(o => o.z !== z); });
         S.active = Math.min(S.active, S.zones.length - 1); if (i < S.active) S.active--;
         renderZones(); renderInspector(); requestRender(); updateHint(); updateSummary(); return;
       }
@@ -1102,7 +1135,8 @@ function renderZones(){
     });
     box.appendChild(el);
   });
-
+  if (S.focusZone != null){ const el = box.children[Math.min(S.focusZone, box.children.length - 1)]; S.focusZone = null; if (el) el.focus(); } // клавиатура: фокус остаётся на чипе
+  kickCoach();
 }
 
 function renderInspector(){
@@ -1172,6 +1206,7 @@ view.addEventListener('pointerdown', e => {
   if (S.stroke && S.stroke.pid === undefined) S.stroke.pid = e.pointerId;
 });
 function press(p){
+  S.showAuto = 0; // первое действие после поиска убирает подсветку найденных областей
   if (S.pm){ addPerspPoint(p); return; }
   if (S.arm && activeZone()){ // «Добавить участок» / «Исключить объект»: одно нажатие по фото
     const z = activeZone(), sub = S.arm === 'sub'; S.arm = null;
@@ -1266,7 +1301,7 @@ function maskChanged(z){ if (z){ autoPersp(z); measureRough(z); } renderZones();
 document.querySelectorAll('[data-tool]').forEach(b => b.addEventListener('click', () => {
   S.tool = b.dataset.tool; S.compare = false; $('#btnCmp').setAttribute('aria-pressed', 'false');
   document.querySelectorAll('[data-tool]').forEach(q => q.setAttribute('aria-pressed', String(q === b)));
-  const bt = S.tool === 'brush' || S.tool === 'erase'; S.poly = null; S.pm = null;
+  const bt = S.tool === 'brush' || S.tool === 'erase'; S.poly = null; S.pm = null; S.arm = null; renderInspector();
   $('#tolBox').classList.toggle('hide', S.tool !== 'wand'); $('#subBox').classList.toggle('hide', !(S.tool === 'wand' || S.tool === 'poly')); $('#addBox').classList.toggle('hide', S.tool !== 'wand');
   $('#brushBox').classList.toggle('hide', !bt); $('#btnClose').classList.toggle('hide', S.tool !== 'poly');
   view.style.cursor = bt ? 'none' : 'crosshair'; updateTouch();
@@ -1274,7 +1309,7 @@ document.querySelectorAll('[data-tool]').forEach(b => b.addEventListener('click'
 }));
 $('#btnCmp').addEventListener('click', () => {
   if (!S.base) return;
-  S.compare = !S.compare; $('#btnCmp').setAttribute('aria-pressed', String(S.compare));
+  S.compare = !S.compare; $('#btnCmp').setAttribute('aria-pressed', String(S.compare)); kickCoach();
   view.style.cursor = S.compare ? 'ew-resize' : ((S.tool === 'brush' || S.tool === 'erase') ? 'none' : 'crosshair'); updateTouch();
   updateHint(); updateTouch(); paintView();
 });
@@ -1283,11 +1318,11 @@ $('#btnClose').addEventListener('click', closePoly);
 document.addEventListener('keydown', e => {
   if (isTyping()) return;
   if (e.key === 'Enter' && S.poly) closePoly();
-  if (e.key === 'Escape' && (S.poly || S.pm || S.arm)){ S.poly = null; S.pm = null; S.arm = null; renderInspector(); updateHint(); paintView(); }
+  if (e.key === 'Escape' && !sheetOpen() && (S.poly || S.pm || S.arm)){ S.poly = null; S.pm = null; S.arm = null; renderInspector(); updateHint(); paintView(); }
 });
 // печатаем текст — горячие клавиши не трогаем; ползунки и флажки печатью не считаются
 const isTyping = () => { const a = document.activeElement; return !!a && (a.tagName === 'TEXTAREA' || (a.tagName === 'INPUT' && !['range', 'checkbox', 'radio', 'button', 'color', 'file'].includes(a.type))); };
-document.addEventListener('keydown', e => { if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && !isTyping()){ e.preventDefault(); undo(); } });
+document.addEventListener('keydown', e => { if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && !isTyping() && !sheetOpen()){ e.preventDefault(); undo(); } });
 $('#tol').addEventListener('input', e => S.tol = +e.target.value);
 $('#brush').addEventListener('input', e => { S.brush = +e.target.value; paintView(); });
 $('#sub').addEventListener('change', e => S.sub = e.target.checked);
@@ -1392,7 +1427,7 @@ $('#scale').addEventListener('input', e => {
 $('#perspSet').addEventListener('click', startPersp);
 $('#perspClear').addEventListener('click', () => { const z = activeZone(); if (!z) return; z.persp = null; z._H = null; z.noPersp = true; renderInspector(); requestRender(); });
 $('#smoothBtn').addEventListener('click', () => { const z = activeZone(); if (!z) return; z.flat = z.flat >= 50 ? 0 : 85; renderInspector(); requestRender(); });
-const arm = mode => { const z = activeZone(); if (!z) return; S.arm = S.arm === mode ? null : mode; S.compare = false; $('#btnCmp').setAttribute('aria-pressed', 'false'); renderInspector(); updateHint(); };
+const arm = mode => { const z = activeZone(); if (!z) return; S.arm = S.arm === mode ? null : mode; S.pm = null; S.poly = null; S.compare = false; updateTouch(); $('#btnCmp').setAttribute('aria-pressed', 'false'); renderInspector(); updateHint(); };
 $('#armAdd').addEventListener('click', () => arm('add'));
 $('#armSub').addEventListener('click', () => arm('sub'));
 $('#tolLess').addEventListener('click', () => retune(-6));
@@ -1526,18 +1561,26 @@ $('#btnCopy').addEventListener('click', async () => {
 /* ====================== генерация (ИИ) ====================== */
 // Адрес сервера можно задать здесь, тогда поле в настройках заполнится само.
 const GEN_DEFAULT_URL = '';
-const G = { url: GEN_DEFAULT_URL, token: '', busy: false, variants: [], srcs: [], seq: 0, consent: false };
+const G = { url: GEN_DEFAULT_URL, token: '', busy: false, variants: [], srcs: [], seq: 0, consents: {} };
+const hostOf = u => { try { return new URL(u).host; } catch (e) { return u; } };
+function needConsent(kind, btn, label, say){ // согласие действует для вида запроса, адреса сервера и этого фото
+  const key = kind + '|' + G.url + '|' + S.photoId;
+  if (G.consents[key]) return false;
+  if (G.asked === key){ G.consents[key] = true; G.asked = null; btn.textContent = label; return false; }
+  G.asked = key; btn.textContent = 'Подтверждаю: отправить фото на сервер'; say('Фото уйдёт на сервер ' + hostOf(G.url) + ' и в нейросеть. Если клиент согласен, нажмите кнопку ещё раз.', false); return true;
+}
 try { const sv = JSON.parse(localStorage.getItem('gen-v1') || 'null'); if (sv){ G.url = String(sv.url || G.url); G.token = String(sv.token || ''); } } catch (e) {}
 const saveGen = () => { try { localStorage.setItem('gen-v1', JSON.stringify({ url: G.url, token: G.token })); } catch (e) {} };
 $('#gUrl').value = G.url; $('#gToken').value = G.token;
-$('#gUrl').addEventListener('input', e => { G.url = e.target.value.trim(); saveGen(); });
+$('#gUrl').addEventListener('input', e => { G.url = e.target.value.trim(); saveGen(); G.asked = null; $('#gGo').textContent = 'Нарисовать 2 варианта (платно)'; $('#aiEditBtn').textContent = 'Перерисовать область (ИИ)'; });
 $('#gToken').addEventListener('input', e => { G.token = e.target.value.trim(); saveGen(); });
 onNewPhoto = () => { // новое фото клиента: прошлые варианты к нему не относятся
-  G.variants = []; G.srcs = []; G.seq++; G.consent = false;
+  G.variants = []; G.srcs = []; G.seq++; G.consents = {};
   $('#gGal').innerHTML = ''; $('#gGal').classList.add('hide'); $('#gBackRow').classList.add('hide');
-  $('#gGo').textContent = 'Нарисовать 2 варианта'; gStatus('', false);
+  $('#gGo').textContent = 'Нарисовать 2 варианта (платно)'; gStatus('', false); G.asked = null;
   $('#aiEditBtn').textContent = 'Перерисовать область (ИИ)'; aiStatus('', false); segStatus('', false); $('#autoSegSeen').textContent = ''; S.showAuto = 0;
 };
+const hasWork = () => S.zones.some(hasMask) || S.history.some(h => h.type === 'ai');
 function confirmLose(){ // свой «подтвердить» на странице: confirm() в закрытой ссылке не работает
   if (Date.now() < (S.loseUntil || 0)){ S.loseUntil = 0; return true; }
   S.loseUntil = Date.now() + 5000; toast('Цвета и материалы на фото сбросятся. Нажмите ещё раз, чтобы продолжить'); return false;
@@ -1555,7 +1598,7 @@ function showVariants(list){
   });
 }
 function useVariant(i, force){
-  if (!force && S.zones.some(hasMask) && !confirmLose()) return;
+  if (!force && hasWork() && !confirmLose()) return;
   const im = new Image(), label = $('#gStyle').selectedOptions[0].textContent;
   im.onload = () => {
     setImage(im, im.naturalWidth, im.naturalHeight, { generated: true, label, src: G.srcs[i] || 'own' });
@@ -1568,21 +1611,17 @@ function useVariant(i, force){
 }
 $('#gBack').addEventListener('click', () => {
   if (!S.hasPhoto) return;
-  if (S.zones.some(hasMask) && !confirmLose()) return;
-  setImage(photo, photo.width, photo.height);
+  if (hasWork() && !confirmLose()) return;
+  setImage(photo, photo.width, photo.height, { keepGallery: true });
   document.querySelectorAll('#gGal button').forEach(b => b.setAttribute('aria-pressed', 'false'));
   $('#gBackRow').classList.add('hide'); updateSummary();
 });
 async function generate(){
   if (!S.base){ toast('Сначала загрузите фото'); return; }
   if (!G.url){ UI.openSheet('settings'); $('#gUrl').focus(); gStatus('Укажите адрес сервера в настройках (шестерёнка вверху).', true); return; }
-  if (G.busy) return;
-  if (!G.consent){ // фото клиента уходит на сервер и в нейросеть: спрашиваем явно
-    G.consent = true; $('#gGo').textContent = 'Подтверждаю: отправить фото на сервер';
-    gStatus('Фото уйдёт на ваш сервер и в нейросеть. Если клиент согласен, нажмите кнопку ещё раз.', false); return;
-  }
-  $('#gGo').textContent = 'Нарисовать 2 варианта';
-  const seq = ++G.seq, pid = S.photoId;
+  if (G.busy){ toast('Запрос к серверу уже идёт. Подождите'); return; }
+  if (needConsent('gen', $('#gGo'), 'Нарисовать 2 варианта (платно)', gStatus)) return;
+  const seq = ++G.seq, pid = S.imgId;
   const k = Math.min(1, 1024 / Math.max(photo.width, photo.height)), c = document.createElement('canvas');
   c.width = Math.round(photo.width * k); c.height = Math.round(photo.height * k);
   c.getContext('2d').drawImage(photo, 0, 0, c.width, c.height);
@@ -1595,7 +1634,7 @@ async function generate(){
       headers: Object.assign({ 'content-type': 'application/json' }, G.token ? { 'x-app-token': G.token } : {})
     });
     let d = null; try { d = await r.json(); } catch (e) {}
-    if (seq !== G.seq || pid !== S.photoId) return; // пока рисовалось, фото сменили
+    if (seq !== G.seq || pid !== S.imgId) return; // пока рисовалось, фото сменили
     if (!r.ok || !d || !d.images || !d.images.length) throw new Error((d && d.error) || 'Сервер ответил ошибкой (' + r.status + ')');
     G.srcs = d.images.map(() => 'server'); showVariants(d.images); gStatus('Готово. Нажмите на вариант, чтобы открыть его в редакторе.', false);
   } catch (e) {
@@ -1619,9 +1658,11 @@ function segStatus(t, err){ const el = $('#autoSegStatus'); el.textContent = t; 
 async function loadSegModel(mod, id, onProgress){
   if (segPipes[id]) return segPipes[id];
   const prog = {};
-  return segPipes[id] = await mod.pipeline('image-segmentation', id, { progress_callback: ev => {
+  const pr = segPipes[id] = mod.pipeline('image-segmentation', id, { progress_callback: ev => {
     if (ev && ev.file && ev.total){ prog[ev.file] = { l: ev.loaded || 0, t: ev.total }; let l = 0, t = 0; for (const k in prog){ l += prog[k].l; t += prog[k].t; } onProgress(Math.min(99, Math.round(l / t * 100))); }
   } });
+  pr.catch(() => { delete segPipes[id]; }); // неудачная загрузка не кэшируется: следующая попытка начнёт заново
+  return pr;
 }
 async function getSegmenter(onProgress, precise){
   if (window.__segmenter){ segUsed = 'тестовая'; return window.__segmenter; } // подмена для проверок
@@ -1689,16 +1730,15 @@ function zonesFromSegments(segs, W, H){
   out.sort((a, b) => { const ia = SEG_ORDER.indexOf(a.name), ib = SEG_ORDER.indexOf(b.name); return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib) || b.area - a.area; });
   return out.slice(0, 8);
 }
-function zonesFromAutoReady(){ S.zones.forEach(z => { if (z.auto) z.fresh = false; }); }
 async function autoSegment(){
   if (!S.base){ toast('Сначала загрузите фото'); return; }
-  if (G.busy) return; G.busy = true; $('#autoSegBtn').disabled = true; const pid = S.photoId;
+  if (S.segBusy){ toast('Поиск уже идёт'); return; } S.segBusy = true; $('#autoSegBtn').disabled = true; const pid = S.imgId;
   try {
     segStatus('Готовлю модель… ' + (Object.keys(segPipes).length || window.__segmenter ? '' : 'Первый запуск скачивает её, это займёт время.'), false);
     const seg = await Promise.race([getSegmenter(p => segStatus('Загрузка модели: ' + p + '%', false), $('#autoSegPrecise').checked), new Promise((_, no) => setTimeout(() => no(new Error('timeout')), 240000))]);
     segStatus('Ищу стены, пол и мебель…', false);
     const segs = await segmentImage(seg, orig);
-    if (pid !== S.photoId) return; // пока считалось, фото сменили
+    if (pid !== S.imgId) return; // пока считалось, картинку сменили
     // что именно увидела модель (в том числе то, что мы пропускаем): помогает подстроить правила
     const seen = segs.map(sg => { let n = 0, m = sg.mask, ch = m.channels || 1, tot = m.width * m.height; for (let i = 0; i < tot; i++) if (m.data[i * ch] > 127) n++; return { l: String(sg.label || '?').trim(), p: n / tot * 100 }; })
       .filter(x => x.p >= 1).sort((a, b) => b.p - a.p).slice(0, 10);
@@ -1713,13 +1753,13 @@ async function autoSegment(){
     S.history.push({ type: 'auto', prev: prevZones, prevActive }); if (S.history.length > 20) S.history.shift();
     S.showAuto = Date.now() + 7000; setTimeout(requestPaint, 7100);
     renderZones(); renderInspector(); updateHint(); updateSummary(); render();
-    if (S.pendingLook){ const L = S.pendingLook; S.pendingLook = null; zonesFromAutoReady(); applyLook(L); }
+    if (S.pendingLook){ const L = S.pendingLook; S.pendingLook = null; applyLook(L); }
     else toast('Найдено элементов: ' + found.length + ' (' + segUsed + ' модель)');
     segStatus('Нашёл (' + segUsed + ' модель): ' + found.map(f => f.name.toLowerCase()).join(', ') + '. Нажмите на нужную область и выберите цвет или материал.', false);
   } catch (e) {
     if (S.pendingLook){ S.pendingLook = null; toast('Не удалось найти элементы автоматически. Нажмите на стену или пол на фото и выберите стиль снова'); }
     segStatus(e && e.message === 'timeout' ? 'Модель слишком долго загружается. Проверьте интернет и повторите.' : 'Не удалось запустить поиск (нет интернета или браузер не поддерживает). Остальное работает: нажимайте на фото как обычно.', true);
-  } finally { G.busy = false; $('#autoSegBtn').disabled = false; }
+  } finally { S.segBusy = false; $('#autoSegBtn').disabled = false; if (S.pendingLook){ S.pendingLook = null; } }
 }
 $('#autoSegBtn').addEventListener('click', autoSegment);
 
@@ -1760,7 +1800,7 @@ function composeEdit(img, g, md){
     const p = gi * 4, q = (y * g.ww + x) * 4;
     for (let k = 0; k < 3; k++) S.base[p + k] = S.base[p + k] * (1 - a) + A[q + k] * a;
   }
-  octx.putImageData(new ImageData(S.base, S.w, S.h), 0, 0);
+  octx.putImageData(new ImageData(S.base, S.w, S.h), 0, 0); S.outDirty = 'all'; // исходные пиксели изменились: кэш кадра пересобрать целиком
 }
 const loadImg = url => new Promise((ok, no) => { const im = new Image(); im.onload = () => ok(im); im.onerror = no; im.src = url; });
 async function aiEdit(){
@@ -1769,13 +1809,9 @@ async function aiEdit(){
   const desc = $('#aiDesc').value.trim();
   if (desc.length < 3){ aiStatus('Напишите, что должно быть на этом месте.', true); $('#aiDesc').focus(); return; }
   if (!G.url){ UI.openSheet('settings'); $('#gUrl').focus(); aiStatus('Укажите адрес сервера в блоке «Идея в другом стиле (ИИ)» → «Автоматически через сервер».', true); return; }
-  if (G.busy) return;
-  if (!G.consent){ // фото клиента уходит на сервер и в нейросеть: спрашиваем явно
-    G.consent = true; $('#aiEditBtn').textContent = 'Подтверждаю: отправить фото на сервер';
-    aiStatus('Фрагмент фото уйдёт на ваш сервер и в нейросеть. Если клиент согласен, нажмите кнопку ещё раз.', false); return;
-  }
-  $('#aiEditBtn').textContent = 'Перерисовать область (ИИ)';
-  const seq = ++G.seq, pid = S.photoId, zid = z.id, prep = prepEdit(z);
+  if (G.busy){ toast('Запрос к серверу уже идёт. Подождите'); return; }
+  if (needConsent('edit', $('#aiEditBtn'), 'Перерисовать область (ИИ)', aiStatus)) return;
+  const seq = ++G.seq, pid = S.imgId, zid = z.id, prep = prepEdit(z);
   G.busy = true; $('#aiEditBtn').disabled = true; aiStatus('Перерисовываю область. Обычно это занимает 20–60 секунд…', false);
   const ctrl = new AbortController(), to = setTimeout(() => ctrl.abort(), 150000);
   try {
@@ -1787,7 +1823,7 @@ async function aiEdit(){
     let d = null; try { d = await r.json(); } catch (e) {}
     if (!r.ok || !d || !d.images || !d.images.length) throw new Error((d && d.error) || 'Сервер ответил ошибкой (' + r.status + ')');
     const img = await loadImg(d.images[0]);
-    if (seq !== G.seq || pid !== S.photoId || !S.zones.some(q => q.id === zid)) return; // пока рисовалось, фото сменили или область удалили
+    if (seq !== G.seq || pid !== S.imgId || !S.zones.some(q => q.id === zid)) return; // пока рисовалось, фото сменили или область удалили
     const before = octx.getImageData(prep.g.x0, prep.g.y0, prep.g.ww, prep.g.wh);
     if (!S.hasBef){ bef.width = S.w; bef.height = S.h; bctx.drawImage(orig, 0, 0); S.hasBef = true; } // «До» остаётся исходным фото
     composeEdit(img, prep.g, prep.md);
@@ -1845,7 +1881,7 @@ const LOOKS = [
 ];
 function roleOf(z, i){
   const n = (z.name || '').toLowerCase();
-  if (/стен/.test(n)) return 'wall'; if (/потол/.test(n)) return 'ceiling'; if (/^пол|плитка пола/.test(n)) return 'floor'; if (/ковёр|ковер/.test(n)) return 'rug';
+  if (/стен/.test(n)) return 'wall'; if (/потол/.test(n)) return 'ceiling'; if (/^пол(\s|\d|$)|плитка пола/.test(n)) return 'floor'; if (/ковёр|ковер/.test(n)) return 'rug';
   if (/тумб|столеш|шкаф|комод|стеллаж|полк|буфет|остров|раковин|холодил|радиатор/.test(n)) return 'cabinet';
   if (/диван|кресл|кроват|стул|пуф|стол/.test(n)) return 'soft'; if (/дверь/.test(n)) return 'door'; if (/штор/.test(n)) return 'curtain';
   return ['wall', 'floor', 'accent'][i % 3];
@@ -1872,6 +1908,7 @@ LOOKS.forEach(L => {
   b.addEventListener('click', () => {
     if (!S.base) return;
     if (!S.zones.some(hasMask)){ // областей ещё нет: сначала находим их автоматически, потом применяем стиль
+      if (S.segBusy){ S.pendingLook = L; toast('Применю стиль, когда закончится поиск'); return; }
       S.pendingLook = L; toast('Ищу стены, пол и мебель…'); $('#autoSegBtn').click(); return;
     }
     applyLook(L);
@@ -1886,19 +1923,40 @@ const UI = (() => {
   function tab(name){ tabs.forEach((t, i) => { const on = t.dataset.tab === name; t.setAttribute('aria-selected', String(on)); t.tabIndex = on ? 0 : -1; panels[i].hidden = !on; }); }
   tabs.forEach((t, i) => {
     t.addEventListener('click', () => tab(t.dataset.tab));
-    t.addEventListener('keydown', e => { if (e.key === 'ArrowRight' || e.key === 'ArrowLeft'){ const n = (i + (e.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length; tab(tabs[n].dataset.tab); tabs[n].focus(); e.preventDefault(); } });
+    t.addEventListener('keydown', e => { if (e.key === 'Home' || e.key === 'End'){ const n = e.key === 'Home' ? 0 : tabs.length - 1; tab(tabs[n].dataset.tab); tabs[n].focus(); e.preventDefault(); } if (e.key === 'ArrowRight' || e.key === 'ArrowLeft'){ const n = (i + (e.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length; tab(tabs[n].dataset.tab); tabs[n].focus(); e.preventDefault(); } });
   });
-  function openSheet(id){ const el = document.getElementById('sheet-' + id); if (!el) return; lastFocus = document.activeElement; el.hidden = false; const c = el.querySelector('[data-close]'); if (c) c.focus(); }
-  function closeSheets(){ let any = false; document.querySelectorAll('.sheet').forEach(sh => { if (!sh.hidden){ sh.hidden = true; any = true; } }); if (any && lastFocus && lastFocus.focus) lastFocus.focus(); }
-  document.querySelectorAll('.sheet').forEach(sh => sh.addEventListener('click', e => { if (e.target === sh) closeSheets(); }));
+  const bgEls = () => [document.querySelector('.top'), document.querySelector('.app')].filter(Boolean);
+  function openSheet(id){
+    const el = document.getElementById('sheet-' + id); if (!el || !el.hidden) return; closeSheets(true);
+    lastFocus = document.activeElement; el.hidden = false;
+    bgEls().forEach(e => { e.inert = true; e.setAttribute('aria-hidden', 'true'); }); // фон не получает ни фокус, ни касания, ни чтение с экрана
+    document.body.style.overflow = 'hidden';
+    const c = el.querySelector('[data-close]'); if (c) c.focus();
+  }
+  function closeSheets(keepFocus){
+    let any = false; document.querySelectorAll('.sheet').forEach(sh => { if (!sh.hidden){ sh.hidden = true; any = true; } });
+    if (!any) return;
+    bgEls().forEach(e => { e.inert = false; e.removeAttribute('aria-hidden'); }); document.body.style.overflow = ''; kickCoach();
+    if (keepFocus !== true && lastFocus && lastFocus.focus) lastFocus.focus();
+  }
+  document.querySelectorAll('.sheet').forEach(sh => { let down = false; sh.addEventListener('mousedown', e => { down = e.target === sh; }); sh.addEventListener('touchstart', e => { down = e.target === sh; }, { passive: true }); sh.addEventListener('click', e => { if (e.target === sh && down) closeSheets(); down = false; }); });
   document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', closeSheets));
-  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSheets(); });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeSheets();
+    if (e.key !== 'Tab') return;
+    const sh = [...document.querySelectorAll('.sheet')].find(x => !x.hidden); if (!sh) return;
+    const f = [...sh.querySelectorAll('button,input:not(.vh),select,textarea,summary,[tabindex]:not([tabindex="-1"]),label.btn[tabindex]')].filter(x => !x.disabled && x.offsetParent !== null);
+    if (!f.length) return; const first = f[0], last = f[f.length - 1];
+    if (!sh.contains(document.activeElement)){ first.focus(); e.preventDefault(); }
+    else if (e.shiftKey && document.activeElement === first){ last.focus(); e.preventDefault(); }
+    else if (!e.shiftKey && document.activeElement === last){ first.focus(); e.preventDefault(); }
+  });
   $('#btnDone').addEventListener('click', () => { $('#btnDone').classList.remove('nudge'); openSheet('done'); });
   $('#autoSegProxy').addEventListener('click', () => $('#autoSegBtn').click());
   $('#btnSettings').addEventListener('click', () => openSheet('settings'));
   $('#pasteToggle').addEventListener('click', () => { const t = $('#pasteBox'); t.hidden = !t.hidden; if (!t.hidden) t.focus(); });
-  function showAll(){ document.body.classList.add('ui-all'); document.querySelectorAll('.tabpanel,.sheet,#pasteBox').forEach(e => { e.hidden = false; }); } // для автоматических проверок
-  if (location.hash === '#ui-all') showAll();
+  function showAll(){ document.body.classList.add('ui-all'); bgEls().forEach(e => { e.inert = false; }); document.querySelectorAll('.tabpanel,.sheet,#pasteBox').forEach(e => { e.hidden = false; }); } // для автоматических проверок
+  if (location.hash === '#ui-all' && (location.protocol === 'file:' || location.hostname === 'localhost')) showAll(); // тестовый режим только на своём компьютере
   tab('color');
   return { tab, openSheet, closeSheets, showAll };
 })();

@@ -10,7 +10,7 @@ const env = { OPENAI_API_KEY: 'sk-test', ALLOWED_ORIGINS: ORIGIN, MAX_VARIANTS: 
 // минимальные настоящие заголовки файлов, чтобы пройти проверку размеров
 const b64 = bytes => Buffer.from(bytes).toString('base64');
 const jpeg = (w, h) => 'data:image/jpeg;base64,' + b64([0xff, 0xd8, 0xff, 0xc0, 0x00, 0x11, 0x08, h >> 8, h & 255, w >> 8, w & 255, 3, 1, 0x22, 0, 2, 0x11, 1, 3, 0x11, 1, 0xff, 0xd9]);
-const png = (w, h) => 'data:image/png;base64,' + b64([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 13, 0x49, 0x48, 0x44, 0x52, w >>> 24, (w >> 16) & 255, (w >> 8) & 255, w & 255, h >>> 24, (h >> 16) & 255, (h >> 8) & 255, h & 255, 8, 2, 0, 0, 0]);
+const png = (w, h) => 'data:image/png;base64,' + b64([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 13, 0x49, 0x48, 0x44, 0x52, w >>> 24, (w >> 16) & 255, (w >> 8) & 255, w & 255, h >>> 24, (h >> 16) & 255, (h >> 8) & 255, h & 255, 8, 2, 0, 0, 0, 0, 0, 0, 0]);
 const pixel = jpeg(768, 1024);
 
 const req = (body, headers = {}, method = 'POST', path = '/generate', raw) =>
@@ -117,3 +117,27 @@ for (const [label, body, st] of [
 ({ res } = await run(req({ image: ok1024, mask: mask1024, desc: 'паркет' }, { 'x-app-token': 'wrong' }, 'POST', '/edit'))); assert.equal(res.status, 401, '/edit тоже закрыт ключом');
 assert.ok(!buildEditPrompt({ desc: 'a\nb\r\nc', room: '__proto__' }).includes('\n'));
 console.log('ok 9 перерисовка участка по маске: маска уходит, плохой ввод отклоняется, ключ нужен');
+
+// 10. по итогам второго аудита
+// 10a. тело без Content-Length читается потоком и обрывается на лимите
+{
+  const huge = new ReadableStream({ start(c) { for (let i = 0; i < 12; i++) c.enqueue(new TextEncoder().encode('x'.repeat(1024 * 1024))); c.close(); } });
+  const r = new Request('https://api.example.com/generate', { method: 'POST', headers: { origin: ORIGIN, 'x-app-token': TOKEN, 'content-type': 'application/json' }, body: huge, duplex: 'half' });
+  const o = await run(r); assert.equal(o.res.status, 413, 'огромное потоковое тело отклонено');
+}
+// 10b. в открытом режиме случайные значения x-app-token не обходят лимит
+{
+  const open = { ...env, APP_TOKENS: '', ALLOW_OPEN: '1', RATE_LIMIT_PER_MIN: '2' };
+  setReply(200, { data: [{ b64_json: 'X' }] });
+  const ipH = { 'cf-connecting-ip': '203.0.113.9' }; let last;
+  for (let i = 0; i < 4; i++) last = (await run(req({ image: pixel }, { ...ipH, 'x-app-token': 'rnd' + i }), open)).res.status;
+  assert.equal(last, 429, 'лимит считается по IP, а не по подставному ключу');
+}
+// 10c. маска: сигнатура PNG и IHDR проверяются целиком, размер ограничен
+{
+  const bad = Buffer.from(png(1024, 1024).split(',')[1], 'base64'); bad[2] = 0; // портим сигнатуру
+  const o1 = await run(req({ image: ok1024, mask: 'data:image/png;base64,' + bad.toString('base64'), desc: 'паркет' }, {}, 'POST', '/edit')); assert.equal(o1.res.status, 400, 'битая сигнатура PNG');
+  const big = Buffer.concat([Buffer.from(pngA(1024, 1024).split(',')[1], 'base64'), Buffer.alloc(4 * 1024 * 1024 + 10)]);
+  const o2 = await run(req({ image: ok1024, mask: 'data:image/png;base64,' + big.toString('base64'), desc: 'паркет' }, {}, 'POST', '/edit')); assert.equal(o2.res.status, 413, 'маска больше 4 МБ');
+}
+console.log('ok 10 поток с лимитом, лимит по IP в открытом режиме, строгая проверка маски');
