@@ -166,6 +166,7 @@ textarea.gtext{min-height:64px;resize:vertical;margin-top:0}
       <h2>Что меняем</h2>
       <div class="row" id="autoSegRow" style="margin:0 0 12px">
         <button class="btn" id="autoSegBtn" style="width:100%">Найти элементы автоматически</button>
+        <label class="chk" style="margin-top:8px"><input type="checkbox" id="autoSegPrecise"> Точнее (дольше, скачивает модель покрупнее)</label>
         <p class="gstatus" id="autoSegStatus" role="status"></p>
         <p class="note" id="autoSegSeen" style="margin:4px 0 0"></p>
         <p class="note" id="autoSegNote">Необязательно. Модель работает в вашем браузере, фото никуда не отправляется. При первом запуске она скачивается (десятки мегабайт), потом хранится в браузере.</p>
@@ -1387,24 +1388,50 @@ $('#gGo').addEventListener('click', generate);
 
 /* ====================== автоматический поиск элементов (необязательно) ====================== */
 const SEG_MODEL = 'Xenova/segformer-b0-finetuned-ade-512-512';        // семантическая разметка ADE20K, работает в браузере
+const SEG_MODEL_PRECISE = 'Xenova/segformer-b2-finetuned-ade-512-512'; // покрупнее; если такой модели нет, используется обычная
 const SEG_LIB = 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.7.6';
 // метки ADE20K → название области
 const SEG_NAMES = { wall: 'Стены', floor: 'Пол', ceiling: 'Потолок', rug: 'Ковёр', cabinet: 'Шкаф', 'chest of drawers': 'Комод', wardrobe: 'Шкаф', shelf: 'Полка', bookcase: 'Стеллаж',
-  counter: 'Столешница', countertop: 'Столешница', 'kitchen island': 'Остров', buffet: 'Буфет', desk: 'Стол', table: 'Стол', 'coffee table': 'Журнальный столик', bed: 'Кровать',
+  counter: 'Тумба или столешница', countertop: 'Тумба или столешница', 'kitchen island': 'Остров', buffet: 'Буфет', desk: 'Стол', table: 'Стол', 'coffee table': 'Журнальный столик', bed: 'Кровать',
   sofa: 'Диван', armchair: 'Кресло', chair: 'Стул', 'swivel chair': 'Кресло', ottoman: 'Пуф', bathtub: 'Ванна', sink: 'Раковина', toilet: 'Унитаз', door: 'Дверь', curtain: 'Шторы',
   refrigerator: 'Холодильник', stairs: 'Лестница', radiator: 'Радиатор' };
 const SEG_ORDER = ['Стены', 'Пол', 'Потолок'];
-let segPipe = null;
+const segPipes = {}; let segUsed = '';
 function segStatus(t, err){ const el = $('#autoSegStatus'); el.textContent = t; el.classList.toggle('err', !!err); }
-async function getSegmenter(onProgress){
-  if (window.__segmenter) return window.__segmenter; // подмена для проверок
-  if (segPipe) return segPipe;
-  const mod = await import(SEG_LIB);
+async function loadSegModel(mod, id, onProgress){
+  if (segPipes[id]) return segPipes[id];
   const prog = {};
-  segPipe = await mod.pipeline('image-segmentation', SEG_MODEL, { progress_callback: ev => {
+  return segPipes[id] = await mod.pipeline('image-segmentation', id, { progress_callback: ev => {
     if (ev && ev.file && ev.total){ prog[ev.file] = { l: ev.loaded || 0, t: ev.total }; let l = 0, t = 0; for (const k in prog){ l += prog[k].l; t += prog[k].t; } onProgress(Math.min(99, Math.round(l / t * 100))); }
   } });
-  return segPipe;
+}
+async function getSegmenter(onProgress, precise){
+  if (window.__segmenter){ segUsed = 'тестовая'; return window.__segmenter; } // подмена для проверок
+  const mod = await import(SEG_LIB);
+  if (precise){
+    try { const p = await loadSegModel(mod, SEG_MODEL_PRECISE, onProgress); segUsed = 'точная'; return p; }
+    catch (e) { segStatus('Точная модель недоступна, использую обычную…', false); }
+  }
+  const p = await loadSegModel(mod, SEG_MODEL, onProgress); segUsed = 'обычная'; return p;
+}
+// модель видит картинку примерно 512×512: длинное фото режем на квадраты с перекрытием, чтобы не терять детали, и сшиваем результат
+async function segmentImage(seg, src){
+  const W = src.width, H = src.height, asp = Math.max(W, H) / Math.min(W, H), SIDE = 512;
+  const one = async () => { const k = Math.min(1, 640 / Math.max(W, H)), c = document.createElement('canvas'); c.width = Math.round(W * k); c.height = Math.round(H * k); c.getContext('2d').drawImage(src, 0, 0, c.width, c.height); return seg(c.toDataURL('image/jpeg', .9)); };
+  if (asp <= 1.3 || asp > 2.6) return one();
+  const horiz = W > H, sc = SIDE / Math.min(W, H), lw = Math.round(W * sc), lh = Math.round(H * sc), long = horiz ? lw : lh;
+  const n = Math.min(3, Math.ceil((long - SIDE) / (SIDE * .85)) + 1), stride = n > 1 ? (long - SIDE) / (n - 1) : 0, starts = Array.from({ length: n }, (_, t) => Math.round(t * stride));
+  const ids = new Map(), cmap = new Uint16Array(lw * lh), idOf = l => { l = String(l || '?'); if (!ids.has(l)) ids.set(l, ids.size + 1); return ids.get(l); };
+  for (let t = 0; t < n; t++){
+    const c = document.createElement('canvas'); c.width = SIDE; c.height = SIDE;
+    c.getContext('2d').drawImage(src, horiz ? starts[t] / sc : 0, horiz ? 0 : starts[t] / sc, horiz ? SIDE / sc : W, horiz ? H : SIDE / sc, 0, 0, SIDE, SIDE);
+    const segs = await seg(c.toDataURL('image/jpeg', .92)), tile = new Uint16Array(SIDE * SIDE);
+    for (const sg of segs){ const id = idOf(sg.label), m = sg.mask, ch = m.channels || 1; if (!m || m.width !== SIDE || m.height !== SIDE) continue; for (let i = 0; i < SIDE * SIDE; i++) if (m.data[i * ch] > 127) tile[i] = id; }
+    // этот кусок отвечает за свою часть кадра: границы проходят посередине перекрытий
+    const own0 = t === 0 ? 0 : Math.round((starts[t] + starts[t - 1] + SIDE) / 2), own1 = t === n - 1 ? long : Math.round((starts[t + 1] + starts[t] + SIDE) / 2);
+    for (let a = own0; a < own1; a++) for (let b = 0; b < SIDE; b++){ const ta = a - starts[t]; if (ta < 0 || ta >= SIDE) continue; const gi = horiz ? b * lw + a : a * lw + b, ti = horiz ? b * SIDE + ta : ta * SIDE + b; cmap[gi] = tile[ti]; }
+  }
+  return [...ids].map(([label, id]) => { const data = new Uint8ClampedArray(lw * lh); for (let i = 0; i < data.length; i++) if (cmap[i] === id) data[i] = 255; return { label, score: null, mask: { data, width: lw, height: lh, channels: 1 } }; });
 }
 // маски классов → области: крупные куски, без мелкой крошки, максимум 8 областей
 function zonesFromSegments(segs, W, H){
@@ -1448,12 +1475,10 @@ async function autoSegment(){
   if (!S.base){ toast('Сначала загрузите фото'); return; }
   if (G.busy) return; G.busy = true; $('#autoSegBtn').disabled = true; const pid = S.photoId;
   try {
-    segStatus('Готовлю модель… ' + (segPipe || window.__segmenter ? '' : 'Первый запуск скачивает её, это займёт время.'), false);
-    const seg = await Promise.race([getSegmenter(p => segStatus('Загрузка модели: ' + p + '%', false)), new Promise((_, no) => setTimeout(() => no(new Error('timeout')), 240000))]);
+    segStatus('Готовлю модель… ' + (Object.keys(segPipes).length || window.__segmenter ? '' : 'Первый запуск скачивает её, это займёт время.'), false);
+    const seg = await Promise.race([getSegmenter(p => segStatus('Загрузка модели: ' + p + '%', false), $('#autoSegPrecise').checked), new Promise((_, no) => setTimeout(() => no(new Error('timeout')), 240000))]);
     segStatus('Ищу стены, пол и мебель…', false);
-    const k = Math.min(1, 640 / Math.max(S.w, S.h)), c = document.createElement('canvas'); c.width = Math.round(S.w * k); c.height = Math.round(S.h * k);
-    c.getContext('2d').drawImage(orig, 0, 0, c.width, c.height);
-    const segs = await seg(c.toDataURL('image/jpeg', .9));
+    const segs = await segmentImage(seg, orig);
     if (pid !== S.photoId) return; // пока считалось, фото сменили
     // что именно увидела модель (в том числе то, что мы пропускаем): помогает подстроить правила
     const seen = segs.map(sg => { let n = 0, m = sg.mask, ch = m.channels || 1, tot = m.width * m.height; for (let i = 0; i < tot; i++) if (m.data[i * ch] > 127) n++; return { l: String(sg.label || '?').trim(), p: n / tot * 100 }; })
@@ -1466,7 +1491,7 @@ async function autoSegment(){
     S.active = -1; resetInteraction(); S.zones.forEach(z => { if (z.auto) measureRough(z); });
     S.showAuto = Date.now() + 7000; setTimeout(requestPaint, 7100);
     renderZones(); renderInspector(); updateHint(); updateSummary(); render();
-    segStatus('Нашёл: ' + found.map(f => f.name.toLowerCase()).join(', ') + '. Нажмите на нужную область и выберите цвет или материал.', false);
+    segStatus('Нашёл (' + segUsed + ' модель): ' + found.map(f => f.name.toLowerCase()).join(', ') + '. Нажмите на нужную область и выберите цвет или материал.', false);
   } catch (e) {
     segStatus(e && e.message === 'timeout' ? 'Модель слишком долго загружается. Проверьте интернет и повторите.' : 'Не удалось запустить поиск (нет интернета или браузер не поддерживает). Остальное работает: нажимайте на фото как обычно.', true);
   } finally { G.busy = false; $('#autoSegBtn').disabled = false; }
