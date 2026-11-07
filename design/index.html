@@ -2,120 +2,191 @@
 <html lang="ru">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex">
 <title>Визуализатор ремонта</title>
 <meta name="description" content="Загрузите фото комнаты и примерьте другой цвет стен, пол, мебель и материалы.">
 <style>
+/* Дизайн-система: спокойная нейтральная основа, один акцент (цвет компании), светлая и тёмная темы.
+   Раскладка: телефон — фото закреплено сверху, вкладки под ним, действия в нижней панели; компьютер — две колонки. */
 :root{
-  --bg:#f4f2ee; --panel:#fff; --ink:#1f2328; --muted:#5c6370; --line:#e3dfd7;
-  --accent:#b94e28; --accent-ink:#fff; --sel:#e0357a; --stage:#22252a;
+  --bg:#f2f4f1; --surface:#fff; --surface-2:#e9ede8; --ink:#14181b; --muted:#566069; --line:#d9dfd9; --line-strong:#bfc8bf;
+  --accent:#0f6b5a; --accent-ink:#fff; --danger:#b3261e; --stage:#171a1d; --sel:#e0357a;
+  --shadow:0 1px 2px rgba(16,24,20,.07),0 6px 18px rgba(16,24,20,.07); --dock-h:72px;
+  --gutter-l:max(16px,env(safe-area-inset-left,0px)); --gutter-r:max(16px,env(safe-area-inset-right,0px));
 }
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){--bg:#0f1214;--surface:#171b1e;--surface-2:#20262a;--ink:#eef1f3;--muted:#9aa5ad;--line:#2a3136;--line-strong:#3b454c;--accent:#41b89f;--accent-ink:#06201a;--danger:#ff8a80;--stage:#0a0c0e;--shadow:0 1px 2px #0007,0 6px 18px #0006;color-scheme:dark}
+}
+:root[data-theme="dark"]{--bg:#0f1214;--surface:#171b1e;--surface-2:#20262a;--ink:#eef1f3;--muted:#9aa5ad;--line:#2a3136;--line-strong:#3b454c;--accent:#41b89f;--accent-ink:#06201a;--danger:#ff8a80;--stage:#0a0c0e;--shadow:0 1px 2px #0007,0 6px 18px #0006;color-scheme:dark}
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
-body{margin:0;font:15px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--ink)}
+body{margin:0;font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--ink);padding-bottom:calc(var(--dock-h) + env(safe-area-inset-bottom,0px))}
 button{font:inherit;color:inherit;cursor:pointer}
-h1{font-size:20px;margin:0}
-h2{font-size:13px;margin:0 0 10px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600}
-.top{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:14px 16px;max-width:1500px;margin:0 auto}
-.top p{margin:2px 0 0;color:var(--muted);font-size:13px}
-.actions{display:flex;gap:8px;flex-wrap:wrap}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;text-align:center;border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:9px 14px;min-height:40px}
-label.btn{cursor:pointer;user-select:none;-webkit-user-select:none}
+h1{font-size:17px;margin:0;font-weight:650;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+h2{font-size:12px;margin:0 0 8px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:650}
+.hide{display:none!important}
 .vh{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;clip:rect(0 0 0 0);pointer-events:none}
-.btn:hover{border-color:#cfc9bd}
-.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
-.btn.primary:hover{filter:brightness(1.07)}
+/* шапка */
+.top{display:flex;align-items:center;gap:8px;padding:10px var(--gutter-r) 8px var(--gutter-l);max-width:1500px;margin:0 auto}
+.brand{flex:1;min-width:0;display:flex;align-items:center;gap:10px}
+.brand-txt{min-width:0}
+.sub{margin:1px 0 0;font-size:12.5px;color:var(--muted)}
+#hLogo{height:34px;max-width:110px;object-fit:contain;border-radius:6px}
+body.has-photo .sub{display:none}
+body.has-photo #btnDemo{display:none}
+body:not(.has-photo) #btnOpen{display:none}
+/* кнопки */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;text-align:center;border:1px solid var(--line-strong);background:var(--surface);border-radius:12px;padding:9px 14px;min-height:44px;font-weight:550;transition:transform .08s,border-color .15s,background .15s}
+.btn:active{transform:scale(.98)}
+.btn:hover{border-color:var(--muted)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:650}
+.btn.primary:hover{filter:brightness(1.06)}
+.btn.sm{min-height:36px;padding:6px 12px;font-size:13px}
 .btn[disabled]{opacity:.45;cursor:default}
-.app{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:16px;padding:0 16px 24px;max-width:1500px;margin:0 auto}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
-.toolbar{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
-.tool{border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:8px 12px;min-height:40px}
-.tool[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
-.sep{width:1px;align-self:stretch;background:var(--line);margin:0 4px}
-.inl{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
-.inl input[type=range]{width:110px}
-.stage{position:relative;background:var(--stage);border-radius:5px;display:grid;place-items:center;min-height:320px;overflow:hidden}
-#view{display:block;max-width:100%;max-height:72vh;width:auto;height:auto;touch-action:pan-y;cursor:crosshair}
+label.btn,label.iconbtn{cursor:pointer;user-select:none;-webkit-user-select:none}
+.iconbtn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-width:44px;min-height:44px;border:0;background:transparent;border-radius:12px;color:var(--ink);padding:0 10px;font-weight:550}
+.iconbtn:hover{background:var(--surface-2)}
+.iconbtn[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.iconbtn svg,.pill svg,.btn svg{flex:none}
+.iconbtn span{white-space:nowrap}
+@media (max-width:430px){#btnUndo span{display:none}#btnUndo{min-width:48px}}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+/* раскладка */
+.app{padding:0 var(--gutter-r) 24px var(--gutter-l);max-width:1500px;margin:0 auto}
+.work{position:sticky;top:env(safe-area-inset-top,0px);z-index:6;background:var(--bg);padding-bottom:8px}
+.stage{position:relative;background:var(--stage);border-radius:12px;display:grid;place-items:center;min-height:260px;overflow:hidden}
+body.has-photo .stage{min-height:0}
+#view{display:block;max-width:100%;max-height:40vh;width:auto;height:auto;touch-action:pan-y;cursor:crosshair}
 .stage>*{grid-area:1/1}
-.empty .btn:not(.primary){color:var(--ink)}
-.empty{display:grid;place-items:center;text-align:center;padding:24px;color:#d6d8dc}
+.stage>.stage-actions{grid-area:auto;position:absolute;top:10px;left:10px;right:10px;display:flex;gap:8px;pointer-events:none;z-index:2}
+.stage-actions>*{pointer-events:auto}
+.pill{display:none;align-items:center;gap:6px;border:0;border-radius:999px;padding:8px 14px 8px 11px;min-height:38px;background:rgba(14,17,19,.74);color:#fff;font-weight:600;font-size:13px;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+body.has-photo .pill{display:inline-flex}
+.pill:disabled{opacity:.6}
+.hint{margin:8px 2px 0;color:var(--muted);font-size:12.5px;line-height:1.3}
+.hint:empty{display:none}
+/* пустой экран */
+.empty{display:grid;place-items:center;text-align:center;padding:26px 20px;color:var(--stage-ink,#e8ecef)}
 .empty.drag{outline:2px dashed #fff8;outline-offset:-12px}
-.empty h2{color:#fff;font-size:18px;text-transform:none;letter-spacing:0;margin-bottom:8px}
-.empty p{margin:0 0 14px;color:#aeb2ba;max-width:420px}
-.paste{display:block;width:100%;max-width:360px;min-height:0;height:84px;margin:14px auto 0;padding:10px;border:1px dashed #fff5;border-radius:10px;background:#ffffff12;color:#fff;font:13px/1.35 inherit;resize:none;text-align:center}
-.paste::placeholder{color:#aeb2ba}
-.steps{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-top:16px;font-size:12px;color:#aeb2ba}
-.steps span{border:1px solid #fff3;border-radius:99px;padding:3px 10px}
-.hint{margin:10px 2px 0;color:var(--muted);font-size:13px;min-height:1.4em}
-.zone{display:flex;align-items:center;gap:8px;padding:8px;border:1px solid transparent;border-radius:10px;cursor:pointer}
-.zone:hover{background:#faf8f5}
-.zone.on{border-color:var(--accent);background:#fdf6f3}
-.dot{width:22px;height:22px;border-radius:6px;border:1px solid #0002;flex:none}
-.zone .nm{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.zone small{display:block;color:var(--muted);font-size:12px}
-.ico{border:0;background:none;padding:6px;border-radius:8px;min-width:40px;min-height:40px;color:var(--muted)}
-.ico:hover{background:#0000000d;color:var(--ink)}
-.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
-.chip{border:1px dashed #c9c3b6;background:none;border-radius:99px;padding:8px 13px;min-height:40px;font-size:13px;color:var(--muted)}
-.chip:hover{border-color:var(--accent);color:var(--accent)}
+.empty .ill{width:56px;height:56px;border-radius:16px;background:#ffffff14;display:grid;place-items:center;margin:0 auto 12px;color:#fff}
+.empty h2{color:#fff;font-size:19px;text-transform:none;letter-spacing:-.01em;margin:0 0 6px;font-weight:650}
+.empty p{margin:0 auto 16px;color:#aab3ba;max-width:340px;font-size:13.5px}
+.empty .btn:not(.primary){color:var(--ink)}
+.empty .actions{justify-content:center}
+.empty .link{background:none;border:0;color:#aab3ba;text-decoration:underline;font-size:12.5px;margin-top:12px;min-height:36px}
+.paste{display:block;width:100%;max-width:340px;height:72px;margin:8px auto 0;padding:10px;border:1px dashed #fff4;border-radius:12px;background:#ffffff10;color:#fff;font:13px/1.35 inherit;resize:none;text-align:center}
+.paste::placeholder{color:#aab3ba}
+.steps{margin:16px auto 0;max-width:340px;font-size:12px;color:#aab3ba;display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
+.steps b{color:#fff;font-weight:650}
+/* области */
+#zoneList{display:flex;gap:8px;overflow-x:auto;padding:12px 2px 4px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch}
+#zoneList:empty{display:none}
+.zone{flex:none;scroll-snap-align:start;display:flex;align-items:center;gap:8px;padding:4px 12px 4px 8px;min-height:40px;border:1px solid var(--line-strong);border-radius:999px;background:var(--surface);cursor:pointer}
+.zone.on{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,var(--surface));box-shadow:inset 0 0 0 1px var(--accent)}
+.zone.fresh{border-style:dashed}
+.zone .dot{width:22px;height:22px;border-radius:50%;border:1px solid var(--line-strong);flex:none}
+.zone .nm{white-space:nowrap;font-weight:600}
+.zone small{display:none}
+.zone .ico{min-width:30px;min-height:30px;padding:0;margin-right:-6px}
+.zone:not(.on) .ico{display:none}
+.ico{border:0;background:none;border-radius:50%;color:var(--muted);display:inline-grid;place-items:center}
+.ico:hover{background:var(--surface-2);color:var(--ink)}
+/* вкладки */
+.tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding:4px;background:var(--surface-2);border-radius:14px;margin-top:8px}
+.tab{border:0;background:transparent;padding:10px 4px;border-radius:10px;font-weight:600;color:var(--muted);min-height:44px;font-size:13.5px}
+.tab[aria-selected="true"]{background:var(--surface);color:var(--ink);box-shadow:var(--shadow)}
+.tabpanel{padding:16px 2px 8px}
+.tabpanel[hidden]{display:none}
+.sec{margin-top:18px}
+.tabpanel>.sec:first-child,.tabpanel>.needs-zone:first-child>.sec:first-child,.tabpanel>.no-zone:first-child{margin-top:0}
+.sec-t{display:flex;justify-content:space-between;align-items:baseline;font-size:12px;font-weight:650;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.needs-zone{display:none}
+body.has-zone .needs-zone{display:block}
+body.has-zone .no-zone{display:none}
+.lead{margin:0;font-size:14px;color:var(--muted)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px}
+/* поля и подсказки */
 .row{margin-top:12px}
 .row>label,.lbl{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);margin-bottom:6px}
-.row input[type=text]{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;font:inherit}
-.row input[type=range]{width:100%}
-.colorline{display:flex;gap:10px;align-items:center}
-input[type=color]{width:48px;height:40px;padding:2px;border:1px solid var(--line);border-radius:8px;background:#fff;cursor:pointer}
-.hex{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;color:var(--muted)}
-.sw{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-top:8px}
-.sw button{aspect-ratio:1;border-radius:8px;border:1px solid #0002;padding:0}
-.sw button[aria-pressed="true"]{outline:2px solid var(--ink);outline-offset:1px}
-.mats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
-.mat{border:1px solid var(--line);background:#fff;border-radius:10px;padding:4px;font-size:11px;text-align:center}
-.mat canvas{width:100%;height:auto;border-radius:6px;display:block;margin-bottom:3px}
-.mat[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
-.chk{display:flex;gap:10px;align-items:center;font-size:14px;min-height:36px}
-input[type=checkbox]{width:20px;height:20px;flex:none}
-input[type=range]{height:28px}
-input[type=range],input[type=checkbox]{accent-color:var(--accent)}
-button:focus-visible,label.btn:focus-visible,.zone:focus-visible,summary:focus-visible,.mat:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-textarea{width:100%;min-height:110px;margin-top:10px;border:1px solid var(--line);border-radius:8px;padding:8px;font:13px/1.4 inherit;resize:vertical}
-details summary{cursor:pointer;color:var(--muted);font-size:13px;margin-top:10px}
-#toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(20px);background:#1f2328;color:#fff;padding:10px 16px;border-radius:10px;opacity:0;transition:.25s;pointer-events:none;max-width:90vw;z-index:9}
-#toast.on{opacity:1;transform:translateX(-50%)}
-.quick{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
-.lead{margin:0;font-size:15px;color:var(--muted)}
-details.more{padding:0}
-details.more>summary{cursor:pointer;padding:14px;font-weight:600;font-size:14px;color:var(--ink);list-style-position:inside}
-details.more[open]>summary{border-bottom:1px solid var(--line)}
-details.more>*:not(summary){margin-left:14px;margin-right:14px}
-details.more>*:last-child{margin-bottom:14px}
-details.more>summary+*{margin-top:12px}
-#zoneList{margin-bottom:4px}
-.brand{display:flex;gap:12px;align-items:center;min-width:0}
-#hLogo{height:44px;max-width:130px;object-fit:contain;border-radius:6px}
-.note{margin:10px 0 0;font-size:12px;color:var(--muted)}
-.opts{display:grid;gap:8px;margin-bottom:12px}
-.gtext{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;font:inherit;background:#fff}
-select.gtext{min-height:40px}
-textarea.gtext{min-height:64px;resize:vertical;margin-top:0}
+.gtext,.row input[type=text]{width:100%;padding:10px 12px;border:1px solid var(--line-strong);border-radius:10px;font:inherit;font-size:16px;background:var(--surface);color:var(--ink)}
+select.gtext{min-height:44px}
+textarea.gtext{min-height:72px;resize:vertical}
+textarea{width:100%;border:1px solid var(--line-strong);border-radius:10px;padding:10px;font:13px/1.4 inherit;background:var(--surface);color:var(--ink);resize:vertical}
+input[type=range]{width:100%;height:28px;accent-color:var(--accent)}
+input[type=checkbox]{width:20px;height:20px;flex:none;accent-color:var(--accent)}
+.chk{display:flex;gap:10px;align-items:center;font-size:14px;min-height:40px}
+.inl{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);min-height:36px}
+.inl input[type=range]{width:130px}
+.colorline{display:flex;gap:10px;align-items:center;margin-top:10px}
+input[type=color]{width:52px;height:44px;padding:3px;border:1px solid var(--line-strong);border-radius:10px;background:var(--surface);cursor:pointer}
+.hex{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;color:var(--muted);text-transform:none;letter-spacing:0}
+.note{margin:8px 0 0;font-size:12px;color:var(--muted)}
+.opts{display:grid;gap:4px;margin-bottom:12px}
+.gstatus{margin:8px 0 0;font-size:13px;color:var(--muted);min-height:1.3em}
+.gstatus.err{color:var(--danger)}
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.gstatus{margin:10px 0 0;font-size:13px;color:var(--muted);min-height:1.4em}
-.gstatus.err{color:#b3261e}
 .steps2{margin:0 0 8px;padding-left:18px;font-size:13px;color:var(--muted)}
 .steps2 li{margin-bottom:2px}
-#gPrompt{font-size:12.5px;color:var(--muted);margin-top:0}
+#gPrompt{font-size:12.5px;color:var(--muted)}
 .gal{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:10px}
-.gal button{padding:0;border:2px solid transparent;border-radius:10px;overflow:hidden;background:#000;aspect-ratio:3/4}
+.gal button{padding:0;border:2px solid transparent;border-radius:12px;overflow:hidden;background:#000;aspect-ratio:3/4}
 .gal button[aria-pressed="true"]{border-color:var(--accent)}
 .gal img{width:100%;height:100%;object-fit:cover;display:block}
-.hide{display:none!important}
-@media (max-width:900px){
-  .app{display:block}
-  .work{position:sticky;top:env(safe-area-inset-top,0px);z-index:6;background:var(--bg);padding-bottom:8px;margin-bottom:8px}
-  #view{max-height:42vh}
-  .hint{font-size:12.5px;margin-top:6px}
+/* цвета и материалы */
+.sw{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
+.sw button{aspect-ratio:1;border-radius:12px;border:1px solid var(--line-strong);padding:0}
+.sw button[aria-pressed="true"]{outline:3px solid var(--ink);outline-offset:2px}
+.mats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.mat{border:1px solid var(--line-strong);background:var(--surface);border-radius:12px;padding:5px;font-size:11.5px;text-align:center;color:var(--ink)}
+.mat canvas{width:100%;height:auto;border-radius:8px;display:block;margin-bottom:4px}
+.mat[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
+/* инструменты области */
+.toolbar{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.tool{border:1px solid var(--line-strong);background:var(--surface);border-radius:10px;padding:8px 12px;min-height:44px;font-weight:550}
+.tool[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{border:1px dashed var(--line-strong);background:none;border-radius:999px;padding:8px 14px;min-height:44px;font-size:13px;color:var(--muted)}
+.chip:hover{border-color:var(--accent);color:var(--accent)}
+/* нижняя панель */
+.dock{position:fixed;left:0;right:0;bottom:0;z-index:20;display:flex;gap:4px;align-items:center;padding:8px var(--gutter-r) calc(8px + env(safe-area-inset-bottom,0px)) var(--gutter-l);background:color-mix(in srgb,var(--surface) 90%,transparent);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border-top:1px solid var(--line)}
+.dock .spacer{flex:1}
+.dock .btn.primary{min-width:120px}
+/* окна */
+.sheet{position:fixed;inset:0;z-index:40;display:flex;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.5)}
+.sheet[hidden]{display:none}
+.sheet-card{background:var(--surface);width:min(580px,100%);max-height:90vh;overflow:auto;border-radius:20px 20px 0 0;padding:16px var(--gutter-r) calc(18px + env(safe-area-inset-bottom,0px)) var(--gutter-l);box-shadow:var(--shadow)}
+.sheet-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;position:sticky;top:-16px;background:var(--surface);padding:4px 0 8px;z-index:1}
+.sheet-head h2{font-size:18px;margin:0;text-transform:none;letter-spacing:-.01em;color:var(--ink)}
+details summary{cursor:pointer;color:var(--muted);font-size:13px;margin-top:10px;min-height:36px}
+/* уведомление */
+#toast{position:fixed;left:50%;bottom:calc(var(--dock-h) + env(safe-area-inset-bottom,0px) + 12px);transform:translateX(-50%) translateY(20px);background:var(--ink);color:var(--bg);padding:11px 16px;border-radius:12px;opacity:0;transition:.25s;pointer-events:none;max-width:min(92vw,520px);z-index:60;box-shadow:var(--shadow)}
+#toast.on{opacity:1;transform:translateX(-50%)}
+button:focus-visible,label.btn:focus-visible,label.iconbtn:focus-visible,.zone:focus-visible,summary:focus-visible,.mat:focus-visible,.tab:focus-visible,.pill:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+/* компьютер: две колонки, нижняя панель под фото */
+@media (min-width:900px){
+  body{padding-bottom:0}
+  .app{display:grid;grid-template-columns:minmax(0,1fr) 420px;gap:24px;align-items:start;padding-top:4px}
+  .work{top:12px;padding-bottom:0}
+  #view{max-height:76vh}
+  .dock{position:static;background:none;border:0;padding:10px 0 0;-webkit-backdrop-filter:none;backdrop-filter:none}
+  .hint{min-height:1.4em}
+  .side{min-width:0}
+  body:not(.has-photo) .app{grid-template-columns:minmax(0,760px);justify-content:center}
+  #toast{bottom:22px}
+  .sheet{align-items:center}
+  .sheet-card{border-radius:20px}
 }
-@media (max-width:900px) and (max-height:620px){ .work{position:static} #view{max-height:70vh} }
+@media (max-width:899px) and (max-height:620px){ .work{position:static} #view{max-height:70vh} }
+body:not(.has-photo) .side,body:not(.has-photo) .dock,body:not(.has-photo) .hint{display:none}
+body:not(.has-photo){padding-bottom:0}
+/* режим проверки: показать всё сразу */
+body.ui-all .side{display:block!important}
+body.ui-all .dock{display:flex!important}
+body.ui-all .tabpanel{display:block!important}
+body.ui-all .sheet{position:static;display:block!important;background:none}
+body.ui-all .sheet[hidden]{display:block!important}
+[hidden]{display:none!important}
 </style>
 </head>
 <body>
@@ -123,161 +194,205 @@ textarea.gtext{min-height:64px;resize:vertical;margin-top:0}
 <header class="top">
   <div class="brand">
     <img id="hLogo" class="hide" alt="">
-    <div>
+    <div class="brand-txt">
       <h1 id="hName">Визуализатор ремонта</h1>
-      <p>Загрузите фото, нажмите на стену или пол и выберите цвет</p>
+      <p class="sub">Примерьте цвет и материал на фото комнаты</p>
     </div>
   </div>
-  <div class="actions">
-    <label class="btn primary" for="file" id="btnOpen">Загрузить фото</label>
-    <button class="btn" id="btnDemo">Пример комнаты</button>
-    <input type="file" id="file" class="vh" accept="image/*">
-  </div>
+  <button class="btn sm" id="btnDemo">Пример</button>
+  <label class="iconbtn" for="file" id="btnOpen" title="Другое фото" aria-label="Загрузить другое фото"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg></label>
+  <input type="file" id="file" class="vh" accept="image/*">
+  <button class="iconbtn" id="btnSettings" aria-label="Настройки: компания и сервер" title="Настройки"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
 </header>
 
 <main class="app">
   <section class="work">
     <div class="stage" id="stage">
       <canvas id="view" width="4" height="3" role="img" aria-label="Фото комнаты. Нажмите на стену, пол или мебель, чтобы выбрать область"></canvas>
+      <div class="stage-actions"><button class="pill" id="autoSegBtn" title="Найти стены, пол и мебель автоматически"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg> Найти элементы</button></div>
       <div class="empty" id="empty">
         <div>
+          <div class="ill"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg></div>
           <h2>Загрузите фото комнаты</h2>
-          <p>Перетащите снимок сюда или выберите файл. Фото обрабатывается в вашем браузере. Оно уходит на сервер, только если вы сами включите генерацию через сервер.</p>
-          <div class="actions" style="justify-content:center">
-            <label class="btn primary" for="file">Выбрать фото</label>
-            <label class="btn" for="cam">Сфотографировать</label>
-            <button class="btn" id="btnDemo2">Попробовать на примере</button>
+          <p>Нажмите на стену, пол или мебель и примерьте другой цвет и материал. Фото обрабатывается в браузере и никуда не уходит, пока вы сами не включите генерацию через сервер.</p>
+          <div class="actions">
+            <label class="btn primary" for="file"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg> Выбрать фото</label>
+            <label class="btn" for="cam"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.5"/></svg> Снять</label>
             <input type="file" id="cam" class="vh" accept="image/*" capture="environment">
           </div>
-          <textarea id="pasteBox" class="paste" aria-label="Вставить фото" placeholder="Не открывается выбор файла? Скопируйте фото, нажмите здесь и удерживайте, затем выберите «Вставить»"></textarea>
-          <div class="steps"><span>1 · Фото</span><span>2 · Нажмите на стену или пол</span><span>3 · Выберите цвет</span><span>4 · Скачайте</span></div>
+          <button class="link" id="btnDemo2">Попробовать на примере</button><br>
+          <button class="link" id="pasteToggle">Не открывается выбор файла?</button>
+          <textarea id="pasteBox" class="paste" hidden aria-label="Вставить фото" placeholder="Скопируйте фото, нажмите здесь и удерживайте, затем выберите «Вставить»"></textarea>
+          <div class="steps"><span><b>1</b> Фото</span><span>→</span><span><b>2</b> Нажмите на стену</span><span>→</span><span><b>3</b> Цвет</span></div>
         </div>
       </div>
-    </div>
-    <div class="quick">
-      <button class="tool" id="btnUndo" title="Ctrl+Z">Отменить</button>
-      <button class="tool" id="btnCmp" aria-pressed="false" title="Потяните линию, чтобы сравнить с исходным фото">До / После</button>
     </div>
     <p class="hint" id="hint"></p>
+    <div class="dock" id="dock">
+      <button class="iconbtn" id="btnUndo" title="Отменить (Ctrl+Z)" aria-label="Отменить"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg><span>Отменить</span></button>
+      <button class="iconbtn" id="btnCmp" aria-pressed="false" title="Сравнить с исходным фото: потяните линию"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M12 4v16"/></svg><span>До / После</span></button>
+      <span class="spacer"></span>
+      <button class="btn primary" id="btnDone" disabled>Готово</button>
+    </div>
   </section>
 
-  <aside>
-    <div class="card" id="editCard">
-      <h2>Что меняем</h2>
-      <div class="row" id="autoSegRow" style="margin:0 0 12px">
-        <button class="btn" id="autoSegBtn" style="width:100%">Найти элементы автоматически</button>
-        <label class="chk" style="margin-top:8px"><input type="checkbox" id="autoSegPrecise"> Точнее (дольше, скачивает модель покрупнее)</label>
-        <p class="gstatus" id="autoSegStatus" role="status"></p>
-        <p class="note" id="autoSegSeen" style="margin:4px 0 0"></p>
-        <p class="note" id="autoSegNote">Необязательно. Модель работает в вашем браузере, фото никуда не отправляется. При первом запуске она скачивается (десятки мегабайт), потом хранится в браузере.</p>
-      </div>
-      <p class="lead" id="noZone">Нажмите на фото на то, что хотите изменить: стену, пол или мебель.</p>
-      <div id="zoneList"></div>
-      <div id="inspector" class="hide">
-        <div class="row">
-          <div class="lbl"><span>Цвет</span><span class="hex" id="hex"></span></div>
-          <div class="colorline"><input type="color" id="color" aria-label="Свой цвет"><span style="font-size:13px;color:var(--muted)" id="cname"></span></div>
+  <aside class="side">
+    <div id="zoneList"></div>
+    <div class="tabs" role="tablist" aria-label="Что настроить">
+      <button class="tab" role="tab" id="tab-color" aria-controls="tp-color" aria-selected="true" data-tab="color">Цвет</button>
+      <button class="tab" role="tab" id="tab-material" aria-controls="tp-material" aria-selected="false" tabindex="-1" data-tab="material">Материал</button>
+      <button class="tab" role="tab" id="tab-area" aria-controls="tp-area" aria-selected="false" tabindex="-1" data-tab="area">Область</button>
+      <button class="tab" role="tab" id="tab-ai" aria-controls="tp-ai" aria-selected="false" tabindex="-1" data-tab="ai">ИИ</button>
+    </div>
+
+    <div class="tabpanel" id="tp-color" role="tabpanel" aria-labelledby="tab-color">
+      <div class="no-zone"><p class="lead" id="noZone">Нажмите на фото на то, что хотите изменить: стену, пол или мебель.</p><button class="btn" id="autoSegProxy" style="margin-top:12px"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg> Найти элементы автоматически</button></div>
+      <div class="needs-zone">
+        <div class="sec">
+          <div class="sec-t"><span>Цвет</span><span class="hex" id="hex"></span></div>
           <div class="sw" id="swatches"></div>
+          <div class="colorline"><input type="color" id="color" aria-label="Свой цвет"><span class="note" style="margin:0" id="cname"></span></div>
         </div>
-        <div class="row"><div class="lbl"><span>Материал</span></div><div class="mats" id="mats"></div></div>
-        <div class="row hide" id="armRow"><div class="actions"><button class="btn" id="armAdd" aria-pressed="false">+ Добавить участок</button><button class="btn" id="armSub" aria-pressed="false">− Исключить объект</button></div></div>
-        <div class="row hide" id="aiEditRow">
-          <div class="lbl"><span>Заменить с помощью ИИ</span></div>
-          <input type="text" id="aiDesc" class="gtext" maxlength="200" placeholder="Что должно быть на этом месте? Например: светлый паркет ёлочкой" autocomplete="off" aria-label="Что должно быть на этом месте">
-          <button class="btn primary" id="aiEditBtn" style="width:100%;margin-top:8px">Перерисовать область (ИИ)</button>
-          <p class="gstatus" id="aiEditStatus" role="status"></p>
-        </div>
-        <div class="row hide" id="smoothRow"><button class="btn" id="smoothBtn" style="width:100%">Сгладить сколы и трещины</button></div>
-        <div class="row hide" id="fixRow"><div class="lbl"><span>Выделилось не то?</span></div><div class="actions"><button class="btn" id="tolLess">Меньше</button><button class="btn" id="tolMore">Больше</button></div></div>
+        <div class="sec"><div class="row" style="margin-top:0"><label for="match"><span>Подстроить под свет сцены</span><span id="matchV"></span></label><input type="range" id="match" min="0" max="100"></div></div>
+        <div class="sec hide" id="smoothRow"><button class="btn" id="smoothBtn" style="width:100%">Сгладить сколы и трещины</button></div>
       </div>
     </div>
 
-    <div class="card" id="resultCard">
-      <h2>Готово</h2>
-      <div class="opts">
-        <label class="chk"><input type="checkbox" id="optPair"> До и после рядом</label>
-        <label class="chk"><input type="checkbox" id="optBrand" checked> Подпись компании внизу</label>
-      </div>
-      <div class="actions">
-        <button class="btn primary" id="btnSave" disabled>Скачать PNG</button>
-        <button class="btn hide" id="btnShare" disabled>Отправить клиенту</button>
-        <button class="btn" id="btnCopy" disabled>Копировать описание</button>
-      </div>
-      <details><summary>Описание изменений для клиента</summary><textarea id="summary" readonly aria-label="Описание изменений для клиента"></textarea></details>
-    </div>
-
-    <details class="card more" id="advCard"><summary>Дополнительно: свои инструменты и настройки</summary>
-      <div class="toolbar" id="toolbar">
-        <button class="tool" data-tool="wand" aria-pressed="true" title="Нажатие на фото выделяет область похожего цвета">Умная заливка</button>
-        <button class="tool" data-tool="poly" aria-pressed="false" title="Обвести стену, пол или зеркало по углам">Контур</button>
-        <button class="tool" data-tool="brush" aria-pressed="false" title="Дорисовать выделение">Кисть</button>
-        <button class="tool" data-tool="erase" aria-pressed="false" title="Стереть лишнее из выделения">Ластик</button>
-        <button class="tool hide" id="btnClose" title="Enter">Замкнуть контур</button>
-        <label class="inl" id="tolBox">Чувствительность <input type="range" id="tol" min="6" max="90" value="24"></label>
-        <label class="inl hide" id="brushBox">Размер <input type="range" id="brush" min="6" max="120" value="36"></label>
-        <label class="inl" id="subBox"><input type="checkbox" id="sub"> вычитать</label>
-        <label class="inl" id="addBox"><input type="checkbox" id="addMode"> добавлять к текущей области</label>
-      </div>
-      <div id="advZone" class="hide">
-        <div class="row"><label for="zname">Название области</label><input type="text" id="zname" maxlength="30"></div>
-        <div class="row"><label for="strength"><span>Интенсивность</span><span id="strengthV"></span></label><input type="range" id="strength" min="0" max="100"></div>
-        <div class="row"><label for="match"><span>Подстроить под свет сцены</span><span id="matchV"></span></label><input type="range" id="match" min="0" max="100"></div>
-        <div class="row"><label for="flat"><span>Выровнять поверхность</span><span id="flatV"></span></label><input type="range" id="flat" min="0" max="100"></div>
-        <div class="row" id="scaleRow"><label for="scale"><span>Размер рисунка</span><span id="scaleV"></span></label><input type="range" id="scale" min="0.4" max="3" step="0.1"></div>
-        <div class="row" id="perspRow">
-          <div class="lbl"><span>Перспектива</span><span id="perspV"></span></div>
+    <div class="tabpanel" id="tp-material" role="tabpanel" aria-labelledby="tab-material" hidden>
+      <div class="no-zone"><p class="lead">Сначала выберите область на фото.</p></div>
+      <div class="needs-zone">
+        <div class="sec"><div class="sec-t">Материал</div><div class="mats" id="mats"></div></div>
+        <div class="sec" id="scaleRow"><div class="row" style="margin-top:0"><label for="scale"><span>Размер рисунка</span><span id="scaleV"></span></label><input type="range" id="scale" min="0.4" max="3" step="0.1"></div></div>
+        <div class="sec chk" id="rotRow"><input type="checkbox" id="rot"><label for="rot">Повернуть рисунок на 90°</label></div>
+        <div class="sec" id="perspRow">
+          <div class="sec-t"><span>Перспектива</span><span id="perspV"></span></div>
           <div class="actions"><button class="btn" id="perspSet">Задать 4 угла</button><button class="btn hide" id="perspClear">Без перспективы</button></div>
           <div class="row hide" id="depthRow"><label for="depth"><span>Глубина рисунка</span><span id="depthV"></span></label><input type="range" id="depth" min="0.1" max="3" step="0.01"></div>
           <p class="note">Перспектива подбирается сама по форме области. Если нужно точнее, отметьте 4 угла поверхности (пола, стены, фасада) в любом порядке.</p>
         </div>
-        <div class="row chk" id="rotRow"><input type="checkbox" id="rot"><label for="rot">Повернуть рисунок на 90°</label></div>
-        <div class="row"><button class="btn" id="btnClear" style="width:100%">Очистить выделение области</button></div>
       </div>
-      <div class="lbl" style="margin-top:14px"><span>Добавить область вручную</span></div>
-      <div class="chips" id="addZone"></div>
-    </details>
-    <details class="card more" id="genCard"><summary>Идея в другом стиле (ИИ)</summary>
-      <div class="g2">
-        <div><label class="lbl" for="gRoom">Помещение</label>
-          <select id="gRoom" class="gtext"><option value="bathroom">Ванная</option><option value="kitchen">Кухня</option><option value="living">Гостиная</option><option value="bedroom">Спальня</option><option value="hall">Прихожая</option><option value="other">Другое</option></select></div>
-        <div><label class="lbl" for="gStyle">Стиль</label>
-          <select id="gStyle" class="gtext"><option value="scandi">Скандинавский</option><option value="loft">Лофт</option><option value="modern">Современный</option><option value="classic">Классика</option><option value="japandi">Джапанди</option><option value="eco">Эко</option></select></div>
+    </div>
+
+    <div class="tabpanel" id="tp-area" role="tabpanel" aria-labelledby="tab-area" hidden>
+      <div class="sec" id="autoSegSection">
+        <div class="sec-t">Автоматический поиск</div>
+        <p class="lead" style="font-size:13px">Модель в браузере находит стены, пол, потолок и мебель и создаёт области. Запускается кнопкой над фото.</p>
+        <label class="chk"><input type="checkbox" id="autoSegPrecise"> Точнее (дольше, скачивает модель покрупнее)</label>
+        <p class="gstatus" id="autoSegStatus" role="status"></p>
+        <p class="note" id="autoSegSeen" style="margin:4px 0 0"></p>
+        <p class="note" id="autoSegNote">Необязательно. Фото никуда не отправляется. При первом запуске модель скачивается (десятки мегабайт), потом хранится в браузере.</p>
       </div>
-      <div class="row"><label for="gWish"><span>Пожелания клиента</span></label><textarea id="gWish" class="gtext" maxlength="400" placeholder="Например: светлая плитка, тёплый свет, подвесная тумба"></textarea></div>
-      <div class="row">
-        <div class="lbl"><span>Бесплатный способ</span></div>
-        <ol class="steps2">
-          <li>Скопируйте запрос.</li>
-          <li>Откройте любое приложение нейросети, где можно редактировать картинки. Прикрепите фото комнаты и вставьте запрос.</li>
-          <li>Сохраните результат и загрузите его сюда.</li>
-        </ol>
-        <textarea id="gPrompt" class="gtext" readonly rows="5" aria-label="Запрос для нейросети"></textarea>
-        <div class="actions" style="margin-top:8px">
-          <button class="btn" id="gCopy">Скопировать запрос</button>
-          <label class="btn primary" for="gOwn">Загрузить готовый вариант</label>
-          <input type="file" id="gOwn" class="vh" accept="image/*">
+      <div class="needs-zone">
+        <div class="sec hide" id="fixRow"><div class="sec-t">Выделилось не то?</div><div class="actions"><button class="btn" id="tolLess">Меньше</button><button class="btn" id="tolMore">Больше</button></div></div>
+        <div class="sec hide" id="armRow"><div class="sec-t">Доработать область</div><div class="actions"><button class="btn" id="armAdd" aria-pressed="false">+ Добавить участок</button><button class="btn" id="armSub" aria-pressed="false">− Исключить объект</button></div></div>
+      </div>
+      <div class="sec">
+        <div class="sec-t">Инструменты выделения</div>
+        <div class="toolbar" id="toolbar">
+          <button class="tool" data-tool="wand" aria-pressed="true" title="Нажатие на фото выделяет область похожего цвета">Умная заливка</button>
+          <button class="tool" data-tool="poly" aria-pressed="false" title="Обвести стену, пол или зеркало по углам">Контур</button>
+          <button class="tool" data-tool="brush" aria-pressed="false" title="Дорисовать выделение">Кисть</button>
+          <button class="tool" data-tool="erase" aria-pressed="false" title="Стереть лишнее из выделения">Ластик</button>
+          <button class="tool hide" id="btnClose" title="Enter">Замкнуть контур</button>
+          <label class="inl" id="tolBox">Чувствительность <input type="range" id="tol" min="6" max="90" value="24"></label>
+          <label class="inl hide" id="brushBox">Размер <input type="range" id="brush" min="6" max="120" value="36"></label>
+          <label class="inl" id="subBox"><input type="checkbox" id="sub"> вычитать</label>
+          <label class="inl" id="addBox"><input type="checkbox" id="addMode"> добавлять к текущей области</label>
         </div>
       </div>
-      <p class="gstatus" id="gStatus" role="status"></p>
-      <div class="gal hide" id="gGal"></div>
-      <div class="row hide" id="gBackRow"><button class="btn" id="gBack" style="width:100%">Вернуть исходное фото</button></div>
-      <details id="gSettings"><summary>Автоматически через сервер (платно за картинку)</summary>
-        <div class="row"><button class="btn primary" id="gGo" style="width:100%">Нарисовать 2 варианта</button></div>
-        <div class="row"><label for="gUrl"><span>Адрес сервера</span></label><input type="text" id="gUrl" class="gtext" placeholder="https://design-visualizer-api.имя.workers.dev" autocomplete="off" autocapitalize="off" spellcheck="false"></div>
-        <div class="row"><label for="gToken"><span>Ключ доступа (если задан)</span></label><input type="text" id="gToken" class="gtext" autocomplete="off" autocapitalize="off" spellcheck="false"></div>
-        <p class="note">Ключ нейросети хранится на сервере, а не на странице. Инструкция по запуску лежит в папке design-api.</p>
-      </details>
-    </details>
-    <details class="card more" id="brandCard"><summary>Ваша компания: название, логотип, цвет</summary>
-      <div class="row" style="margin-top:0"><label for="cName">Название</label><input type="text" id="cName" maxlength="40" placeholder="Например, СтройДом"></div>
-      <div class="row"><label for="cContact">Телефон, сайт или Telegram</label><input type="text" id="cContact" maxlength="60" placeholder="+7 900 000-00-00"></div>
-      <div class="row"><div class="colorline"><input type="color" id="cColor" value="#b94e28" aria-label="Фирменный цвет"><span style="font-size:13px;color:var(--muted)">Фирменный цвет</span></div></div>
-      <div class="row actions"><label class="btn" for="logoFile" id="btnLogo">Загрузить логотип</label><button class="btn hide" id="btnLogoDel">Убрать</button><input type="file" id="logoFile" class="vh" accept="image/*"></div>
-      <p class="note">Название и логотип появятся в шапке, на скачанной картинке и в описании для клиента. Всё хранится только в вашем браузере.</p>
-    </details>
+      <div class="needs-zone" id="advZone">
+        <div class="sec">
+          <div class="sec-t">Параметры области</div>
+          <div class="row" style="margin-top:0"><label for="zname">Название</label><input type="text" id="zname" maxlength="30"></div>
+          <div class="row"><label for="strength"><span>Интенсивность</span><span id="strengthV"></span></label><input type="range" id="strength" min="0" max="100"></div>
+          <div class="row"><label for="flat"><span>Выровнять поверхность</span><span id="flatV"></span></label><input type="range" id="flat" min="0" max="100"></div>
+          <div class="row"><button class="btn" id="btnClear" style="width:100%">Очистить выделение области</button></div>
+        </div>
+      </div>
+      <div class="sec"><div class="sec-t">Новая область вручную</div><div class="chips" id="addZone"></div></div>
+    </div>
+
+    <div class="tabpanel" id="tp-ai" role="tabpanel" aria-labelledby="tab-ai" hidden>
+      <div class="needs-zone">
+        <div class="sec hide" id="aiEditRow">
+          <div class="sec-t">Заменить область с помощью ИИ</div>
+          <input type="text" id="aiDesc" class="gtext" maxlength="200" placeholder="Что должно быть на этом месте? Например: светлый паркет ёлочкой" autocomplete="off" aria-label="Что должно быть на этом месте">
+          <button class="btn primary" id="aiEditBtn" style="width:100%;margin-top:8px">Перерисовать область (ИИ)</button>
+          <p class="gstatus" id="aiEditStatus" role="status"></p>
+        </div>
+      </div>
+      <div class="sec" id="genCard">
+        <div class="sec-t">Идея в другом стиле</div>
+        <div class="g2">
+          <div><label class="lbl" for="gRoom">Помещение</label>
+            <select id="gRoom" class="gtext"><option value="bathroom">Ванная</option><option value="kitchen">Кухня</option><option value="living">Гостиная</option><option value="bedroom">Спальня</option><option value="hall">Прихожая</option><option value="other">Другое</option></select></div>
+          <div><label class="lbl" for="gStyle">Стиль</label>
+            <select id="gStyle" class="gtext"><option value="scandi">Скандинавский</option><option value="loft">Лофт</option><option value="modern">Современный</option><option value="classic">Классика</option><option value="japandi">Джапанди</option><option value="eco">Эко</option></select></div>
+        </div>
+        <div class="row"><label for="gWish"><span>Пожелания клиента</span></label><textarea id="gWish" class="gtext" maxlength="400" placeholder="Например: светлая плитка, тёплый свет, подвесная тумба"></textarea></div>
+        <div class="row" id="serverGen">
+          <button class="btn primary" id="gGo" style="width:100%">Нарисовать 2 варианта (платно)</button>
+          <p class="note">Нужен сервер: адрес и ключ вводятся в настройках (шестерёнка вверху).</p>
+        </div>
+        <div class="row">
+          <div class="lbl"><span>Бесплатный способ</span></div>
+          <ol class="steps2">
+            <li>Скопируйте запрос.</li>
+            <li>Откройте любое приложение нейросети, где можно редактировать картинки. Прикрепите фото комнаты и вставьте запрос.</li>
+            <li>Сохраните результат и загрузите его сюда.</li>
+          </ol>
+          <textarea id="gPrompt" class="gtext" readonly rows="5" aria-label="Запрос для нейросети"></textarea>
+          <div class="actions" style="margin-top:8px">
+            <button class="btn" id="gCopy">Скопировать запрос</button>
+            <label class="btn primary" for="gOwn">Загрузить готовый вариант</label>
+            <input type="file" id="gOwn" class="vh" accept="image/*">
+          </div>
+        </div>
+        <p class="gstatus" id="gStatus" role="status"></p>
+        <div class="gal hide" id="gGal"></div>
+        <div class="row hide" id="gBackRow"><button class="btn" id="gBack" style="width:100%">Вернуть исходное фото</button></div>
+      </div>
+    </div>
   </aside>
 </main>
+
+<div class="sheet" id="sheet-done" hidden role="dialog" aria-modal="true" aria-labelledby="done-title">
+  <div class="sheet-card" id="resultCard">
+    <div class="sheet-head"><h2 id="done-title">Готово</h2><button class="iconbtn" data-close aria-label="Закрыть"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+    <div class="opts">
+      <label class="chk"><input type="checkbox" id="optPair"> До и после рядом</label>
+      <label class="chk"><input type="checkbox" id="optBrand" checked> Подпись компании внизу</label>
+    </div>
+    <div class="actions">
+      <button class="btn primary" id="btnSave" disabled>Скачать PNG</button>
+      <button class="btn hide" id="btnShare" disabled>Отправить клиенту</button>
+      <button class="btn" id="btnCopy" disabled>Копировать описание</button>
+    </div>
+    <details open><summary>Описание изменений для клиента</summary><textarea id="summary" readonly rows="6" aria-label="Описание изменений для клиента"></textarea></details>
+  </div>
+</div>
+
+<div class="sheet" id="sheet-settings" hidden role="dialog" aria-modal="true" aria-labelledby="st-title">
+  <div class="sheet-card">
+    <div class="sheet-head"><h2 id="st-title">Настройки</h2><button class="iconbtn" data-close aria-label="Закрыть"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+    <div class="sec" id="brandCard">
+      <div class="sec-t">Ваша компания</div>
+      <div class="row" style="margin-top:0"><label for="cName">Название</label><input type="text" id="cName" maxlength="40" placeholder="Например, СтройДом"></div>
+      <div class="row"><label for="cContact">Телефон, сайт или Telegram</label><input type="text" id="cContact" maxlength="60" placeholder="+7 900 000-00-00"></div>
+      <div class="row"><div class="colorline" style="margin-top:0"><input type="color" id="cColor" value="#0f6b5a" aria-label="Фирменный цвет"><span class="note" style="margin:0">Фирменный цвет</span></div></div>
+      <div class="row actions"><label class="btn" for="logoFile" id="btnLogo">Загрузить логотип</label><button class="btn hide" id="btnLogoDel">Убрать</button><input type="file" id="logoFile" class="vh" accept="image/*"></div>
+      <p class="note">Название и логотип появятся в шапке, на скачанной картинке и в описании для клиента. Всё хранится только в вашем браузере.</p>
+    </div>
+    <div class="sec" id="serverSection">
+      <div class="sec-t">Сервер генерации (необязательно)</div>
+      <div class="row" style="margin-top:0"><label for="gUrl"><span>Адрес сервера</span></label><input type="text" id="gUrl" class="gtext" placeholder="https://design-visualizer-api.имя.workers.dev" autocomplete="off" autocapitalize="off" spellcheck="false"></div>
+      <div class="row"><label for="gToken"><span>Ключ доступа</span></label><input type="text" id="gToken" class="gtext" autocomplete="off" autocapitalize="off" spellcheck="false"></div>
+      <p class="note">Ключ нейросети хранится на сервере, а не на странице. Инструкция по запуску лежит в папке design-api.</p>
+    </div>
+  </div>
+</div>
 <div id="toast" role="status"></div>
+
 
 <script>
 'use strict';
@@ -311,6 +426,8 @@ const MATERIALS = [
   { id: 'fabric',   name: 'Ткань',      color: '#6F8A8C' }
 ];
 const ROUGH_T = 13; // выше этого разброса яркости предлагаем сгладить поверхность
+const _i = (inner, sz) => '<svg viewBox="0 0 24 24" width="' + (sz || 18) + '" height="' + (sz || 18) + '" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + inner + '</svg>';
+const EYE_ON = _i('<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>'), EYE_OFF = _i('<path d="M3 3l18 18"/><path d="M10.6 5.1A10 10 0 0 1 12 5c6.5 0 10 7 10 7a17 17 0 0 1-3.2 4.2M6.6 6.6A16.5 16.5 0 0 0 2 12s3.5 7 10 7a9.7 9.7 0 0 0 4.4-1"/>'), X_ICON = _i('<path d="M18 6 6 18M6 6l12 12"/>', 16);
 const AUTO_COLORS = ['#9CAF9A', '#D8C3A0', '#2F3E55', '#C26B4A', '#B8B2A7', '#D8A9A4', '#2F6B5A', '#D2A33B'];
 const ZONE_PRESETS = {
   'Область': { color: '#9CAF9A', material: 'none' },
@@ -456,7 +573,7 @@ function setImage(source, sw, sh, opts){
   if (!opts.generated){ S.photoId = (S.photoId || 0) + 1; if (onNewPhoto) onNewPhoto(); }
   $('#btnCmp').setAttribute('aria-pressed', 'false');
   $('#empty').classList.add('hide');
-  $('#btnSave').disabled = false; $('#btnCopy').disabled = false; $('#btnShare').disabled = false;
+  $('#btnSave').disabled = false; $('#btnCopy').disabled = false; $('#btnShare').disabled = false; $('#btnDone').disabled = false; document.body.classList.add('has-photo');
   renderZones(); renderInspector(); updateHint(); updateSummary();
   render();
 }
@@ -909,14 +1026,14 @@ function renderZones(){
   const box = $('#zoneList'); box.innerHTML = '';
   S.zones.forEach((z, i) => {
     const el = document.createElement('div');
-    el.className = 'zone' + (i === S.active ? ' on' : '');
+    el.className = 'zone' + (i === S.active ? ' on' : '') + (z.fresh ? ' fresh' : '');
     el.setAttribute('role', 'button'); el.tabIndex = 0; el.setAttribute('aria-pressed', String(i === S.active));
     el.addEventListener('keydown', ev => { if ((ev.key === 'Enter' || ev.key === ' ') && ev.target === el){ ev.preventDefault(); el.click(); } });
     const empty = !hasMask(z);
     el.innerHTML = '<span class="dot" style="background:' + z.color + '"></span>' +
       '<span class="nm">' + esc(z.name) + '<small>' + (empty ? 'выделите область на фото' : z.fresh ? 'найдено автоматически: выберите цвет' : (MATERIALS.find(m => m.id === z.material).name)) + '</small></span>' +
-      '<button class="ico" data-a="eye" title="Показать / скрыть" aria-label="Показать или скрыть область">' + (z.visible ? '👁' : '—') + '</button>' +
-      '<button class="ico" data-a="del" title="Удалить область" aria-label="Удалить область">✕</button>';
+      '<button class="ico" data-a="eye" title="Показать / скрыть" aria-label="Показать или скрыть область">' + (z.visible ? EYE_ON : EYE_OFF) + '</button>' +
+      '<button class="ico" data-a="del" title="Удалить область" aria-label="Удалить область">' + X_ICON + '</button>';
     el.addEventListener('click', e => {
       const a = e.target.closest('[data-a]') && e.target.closest('[data-a]').dataset.a;
       if (a === 'eye'){ z.visible = !z.visible; renderZones(); updateSummary(); requestRender(); return; }
@@ -933,8 +1050,8 @@ function renderZones(){
 }
 
 function renderInspector(){
-  const z = activeZone(), ins = $('#inspector');
-  ins.classList.toggle('hide', !z); $('#noZone').classList.toggle('hide', !!z); $('#advZone').classList.toggle('hide', !z); if (!z) return;
+  const z = activeZone();
+  document.body.classList.toggle('has-zone', !!z); if (!z) return;
   $('#fixRow').classList.toggle('hide', !(z.simple && z.seed));
   $('#armRow').classList.toggle('hide', !hasMask(z)); $('#aiEditRow').classList.toggle('hide', !hasMask(z)); $('#armAdd').setAttribute('aria-pressed', String(S.arm === 'add')); $('#armSub').setAttribute('aria-pressed', String(S.arm === 'sub'));
   $('#smoothRow').classList.toggle('hide', !(z.rough > ROUGH_T && z.material === 'none'));
@@ -962,8 +1079,8 @@ function updateHint(){
   else if (S.tool === 'poly') t = 'Ставьте точки по углам стены, пола или зеркала. Замкните контур нажатием на первую (белую) точку или кнопкой «Замкнуть контур».';
   else if (S.tool === 'brush') t = 'Закрасьте то, что нужно добавить в область. Размер кисти в «Дополнительно».';
   else if (S.tool === 'erase') t = 'Сотрите всё, что не должно перекрашиваться (розетки, плинтус, рамы).';
-  else if (!z || !hasMask(z)) t = 'Нажмите на фото на то, что хотите изменить: стену, пол или мебель.';
-  else t = 'Выберите цвет или материал в блоке «Что меняем». ' + (z.simple ? 'Выделилось не то: нажмите «Меньше» или «Больше». ' : '') + 'Чтобы изменить другую часть, нажмите на неё на фото.';
+  else if (!z || !hasMask(z)) t = ''; // подсказку показывает вкладка «Цвет»
+  else t = 'Выберите цвет или материал во вкладках ниже. ' + (z.simple ? 'Выделилось не то: вкладка «Область». ' : '') + 'Другая часть: нажмите на неё на фото.';
   $('#hint').textContent = t;
 }
 
@@ -1005,7 +1122,7 @@ function press(p){
   if (fresh){ // нажатие на уже выделенную область выбирает её, а не создаёт новую
     const hit = zoneAt(p);
     if (hit >= 0){
-      if (hit === S.active) toast('Эта область уже выбрана. Выберите цвет или материал в блоке «Что меняем»');
+      if (hit === S.active) toast('Эта область уже выбрана. Выберите цвет или материал ниже');
       else { S.active = hit; renderZones(); renderInspector(); updateHint(); requestRender(); }
       return;
     }
@@ -1201,12 +1318,13 @@ $('#btnClear').addEventListener('click', () => {
 });
 
 /* ====================== фирменный стиль ====================== */
-const B = { name: '', contact: '', color: '#b94e28', logo: '', img: null };
+const DEFAULT_BRAND = '#0f6b5a';
+const B = { name: '', contact: '', color: DEFAULT_BRAND, logo: '', img: null };
 function saveBrand(){ try { localStorage.setItem('brand-v1', JSON.stringify({ name: B.name, contact: B.contact, color: B.color, logo: B.logo })); } catch (e) { if (!S.brandWarned){ S.brandWarned = true; toast('Данные компании не сохранятся после закрытия страницы: хранилище браузера недоступно'); } } }
 function applyBrand(){
   const root = document.documentElement.style, [r, g, b] = hex2rgb(B.color);
-  root.setProperty('--accent', B.color);
-  root.setProperty('--accent-ink', (.2126 * r + .7152 * g + .0722 * b) > 170 ? '#1f2328' : '#fff');
+  if (B.color.toLowerCase() === DEFAULT_BRAND){ root.removeProperty('--accent'); root.removeProperty('--accent-ink'); } // тема сама подбирает акцент для светлого и тёмного вида
+  else { root.setProperty('--accent', B.color); root.setProperty('--accent-ink', (.2126 * r + .7152 * g + .0722 * b) > 170 ? '#1f2328' : '#fff'); }
   $('#hName').textContent = B.name || 'Визуализатор ремонта';
   document.title = B.name ? B.name + ' — визуализатор ремонта' : 'Визуализатор ремонта';
   const lg = $('#hLogo'); if (B.logo){ lg.src = B.logo; lg.classList.remove('hide'); } else lg.classList.add('hide');
@@ -1311,7 +1429,7 @@ $('#btnShare').addEventListener('click', () => {
 $('#btnCopy').addEventListener('click', async () => {
   const t = $('#summary').value;
   try { await navigator.clipboard.writeText(t); toast('Описание скопировано'); }
-  catch { const ta = $('#summary'); ta.closest('details').open = true; ta.select(); toast('Выделено — нажмите Ctrl+C'); }
+  catch { UI.openSheet('done'); const ta = $('#summary'); ta.select(); toast('Выделено — нажмите Ctrl+C'); }
 });
 
 /* ====================== генерация (ИИ) ====================== */
@@ -1366,7 +1484,7 @@ $('#gBack').addEventListener('click', () => {
 });
 async function generate(){
   if (!S.base){ toast('Сначала загрузите фото'); return; }
-  if (!G.url){ $('#gSettings').open = true; $('#gUrl').focus(); gStatus('Укажите адрес сервера генерации в настройках ниже.', true); return; }
+  if (!G.url){ UI.openSheet('settings'); $('#gUrl').focus(); gStatus('Укажите адрес сервера в настройках (шестерёнка вверху).', true); return; }
   if (G.busy) return;
   if (!G.consent){ // фото клиента уходит на сервер и в нейросеть: спрашиваем явно
     G.consent = true; $('#gGo').textContent = 'Подтверждаю: отправить фото на сервер';
@@ -1555,7 +1673,7 @@ async function aiEdit(){
   if (!z || !hasMask(z)){ aiStatus('Сначала нажмите на фото на то, что хотите заменить.', true); return; }
   const desc = $('#aiDesc').value.trim();
   if (desc.length < 3){ aiStatus('Напишите, что должно быть на этом месте.', true); $('#aiDesc').focus(); return; }
-  if (!G.url){ $('#genCard').open = true; $('#gSettings').open = true; aiStatus('Укажите адрес сервера в блоке «Идея в другом стиле (ИИ)» → «Автоматически через сервер».', true); return; }
+  if (!G.url){ UI.openSheet('settings'); $('#gUrl').focus(); aiStatus('Укажите адрес сервера в блоке «Идея в другом стиле (ИИ)» → «Автоматически через сервер».', true); return; }
   if (G.busy) return;
   if (!G.consent){ // фото клиента уходит на сервер и в нейросеть: спрашиваем явно
     G.consent = true; $('#aiEditBtn').textContent = 'Подтверждаю: отправить фото на сервер';
@@ -1621,12 +1739,35 @@ $('#gOwn').addEventListener('change', async e => {
   else useVariant(G.variants.length - 1, true);
 });
 
+/* ====================== вкладки и окна ====================== */
+const UI = (() => {
+  const tabs = [...document.querySelectorAll('.tab')], panels = tabs.map(t => document.getElementById(t.getAttribute('aria-controls')));
+  let lastFocus = null;
+  function tab(name){ tabs.forEach((t, i) => { const on = t.dataset.tab === name; t.setAttribute('aria-selected', String(on)); t.tabIndex = on ? 0 : -1; panels[i].hidden = !on; }); }
+  tabs.forEach((t, i) => {
+    t.addEventListener('click', () => tab(t.dataset.tab));
+    t.addEventListener('keydown', e => { if (e.key === 'ArrowRight' || e.key === 'ArrowLeft'){ const n = (i + (e.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length; tab(tabs[n].dataset.tab); tabs[n].focus(); e.preventDefault(); } });
+  });
+  function openSheet(id){ const el = document.getElementById('sheet-' + id); if (!el) return; lastFocus = document.activeElement; el.hidden = false; const c = el.querySelector('[data-close]'); if (c) c.focus(); }
+  function closeSheets(){ let any = false; document.querySelectorAll('.sheet').forEach(sh => { if (!sh.hidden){ sh.hidden = true; any = true; } }); if (any && lastFocus && lastFocus.focus) lastFocus.focus(); }
+  document.querySelectorAll('.sheet').forEach(sh => sh.addEventListener('click', e => { if (e.target === sh) closeSheets(); }));
+  document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', closeSheets));
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSheets(); });
+  $('#btnDone').addEventListener('click', () => openSheet('done'));
+  $('#autoSegProxy').addEventListener('click', () => $('#autoSegBtn').click());
+  $('#btnSettings').addEventListener('click', () => openSheet('settings'));
+  $('#pasteToggle').addEventListener('click', () => { const t = $('#pasteBox'); t.hidden = !t.hidden; if (!t.hidden) t.focus(); });
+  function showAll(){ document.body.classList.add('ui-all'); document.querySelectorAll('.tabpanel,.sheet,#pasteBox').forEach(e => { e.hidden = false; }); } // для автоматических проверок
+  if (location.hash === '#ui-all') showAll();
+  tab('color');
+  return { tab, openSheet, closeSheets, showAll };
+})();
+
 /* кнопки-метки выбора файла доступны с клавиатуры */
 document.querySelectorAll('label.btn[for]').forEach(l => { l.tabIndex = 0; l.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); const f = document.getElementById(l.getAttribute('for')); if (f) f.click(); } }); });
 document.querySelectorAll('.vh').forEach(i => { i.tabIndex = -1; });
 
 /* старт */
-$('#inspector').classList.add('hide');
 $('#brushBox').classList.add('hide');
 renderZones(); applyBrand();
 </script>
