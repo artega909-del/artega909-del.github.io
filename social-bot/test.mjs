@@ -120,7 +120,7 @@ console.log('ok 5 публикация Reels');
   const calls = [];
   const q = await writeQueue([post({ type: 'IMAGE', media: 'assets/a.jpg' })]);
   await run('publish', q, fakeFetch(okInstagram(), calls));
-  const create = calls.find(c => c.url.endsWith('/1784/media'));
+  const create = calls.find(c => c.method === 'POST' && c.url.endsWith('/1784/media'));
   assert.equal(create.params.image_url, 'https://artega909-del.github.io/assets/a.jpg'); assert.ok(!('video_url' in create.params));
 }
 console.log('ok 6 публикация фото');
@@ -189,5 +189,46 @@ console.log('ok 11 dry-run');
   assert.deepEqual(s.failed, ['p1']); assert.match((await readPosts(q))[0].error, /JPEG/);
 }
 console.log('ok 12 невалидная запись');
+
+// 13. защита от повтора: такой пост уже есть в аккаунте (прошлый запуск не успел сохранить статус) → не публикуем снова
+{
+  const calls = [];
+  const ok = okInstagram();
+  const h = (m, u, p) => (m === 'GET' && u.pathname.endsWith('/1784/media')
+    ? { status: 200, json: { data: [{ id: 'OLD1', caption: '  Привет #ai ', permalink: 'https://www.instagram.com/reel/OLD/' }] } } : ok(m, u, p));
+  const q = await writeQueue([post()]);
+  const { s, logs } = await run('publish', q, fakeFetch(h, calls));
+  assert.deepEqual(s.published, []); assert.deepEqual(s.duplicates, ['p1']);
+  const p1 = (await readPosts(q))[0];
+  assert.equal(p1.status, 'published'); assert.equal(p1.media_id, 'OLD1'); assert.match(p1.note, /повторно не публиковался/);
+  assert.ok(!calls.some(c => c.method === 'POST'), 'ничего не создаётся и не публикуется');
+  assert.match(logs.join('\n'), /уже есть в аккаунте/);
+  // repeat: true — осознанный повтор с той же подписью публикуется
+  const q2 = await writeQueue([post({ repeat: true })], 'q2.json');
+  const r2 = await run('publish', q2, fakeFetch(h));
+  assert.deepEqual(r2.s.published, ['p1']);
+}
+console.log('ok 13 защита от повторной публикации');
+
+// 14. если проверить последние посты не удалось — пишем предупреждение и публикуем (не блокируем очередь)
+{
+  const ok = okInstagram();
+  const h = (m, u, p) => (m === 'GET' && u.pathname.endsWith('/1784/media') ? { status: 500, json: { error: { message: 'temporary' } } } : ok(m, u, p));
+  const q = await writeQueue([post()]);
+  const { s, logs } = await run('publish', q, fakeFetch(h));
+  assert.deepEqual(s.published, ['p1']); assert.match(logs.join('\n'), /не удалось проверить последние посты/);
+}
+console.log('ok 14 сбой проверки повтора не блокирует публикацию');
+
+// 15. обложка Reels: cover_ms → thumb_offset; неверное значение отклоняется
+{
+  const calls = [];
+  await run('publish', await writeQueue([post({ cover_ms: 1500 })]), fakeFetch(okInstagram(), calls));
+  assert.equal(calls.find(c => c.method === 'POST' && c.url.endsWith('/1784/media')).params.thumb_offset, '1500');
+  assert.ok(validate(post({ cover_ms: -1 })).some(e => /cover_ms/.test(e)));
+  assert.ok(validate(post({ cover_ms: 1.5 })).some(e => /cover_ms/.test(e)));
+  assert.ok(validate(post({ type: 'IMAGE', media: 'assets/a.jpg', cover_ms: 0 })).some(e => /только у REELS/.test(e)));
+}
+console.log('ok 15 обложка Reels');
 
 console.log('\nВсе проверки пройдены');

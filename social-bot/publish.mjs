@@ -44,6 +44,8 @@ export function validate(item) {
     if ((caption.match(/#[\p{L}\p{N}_]+/gu) || []).length > 30) errs.push('больше 30 хештегов');
   }
   if (Number.isNaN(Date.parse(item.publish_at))) errs.push('publish_at: время вида 2026-12-01T09:00:00Z');
+  if (item.cover_ms !== undefined && !(Number.isInteger(item.cover_ms) && item.cover_ms >= 0)) errs.push('cover_ms: целое число миллисекунд от начала видео (кадр-обложка)');
+  if (item.cover_ms !== undefined && item.type !== 'REELS') errs.push('cover_ms бывает только у REELS');
   return errs;
 }
 
@@ -77,9 +79,22 @@ async function publishOne(item, ctx) {
   const head = await fetchFn(url, { method: 'HEAD', redirect: 'follow' }).catch(() => null);
   if (!head || !head.ok) return { skipped: `файл пока не доступен по ссылке (${head ? head.status : 'нет ответа'}): ${url}` };
 
+  // Защита от повторной публикации: если прошлый запуск опубликовал пост, но не успел сохранить статус
+  // (сбой, отменённый запуск, конфликт при git push), такой же пост уже есть в аккаунте — второй раз не публикуем.
+  const caption = (item.caption || '').trim();
+  if (caption && !item.repeat) {
+    try {
+      const recent = await api.call('GET', `/${igId}/media`, { fields: 'id,caption,permalink', limit: '25' });
+      const same = (recent.data || []).find(m => (m.caption || '').trim() === caption);
+      if (same) return { media_id: same.id, permalink: same.permalink || null, duplicate: true };
+    } catch (e) { ctx.log(`⚠️  ${item.id}: не удалось проверить последние посты на повтор (${e.message}), публикую`); }
+  }
+
   const params = { caption: item.caption || '' };
-  if (item.type === 'REELS') { params.media_type = 'REELS'; params.video_url = url; params.share_to_feed = 'true'; }
-  else params.image_url = url;
+  if (item.type === 'REELS') {
+    params.media_type = 'REELS'; params.video_url = url; params.share_to_feed = 'true';
+    if (item.cover_ms !== undefined) params.thumb_offset = String(item.cover_ms);
+  } else params.image_url = url;
 
   const created = await api.call('POST', `/${igId}/media`, params);
   for (let i = 0; ; i++) { // ждём, пока Instagram обработает файл
@@ -163,7 +178,8 @@ export async function main({
   const maxPerRun = Number(env.MAX_PER_RUN) || 3;
   const maxLate = (Number(env.MAX_LATE_HOURS) || 48) * HOUR;
   const save = () => writeFile(queuePath, JSON.stringify(queue, null, 2) + '\n');
-  const ctx = { api, igId, fetchFn, sleep, site: env.SITE_URL || SITE, pollMs: Number(env.POLL_MS) || 5000, maxPolls: Number(env.MAX_POLLS) || 120 };
+  // ожидание обработки видео: до ~5 минут на пост (3 поста × 5 мин укладываются в лимит задания)
+  const ctx = { api, igId, fetchFn, sleep, log, site: env.SITE_URL || SITE, pollMs: Number(env.POLL_MS) || 5000, maxPolls: Number(env.MAX_POLLS) || 60 };
 
   let done = 0;
   for (const item of posts) {
@@ -197,12 +213,18 @@ export async function main({
       const r = await publishOne(item, ctx);
       if (r.skipped) { summary.skipped.push(item.id); log(`⏳ ${item.id}: ${r.skipped}`); continue; }
       item.status = 'published';
-      item.published_at = new Date(now()).toISOString();
       item.media_id = r.media_id;
       item.permalink = r.permalink;
       delete item.error;
-      summary.published.push(item.id);
-      log(`✅ ${item.id}: опубликовано${r.permalink ? ' → ' + r.permalink : ''}`);
+      if (r.duplicate) {
+        item.note = 'уже был в аккаунте (найден по подписи), повторно не публиковался';
+        summary.duplicates = [...(summary.duplicates || []), item.id];
+        log(`♻️  ${item.id}: такой пост уже есть в аккаунте${r.permalink ? ' → ' + r.permalink : ''}, повторно не публикую`);
+      } else {
+        item.published_at = new Date(now()).toISOString();
+        summary.published.push(item.id);
+        log(`✅ ${item.id}: опубликовано${r.permalink ? ' → ' + r.permalink : ''}`);
+      }
       done++;
     } catch (e) {
       item.status = 'failed';
