@@ -86,6 +86,11 @@ console.log('ok 3б диагностика при отказе доступа');
 // 4. нет секретов → понятная ошибка с именами, без значений
 await assert.rejects(main({ mode: 'check', env: { INSTAGRAM_ACCOUNT_ID: '1' }, fetchFn: fakeFetch(okInstagram()) }), /INSTAGRAM_ACCESS_TOKEN/);
 await assert.rejects(main({ mode: 'oops', env, fetchFn: fakeFetch(okInstagram()) }), /Неизвестный режим/);
+{ // ID с лишними символами (например, два числа подряд) отклоняется до обращения к Instagram, токен не печатается
+  const calls = [];
+  const err = await main({ mode: 'check', env: { ...env, INSTAGRAM_ACCOUNT_ID: '17841449033580265\n61596101324605' }, fetchFn: fakeFetch(okInstagram(), calls) }).catch(e => e);
+  assert.match(err.message, /только из цифр.*32 символов|только из цифр.*символов/); assert.equal(calls.length, 0); assert.ok(!err.message.includes(TOKEN));
+}
 console.log('ok 4 нет секретов / неверный режим');
 
 // 5. публикация: созданный контейнер → ожидание обработки → публикация; статусы записаны; черновики и будущие посты не тронуты

@@ -129,6 +129,10 @@ export async function main({
   if (missing.length) throw new Error('Не заданы секреты: ' + missing.join(', ') + ' (GitHub → Settings → Secrets and variables → Actions)');
   const token = env.INSTAGRAM_ACCESS_TOKEN.trim();
   const igId = env.INSTAGRAM_ACCOUNT_ID.trim();
+  if (!/^\d{4,20}$/.test(igId)) {
+    throw new Error(`INSTAGRAM_ACCOUNT_ID должен состоять только из цифр (у Instagram-аккаунта их около 17), а в секрете ${igId.length} символов. ` +
+      'Заново скопируйте ID из Business Settings → Аккаунты → Аккаунты Instagram и сохраните секрет без пробелов, переносов строк и лишних чисел.');
+  }
   const api = graphClient({ fetchFn, token, version: env.GRAPH_VERSION || 'v23.0' });
   const summary = { published: [], failed: [], missed: [], waiting: [], skipped: [] };
 
