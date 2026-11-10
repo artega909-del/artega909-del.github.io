@@ -67,6 +67,22 @@ console.log('ok 2 проверка записей');
 }
 console.log('ok 3 check');
 
+// 3б. check не прошёл (нет доступа к аккаунту) → диагностика: чей токен, какие разрешения; токен и полный ID не печатаются
+{
+  const h = (m, u) => {
+    if (u.pathname.endsWith('/1784')) return { status: 400, json: { error: { message: `Unsupported get request. Object with ID '1784' does not exist ${TOKEN}`, code: 100, error_subcode: 33 } } };
+    if (u.pathname.endsWith('/me/permissions')) return { status: 200, json: { data: [{ permission: 'instagram_basic', status: 'granted' }] } };
+    if (u.pathname.endsWith('/me')) return { status: 200, json: { id: '6159', name: 'salam-bot' } };
+  };
+  const logs = [];
+  await assert.rejects(main({ mode: 'check', env: { ...env, INSTAGRAM_ACCOUNT_ID: '17841449033580265' }, fetchFn: fakeFetch(h), log: s => logs.push(s), now: () => NOW, sleep: async () => {} }), /подсказки выше/);
+  const text = logs.join('\n');
+  assert.match(text, /17 цифр, начинается с «17841»/); assert.ok(!text.includes('17841449033580265'), 'полный ID не печатается');
+  assert.match(text, /salam-bot/); assert.match(text, /instagram_basic/); assert.match(text, /нет разрешения instagram_content_publish/);
+  assert.ok(!text.includes(TOKEN), 'токен не печатается');
+}
+console.log('ok 3б диагностика при отказе доступа');
+
 // 4. нет секретов → понятная ошибка с именами, без значений
 await assert.rejects(main({ mode: 'check', env: { INSTAGRAM_ACCOUNT_ID: '1' }, fetchFn: fakeFetch(okInstagram()) }), /INSTAGRAM_ACCESS_TOKEN/);
 await assert.rejects(main({ mode: 'oops', env, fetchFn: fakeFetch(okInstagram()) }), /Неизвестный режим/);

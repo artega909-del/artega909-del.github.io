@@ -95,6 +95,26 @@ async function publishOne(item, ctx) {
   return { media_id: pub.id, permalink };
 }
 
+// Подсказки, если доступ к аккаунту не получен. Секреты не показываем: ID печатается только началом и длиной.
+async function diagnose({ api, igId, log }) {
+  log(`ID аккаунта в секрете: ${igId.length} цифр, начинается с «${igId.slice(0, 5)}». ID Instagram-аккаунта обычно из 17 цифр и начинается с 17841.`);
+  try {
+    const me = await api.call('GET', '/me', { fields: 'id,name' });
+    log(`Токен принадлежит: ${me.name || '?'} (id ${me.id}). Должен быть системный пользователь salam-bot.`);
+  } catch (e) { log('Токен не удалось проверить: ' + e.message); }
+  try {
+    const p = await api.call('GET', '/me/permissions');
+    const granted = (p.data || []).filter(x => x.status === 'granted').map(x => x.permission);
+    log('Разрешения токена: ' + (granted.join(', ') || 'нет'));
+    for (const need of ['instagram_basic', 'instagram_content_publish']) {
+      if (!granted.includes(need)) log(`⚠️  у токена нет разрешения ${need}: сгенерируйте новый токен с этим разрешением`);
+    }
+  } catch (e) { log('Разрешения прочитать не удалось: ' + e.message); }
+  log('Что проверить: 1) Business Settings → Системные пользователи → salam-bot → «Назначенные объекты»: там должен быть @salammotion с управлением контентом;');
+  log('2) в секрете INSTAGRAM_ACCOUNT_ID лежит ID именно Instagram-аккаунта (Аккаунты → Аккаунты Instagram), а не приложения или пользователя;');
+  log('3) токен создан для приложения Salam Motion Bot.');
+}
+
 export async function main({
   mode = 'publish',
   env = process.env,
@@ -113,9 +133,15 @@ export async function main({
   const summary = { published: [], failed: [], missed: [], waiting: [], skipped: [] };
 
   if (mode === 'check') {
-    const me = await api.call('GET', `/${igId}`, { fields: 'username' });
-    log(`Доступ есть: @${me.username}`);
-    return { ok: true, username: me.username, ...summary };
+    let acc;
+    try { acc = await api.call('GET', `/${igId}`, { fields: 'username' }); }
+    catch (e) {
+      log('❌ ' + e.message);
+      await diagnose({ api, igId, log });
+      throw new Error('проверка доступа не пройдена, подсказки выше');
+    }
+    log(`Доступ есть: @${acc.username}`);
+    return { ok: true, username: acc.username, ...summary };
   }
 
   const queue = JSON.parse(await readFile(queuePath, 'utf8'));
