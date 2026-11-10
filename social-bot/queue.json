@@ -1,0 +1,15 @@
+{
+  "_help": "Очередь публикаций. Бот берёт записи со status \"scheduled\", у которых publish_at уже наступил. Подробности: social-bot/README.md",
+  "posts": [
+    {
+      "id": "example-001",
+      "brand": "salam",
+      "platform": "instagram",
+      "type": "REELS",
+      "media": "assets/example.mp4",
+      "caption": "Пример подписи. Замените текст и файл, поставьте status: scheduled — и бот опубликует в указанное время.",
+      "publish_at": "2026-12-01T09:00:00Z",
+      "status": "draft"
+    }
+  ]
+}
