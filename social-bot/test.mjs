@@ -71,6 +71,7 @@ console.log('ok 3 check');
 {
   const h = (m, u) => {
     if (u.pathname.endsWith('/1784')) return { status: 400, json: { error: { message: `Unsupported get request. Object with ID '1784' does not exist ${TOKEN}`, code: 100, error_subcode: 33 } } };
+    if (u.pathname.endsWith('/debug_token')) return { status: 200, json: { data: { is_valid: true, app_id: '99', expires_at: 0, granular_scopes: [{ scope: 'instagram_basic', target_ids: ['17841000000000001'] }] } } };
     if (u.pathname.endsWith('/me/permissions')) return { status: 200, json: { data: [{ permission: 'instagram_basic', status: 'granted' }] } };
     if (u.pathname.endsWith('/me')) return { status: 200, json: { id: '6159', name: 'salam-bot' } };
   };
@@ -78,6 +79,7 @@ console.log('ok 3 check');
   await assert.rejects(main({ mode: 'check', env: { ...env, INSTAGRAM_ACCOUNT_ID: '17841449033580265' }, fetchFn: fakeFetch(h), log: s => logs.push(s), now: () => NOW, sleep: async () => {} }), /подсказки выше/);
   const text = logs.join('\n');
   assert.match(text, /17 цифр, начинается с «17841»/); assert.ok(!text.includes('17841449033580265'), 'полный ID не печатается');
+  assert.match(text, /Токену доступны Instagram-аккаунты \(ID\): 17841000000000001/); assert.match(text, /НЕ совпадает ни с одним/);
   assert.match(text, /salam-bot/); assert.match(text, /instagram_basic/); assert.match(text, /нет разрешения instagram_content_publish/);
   assert.ok(!text.includes(TOKEN), 'токен не печатается');
 }

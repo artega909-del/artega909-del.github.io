@@ -67,7 +67,7 @@ function graphClient({ fetchFn, token, version }) {
     }
     return data;
   }
-  return { call, redact };
+  return { call, redact, token };
 }
 
 async function publishOne(item, ctx) {
@@ -102,6 +102,16 @@ async function diagnose({ api, igId, log }) {
     const me = await api.call('GET', '/me', { fields: 'id,name' });
     log(`Токен принадлежит: ${me.name || '?'} (id ${me.id}). Должен быть системный пользователь salam-bot.`);
   } catch (e) { log('Токен не удалось проверить: ' + e.message); }
+  try { // какие именно объекты доступны токену: Meta отдаёт их в granular_scopes (ID аккаунтов не секретны)
+    const d = (await api.call('GET', '/debug_token', { input_token: api.token })).data || {};
+    log(`Токен: действителен=${d.is_valid}, приложение ${d.app_id}, срок ${d.expires_at ? new Date(d.expires_at * 1000).toISOString() : 'не истекает'}`);
+    const ids = [...new Set((d.granular_scopes || []).filter(s => /^instagram_/.test(s.scope)).flatMap(s => s.target_ids || []))];
+    if (!ids.length) log('⚠️  токену не назначен ни один Instagram-аккаунт: назначьте @salammotion пользователю salam-bot (Назначенные объекты) и при необходимости сгенерируйте токен заново');
+    else {
+      log('Токену доступны Instagram-аккаунты (ID): ' + ids.join(', '));
+      log(ids.includes(igId) ? 'ID из секрета есть в этом списке' : '⚠️  ID из секрета НЕ совпадает ни с одним из доступных: исправьте INSTAGRAM_ACCOUNT_ID на один из ID выше');
+    }
+  } catch (e) { log('Список доступных объектов получить не удалось: ' + e.message); }
   try {
     const p = await api.call('GET', '/me/permissions');
     const granted = (p.data || []).filter(x => x.status === 'granted').map(x => x.permission);
