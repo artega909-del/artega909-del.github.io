@@ -170,6 +170,10 @@ export async function main({
       throw new Error('проверка доступа не пройдена, подсказки выше');
     }
     log(`Доступ есть: @${acc.username}`);
+    try { // нужно для защиты от повторной публикации
+      const m = await api.call('GET', `/${igId}/media`, { fields: 'id', limit: '1' });
+      log(`Чтение последних постов работает (защита от повтора): найдено ${(m.data || []).length ? 'есть посты' : 'постов нет'}`);
+    } catch (e) { log('⚠️  не удалось прочитать последние посты, защита от повтора не сработает: ' + e.message); }
     return { ok: true, username: acc.username, ...summary };
   }
 

@@ -63,7 +63,8 @@ console.log('ok 2 проверка записей');
   assert.match(logs.join('\n'), /@salammotion/);
   assert.ok(!logs.join('\n').includes(TOKEN));
   assert.equal(calls[0].params.access_token, TOKEN);
-  assert.equal(calls.length, 1, 'check ничего не публикует');
+  assert.ok(!calls.some(c => c.method === 'POST'), 'check ничего не публикует');
+  assert.match(logs.join('\n'), /Чтение последних постов работает/);
 }
 console.log('ok 3 check');
 
