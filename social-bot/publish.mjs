@@ -189,7 +189,16 @@ export async function main({
   for (const item of posts) {
     if (item.status !== 'scheduled') continue;
     const t = Date.parse(item.publish_at);
-    if (!Number.isNaN(t) && t > now()) { summary.waiting.push(item.id); continue; }
+    if (!Number.isNaN(t) && t > now()) {
+      summary.waiting.push(item.id);
+      if (mode === 'dry-run') { // предпросмотр будущих постов: запись в порядке? файл уже доступен по ссылке?
+        const errs = validate(item);
+        const url = errs.length ? null : mediaUrl(item.media, ctx.site);
+        const head = url ? await fetchFn(url, { method: 'HEAD', redirect: 'follow' }).catch(() => null) : null;
+        log(`⏰ ${item.id}: выйдет после ${item.publish_at}` + (errs.length ? ` ❌ ${errs.join('; ')}` : ` → ${url} [файл: ${head ? head.status : 'нет ответа'}]`));
+      }
+      continue;
+    }
     if (!Number.isNaN(t) && now() - t > maxLate) {
       summary.missed.push(item.id);
       log(`⏭  ${item.id}: время прошло более ${maxLate / HOUR} ч назад, пропускаю (status → missed)`);

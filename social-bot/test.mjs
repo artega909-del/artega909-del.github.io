@@ -232,4 +232,14 @@ console.log('ok 14 сбой проверки повтора не блокиру�
 }
 console.log('ok 15 обложка Reels');
 
+// 16. dry-run показывает будущие посты и проверяет их файл, ничего не публикуя
+{
+  const calls = [];
+  const q = await writeQueue([post({ id: 'future', publish_at: '2026-12-02T09:00:00Z' })]);
+  const { s, logs } = await run('dry-run', q, fakeFetch(okInstagram(), calls));
+  assert.deepEqual(s.waiting, ['future']); assert.match(logs.join('\n'), /future: выйдет после 2026-12-02T09:00:00Z.*файл: 200/);
+  assert.ok(!calls.some(c => c.method === 'POST'));
+}
+console.log('ok 16 dry-run: предпросмотр будущих постов');
+
 console.log('\nВсе проверки пройдены');
