@@ -45,7 +45,7 @@ console.log('ok 1 ссылки на файлы');
 
 // 2. проверка записей
 assert.deepEqual(validate(post()), []);
-assert.ok(validate(post({ type: 'VIDEO' })).some(e => /REELS или IMAGE/.test(e)));
+assert.ok(validate(post({ type: 'VIDEO' })).some(e => /REELS, IMAGE или CAROUSEL/.test(e)));
 assert.ok(validate(post({ media: 'assets/a.png', type: 'IMAGE' })).some(e => /JPEG/.test(e)));
 assert.ok(validate(post({ media: 'http://x.com/a.mp4' })).length > 0, 'http без s не принимается');
 assert.ok(validate(post({ media: '../secret.mp4' })).length > 0);
@@ -241,5 +241,40 @@ console.log('ok 15 обложка Reels');
   assert.ok(!calls.some(c => c.method === 'POST'));
 }
 console.log('ok 16 dry-run: предпросмотр будущих постов');
+
+// 17. карусель: каждый слайд создаётся отдельно, затем общий контейнер с children и подписью; публикуется один раз
+{
+  const calls = []; let n = 0;
+  const h = (m, u, p) => {
+    if (m === 'HEAD') return { status: 200 };
+    if (m === 'POST' && u.pathname.endsWith('/1784/media')) return { status: 200, json: { id: p.media_type === 'CAROUSEL' ? 'PARENT' : 'CH' + (++n) } };
+    if (m === 'GET' && /\/(CH\d|PARENT)$/.test(u.pathname)) return { status: 200, json: { status_code: 'FINISHED' } };
+    if (u.pathname.endsWith('/1784/media_publish')) return { status: 200, json: { id: 'M9' } };
+    if (u.pathname.endsWith('/M9')) return { status: 200, json: { permalink: 'https://www.instagram.com/p/CAR/' } };
+    if (m === 'GET' && u.pathname.endsWith('/1784/media')) return { status: 200, json: { data: [] } };
+  };
+  const car = post({ type: 'CAROUSEL', media: ['assets/c/01.jpg', 'assets/c/02.jpg', 'assets/c/03.jpg'] });
+  assert.deepEqual(validate(car), []);
+  const q = await writeQueue([car]);
+  const { s } = await run('publish', q, fakeFetch(h, calls));
+  assert.deepEqual(s.published, ['p1']);
+  const posts = calls.filter(c => c.method === 'POST' && c.url.endsWith('/1784/media'));
+  assert.equal(posts.length, 4);
+  assert.deepEqual(posts.slice(0, 3).map(c => [c.params.image_url, c.params.is_carousel_item, c.params.caption]),
+    [1, 2, 3].map(i => [`https://artega909-del.github.io/assets/c/0${i}.jpg`, 'true', undefined]));
+  assert.equal(posts[3].params.media_type, 'CAROUSEL'); assert.equal(posts[3].params.children, 'CH1,CH2,CH3'); assert.equal(posts[3].params.caption, 'Привет #ai');
+  const pub = calls.filter(c => c.url.endsWith('/1784/media_publish')); assert.equal(pub.length, 1); assert.equal(pub[0].params.creation_id, 'PARENT');
+  assert.equal((await readPosts(q))[0].permalink, 'https://www.instagram.com/p/CAR/');
+  // проверки записи
+  assert.ok(validate(post({ type: 'CAROUSEL', media: 'assets/a.jpg' })).some(e => /2–10/.test(e)));
+  assert.ok(validate(post({ type: 'CAROUSEL', media: ['assets/a.jpg'] })).some(e => /2–10/.test(e)));
+  assert.ok(validate(post({ type: 'CAROUSEL', media: ['assets/a.jpg', 'assets/b.png'] })).some(e => /JPEG/.test(e)));
+  // один слайд ещё не доступен на сайте → ничего не создаётся, пост ждёт
+  const calls2 = [];
+  const q2 = await writeQueue([car], 'q2.json');
+  const r2 = await run('publish', q2, fakeFetch((m, u, p) => (m === 'HEAD' && u.pathname.endsWith('02.jpg') ? { status: 404 } : h(m, u, p)), calls2));
+  assert.deepEqual(r2.s.skipped, ['p1']); assert.ok(!calls2.some(c => c.method === 'POST'));
+}
+console.log('ok 17 карусель');
 
 console.log('\nВсе проверки пройдены');
