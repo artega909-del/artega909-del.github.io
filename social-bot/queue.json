@@ -14,6 +14,60 @@
       "media_id": "17978361663141176",
       "permalink": "https://www.instagram.com/reel/Dfr7S4SPi-n/",
       "published_at": "2026-11-13T15:14:11.407Z"
+    },
+    {
+      "id": "salam-002-kak-sdelano",
+      "brand": "salam",
+      "platform": "instagram",
+      "type": "CAROUSEL",
+      "media": [
+        "assets/social/salam-002-kak-sdelano/01.jpg",
+        "assets/social/salam-002-kak-sdelano/02.jpg",
+        "assets/social/salam-002-kak-sdelano/03.jpg",
+        "assets/social/salam-002-kak-sdelano/04.jpg",
+        "assets/social/salam-002-kak-sdelano/05.jpg",
+        "assets/social/salam-002-kak-sdelano/06.jpg"
+      ],
+      "caption": "Как сделана вчерашняя реклама шоколада — по шагам 👉\n1. Одна фраза.\n2. ИИ дописывает сценарий: героиня, камера, свет.\n3. Generate.\n4. Готовый ролик — без съёмки, актёров и студии.\n\nНужен такой ролик для вашего продукта? Ссылка в шапке профиля — salammotion.com\nКадры сгенерированы ИИ в Salam Motion.\n\n#ии #нейросети #видеореклама #реклама #маркетинг",
+      "publish_at": "2026-11-14T14:00:00Z",
+      "status": "draft",
+      "note": "ждёт подтверждения автора"
+    },
+    {
+      "id": "salam-003-oshibki-v-prompte",
+      "brand": "salam",
+      "platform": "instagram",
+      "type": "CAROUSEL",
+      "media": [
+        "assets/social/salam-003-oshibki-v-prompte/01.jpg",
+        "assets/social/salam-003-oshibki-v-prompte/02.jpg",
+        "assets/social/salam-003-oshibki-v-prompte/03.jpg",
+        "assets/social/salam-003-oshibki-v-prompte/04.jpg",
+        "assets/social/salam-003-oshibki-v-prompte/05.jpg",
+        "assets/social/salam-003-oshibki-v-prompte/06.jpg",
+        "assets/social/salam-003-oshibki-v-prompte/07.jpg"
+      ],
+      "caption": "5 ошибок в промпте, из-за которых ИИ выдаёт «не то» 👉\nНет героя, нет камеры, нет света, всё в одном кадре и не сказано, чего не надо. В карусели — как исправить каждую.\n\nСохраните, чтобы не потерять. А если не хочется вникать — напишите одну фразу, Salam Motion допишет остальное: salammotion.com\n\n#промпт #нейросети #ии #видеомаркетинг #контент",
+      "publish_at": "2026-11-17T14:00:00Z",
+      "status": "draft",
+      "note": "ждёт подтверждения автора"
+    },
+    {
+      "id": "salam-004-dvizheniya-kamery",
+      "brand": "salam",
+      "platform": "instagram",
+      "type": "CAROUSEL",
+      "media": [
+        "assets/social/salam-004-dvizheniya-kamery/01.jpg",
+        "assets/social/salam-004-dvizheniya-kamery/02.jpg",
+        "assets/social/salam-004-dvizheniya-kamery/03.jpg",
+        "assets/social/salam-004-dvizheniya-kamery/04.jpg",
+        "assets/social/salam-004-dvizheniya-kamery/05.jpg"
+      ],
+      "caption": "Шпаргалка: 6 движений камеры для промпта 🎥\nDolly-in, whip-pan, orbit, macro, crane up, FPV — одно слово в промпте, и кадр выглядит как кино.\n\nСохраните и отправьте тому, кто делает видео в нейросетях. Попробовать на своей идее: salammotion.com\n\n#нейросети #ии #видеосъемка #промпт #видеореклама",
+      "publish_at": "2026-11-20T14:00:00Z",
+      "status": "draft",
+      "note": "ждёт подтверждения автора"
     }
   ]
 }

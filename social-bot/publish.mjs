@@ -26,17 +26,20 @@ export function validate(item) {
   const errs = [];
   if (!item.id) errs.push('нет id');
   if (item.platform !== 'instagram') errs.push(`платформа «${item.platform}» пока не поддерживается`);
-  if (!['REELS', 'IMAGE'].includes(item.type)) errs.push('type должен быть REELS или IMAGE');
-  const media = item.media;
-  if (typeof media !== 'string' || !media) errs.push('не указан media');
-  else {
+  if (!['REELS', 'IMAGE', 'CAROUSEL'].includes(item.type)) errs.push('type должен быть REELS, IMAGE или CAROUSEL');
+  const checkOne = media => {
+    if (typeof media !== 'string' || !media) { errs.push('не указан media'); return; }
     const isHttps = /^https:\/\//i.test(media);
     if (!isHttps && (/^[a-z][a-z0-9+.-]*:/i.test(media) || media.split('/').includes('..'))) {
       errs.push('media: путь внутри репозитория (assets/…) или ссылка https://');
     }
     if (item.type === 'REELS' && !/\.(mp4|mov)(\?|#|$)/i.test(media)) errs.push('для REELS нужен файл .mp4 или .mov');
-    if (item.type === 'IMAGE' && !/\.jpe?g(\?|#|$)/i.test(media)) errs.push('для IMAGE нужен JPEG (.jpg)');
-  }
+    if (item.type !== 'REELS' && !/\.jpe?g(\?|#|$)/i.test(media)) errs.push(`для ${item.type} нужен JPEG (.jpg)`);
+  };
+  if (item.type === 'CAROUSEL') {
+    if (!Array.isArray(item.media) || item.media.length < 2 || item.media.length > 10) errs.push('для CAROUSEL media — список из 2–10 картинок');
+    else item.media.forEach(checkOne);
+  } else checkOne(item.media);
   const caption = item.caption ?? '';
   if (typeof caption !== 'string') errs.push('caption должен быть текстом');
   else {
@@ -72,12 +75,34 @@ function graphClient({ fetchFn, token, version }) {
   return { call, redact, token };
 }
 
+// Проверка, что все файлы поста доступны по публичной ссылке. bad — первый недоступный файл.
+async function checkFiles(item, ctx) {
+  const urls = [].concat(item.media).map(m => mediaUrl(m, ctx.site));
+  let bad = null;
+  for (const url of urls) {
+    const head = await ctx.fetchFn(url, { method: 'HEAD', redirect: 'follow' }).catch(() => null);
+    if (!head || !head.ok) { bad = { url, status: head ? head.status : 'нет ответа' }; break; }
+  }
+  const text = urls.length === 1 ? `${urls[0]} [файл: ${bad ? bad.status : 200}]`
+    : `${urls.length} слайдов, ${urls[0]} … [файлы: ${bad ? `${bad.status} — ${bad.url}` : 'все 200'}]`;
+  return { urls, bad, text };
+}
+
 async function publishOne(item, ctx) {
   const { api, igId, fetchFn, sleep } = ctx;
-  const url = mediaUrl(item.media, ctx.site);
-  // Файл должен уже быть доступен по ссылке (GitHub Pages обновляется не мгновенно) — иначе ждём следующего запуска.
-  const head = await fetchFn(url, { method: 'HEAD', redirect: 'follow' }).catch(() => null);
-  if (!head || !head.ok) return { skipped: `файл пока не доступен по ссылке (${head ? head.status : 'нет ответа'}): ${url}` };
+  // Файлы должны уже быть доступны по ссылке (GitHub Pages обновляется не мгновенно) — иначе ждём следующего запуска.
+  const files = await checkFiles(item, ctx);
+  if (files.bad) return { skipped: `файл пока не доступен по ссылке (${files.bad.status}): ${files.bad.url}` };
+  const url = files.urls[0];
+  const waitReady = async id => { // ждём, пока Instagram обработает файл
+    for (let i = 0; ; i++) {
+      const st = await api.call('GET', `/${id}`, { fields: 'status_code' });
+      if (st.status_code === 'FINISHED') return;
+      if (st.status_code === 'ERROR' || st.status_code === 'EXPIRED') throw new Error('Instagram не смог обработать файл: ' + st.status_code);
+      if (i >= ctx.maxPolls) throw new Error('Instagram слишком долго обрабатывает файл');
+      await sleep(ctx.pollMs);
+    }
+  };
 
   // Защита от повторной публикации: если прошлый запуск опубликовал пост, но не успел сохранить статус
   // (сбой, отменённый запуск, конфликт при git push), такой же пост уже есть в аккаунте — второй раз не публикуем.
@@ -94,16 +119,17 @@ async function publishOne(item, ctx) {
   if (item.type === 'REELS') {
     params.media_type = 'REELS'; params.video_url = url; params.share_to_feed = 'true';
     if (item.cover_ms !== undefined) params.thumb_offset = String(item.cover_ms);
+  } else if (item.type === 'CAROUSEL') { // сначала каждый слайд отдельно, потом общий контейнер
+    const children = [];
+    for (const u of files.urls) {
+      const child = await api.call('POST', `/${igId}/media`, { image_url: u, is_carousel_item: 'true' });
+      await waitReady(child.id); children.push(child.id);
+    }
+    params.media_type = 'CAROUSEL'; params.children = children.join(',');
   } else params.image_url = url;
 
   const created = await api.call('POST', `/${igId}/media`, params);
-  for (let i = 0; ; i++) { // ждём, пока Instagram обработает файл
-    const st = await api.call('GET', `/${created.id}`, { fields: 'status_code' });
-    if (st.status_code === 'FINISHED') break;
-    if (st.status_code === 'ERROR' || st.status_code === 'EXPIRED') throw new Error('Instagram не смог обработать файл: ' + st.status_code);
-    if (i >= ctx.maxPolls) throw new Error('Instagram слишком долго обрабатывает файл');
-    await sleep(ctx.pollMs);
-  }
+  await waitReady(created.id);
   const pub = await api.call('POST', `/${igId}/media_publish`, { creation_id: created.id });
   let permalink = null;
   try { permalink = (await api.call('GET', `/${pub.id}`, { fields: 'permalink' })).permalink || null; } catch { /* ссылка не обязательна */ }
@@ -193,9 +219,7 @@ export async function main({
       summary.waiting.push(item.id);
       if (mode === 'dry-run') { // предпросмотр будущих постов: запись в порядке? файл уже доступен по ссылке?
         const errs = validate(item);
-        const url = errs.length ? null : mediaUrl(item.media, ctx.site);
-        const head = url ? await fetchFn(url, { method: 'HEAD', redirect: 'follow' }).catch(() => null) : null;
-        log(`⏰ ${item.id}: выйдет после ${item.publish_at}` + (errs.length ? ` ❌ ${errs.join('; ')}` : ` → ${url} [файл: ${head ? head.status : 'нет ответа'}]`));
+        log(`⏰ ${item.id}: выйдет после ${item.publish_at}` + (errs.length ? ` ❌ ${errs.join('; ')}` : ` → ${(await checkFiles(item, ctx)).text}`));
       }
       continue;
     }
@@ -215,9 +239,7 @@ export async function main({
     if (done >= maxPerRun) { summary.waiting.push(item.id); continue; }
 
     if (mode === 'dry-run') {
-      const url = mediaUrl(item.media, ctx.site);
-      const head = await fetchFn(url, { method: 'HEAD', redirect: 'follow' }).catch(() => null);
-      log(`🔎 вышло бы: ${item.id} (${item.type}) → ${url} [файл: ${head ? head.status : 'нет ответа'}]`);
+      log(`🔎 вышло бы: ${item.id} (${item.type}) → ${(await checkFiles(item, ctx)).text}`);
       done++;
       continue;
     }
