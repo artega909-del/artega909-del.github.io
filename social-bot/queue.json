@@ -189,6 +189,146 @@
       "media_id": "17915392620480305",
       "permalink": "https://www.instagram.com/p/DfvI--OmJ5O/",
       "published_at": "2026-11-14T21:10:57.616Z"
+    },
+    {
+      "id": "story-1115-am-sovet-dejstvie",
+      "brand": "salam",
+      "platform": "instagram",
+      "type": "STORY",
+      "media": "assets/social/stories/1115-am-sovet-dejstvie.jpg",
+      "caption": "",
+      "publish_at": "2026-11-15T05:00:00Z",
+      "status": "scheduled"
+    },
+    {
+      "id": "story-1115-pm-formula",
+      "brand": "salam",
+      "platform": "instagram",
+      "type": "STORY",
+      "media": "assets/social/stories/1115-pm-formula.jpg",
+      "caption": "",
+      "publish_at": "2026-11-15T14:05:00Z",
+      "status": "scheduled"
+    },
+    {
+      "id": "story-1116-am-reels-shokolad",
+      "brand": "salam",
+      "platform": "instagram",
+      "type": "STORY",
+      "media": "assets/salam-001-chocolate.mp4",
+      "caption": "",
+      "publish_at": "2026-11-16T05:00:00Z",
+      "status": "scheduled"
+    },
+    {
+      "id": "story-1116-pm-cvety",
+      "brand": "salam",
+      "platform": "instagram",
+      "type": "STORY",
+      "media": "assets/social/stories/1116-pm-cvety.jpg",
+      "caption": "",
+      "publish_at": "2026-11-16T14:05:00Z",
+      "status": "scheduled"
+    },
+    {
+      "id": "story-1117-am-sovet-geroj",
+      "brand": "salam",
+      "platform": "instagram",
+      "type": "STORY",
+      "media": "assets/social/stories/1117-am-sovet-geroj.jpg",
+      "caption": "",
+      "publish_at": "2026-11-17T05:00:00Z",
+      "status": "scheduled"
+    },
+    {
+      "id": "story-1117-pm-svet",
+      "brand": "salam",
+      "platform": "instagram",
+      "type": "STORY",
+      "media": "assets/social/stories/1117-pm-svet.jpg",
+      "caption": "",
+      "publish_at": "2026-11-17T14:05:00Z",
+      "status": "scheduled"
+    },
+    {
+      "id": "story-1118-am-startup-world-cup",
+      "brand": "salam",
+      "platform": "instagram",
+      "type": "STORY",
+      "media": "assets/social/stories/1118-am-startup-world-cup.jpg",
+      "caption": "",
+      "publish_at": "2026-11-18T05:00:00Z",
+      "status": "scheduled"
+    },
+    {
+      "id": "story-1118-pm-napitok",
+      "brand": "salam",
+      "platform": "instagram",
+      "type": "STORY",
+      "media": "assets/social/stories/1118-pm-napitok.jpg",
+      "caption": "",
+      "publish_at": "2026-11-18T14:05:00Z",
+      "status": "scheduled"
+    },
+    {
+      "id": "story-1119-am-sovet-zaprety",
+      "brand": "salam",
+      "platform": "instagram",
+      "type": "STORY",
+      "media": "assets/social/stories/1119-am-sovet-zaprety.jpg",
+      "caption": "",
+      "publish_at": "2026-11-19T05:00:00Z",
+      "status": "scheduled"
+    },
+    {
+      "id": "story-1119-pm-idei",
+      "brand": "salam",
+      "platform": "instagram",
+      "type": "STORY",
+      "media": "assets/social/stories/1119-pm-idei.jpg",
+      "caption": "",
+      "publish_at": "2026-11-19T14:05:00Z",
+      "status": "scheduled"
+    },
+    {
+      "id": "story-1120-am-vopros",
+      "brand": "salam",
+      "platform": "instagram",
+      "type": "STORY",
+      "media": "assets/social/stories/1120-am-vopros.jpg",
+      "caption": "",
+      "publish_at": "2026-11-20T05:00:00Z",
+      "status": "scheduled"
+    },
+    {
+      "id": "story-1120-pm-kamera",
+      "brand": "salam",
+      "platform": "instagram",
+      "type": "STORY",
+      "media": "assets/social/stories/1120-pm-kamera.jpg",
+      "caption": "",
+      "publish_at": "2026-11-20T14:05:00Z",
+      "status": "scheduled"
+    },
+    {
+      "id": "story-1121-am-sovet-svet",
+      "brand": "salam",
+      "platform": "instagram",
+      "type": "STORY",
+      "media": "assets/social/stories/1121-am-sovet-svet.jpg",
+      "caption": "",
+      "publish_at": "2026-11-21T05:00:00Z",
+      "status": "scheduled"
+    },
+    {
+      "id": "story-1121-pm-huki",
+      "brand": "salam",
+      "platform": "instagram",
+      "type": "STORY",
+      "media": "assets/social/stories/1121-pm-huki.jpg",
+      "caption": "",
+      "publish_at": "2026-11-21T14:05:00Z",
+      "status": "scheduled"
     }
   ]
 }
