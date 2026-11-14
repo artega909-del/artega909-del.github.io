@@ -6,14 +6,10 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: 'check — проверить доступ, dry-run — показать, что вышло бы, publish — опубликовать, delete — удалить пост post_id'
+        description: 'check — проверить доступ, dry-run — показать, что вышло бы, publish — опубликовать'
         type: choice
-        options: [check, dry-run, publish, delete]
+        options: [check, dry-run, publish]
         default: check
-      post_id:
-        description: 'только для delete: id записи из queue.json'
-        type: string
-        default: ''
   push: # проверка доступа при изменениях бота на рабочей ветке (ничего не публикует)
     branches: [ccr-c4657446-m4wbw4]
     paths: ['social-bot/**', '.github/workflows/social-post.yml']
@@ -39,7 +35,6 @@ jobs:
           INSTAGRAM_ACCESS_TOKEN: ${{ secrets.INSTAGRAM_ACCESS_TOKEN }}
           INSTAGRAM_ACCOUNT_ID: ${{ secrets.INSTAGRAM_ACCOUNT_ID }}
           MODE: ${{ inputs.mode || (github.event_name == 'push' && 'check') || 'publish' }}
-          POST_ID: ${{ inputs.post_id }}
         run: node social-bot/publish.mjs "$MODE"
       - name: Сохранить статусы очереди
         if: always() && github.event_name != 'push'

@@ -59,7 +59,7 @@ function graphClient({ fetchFn, token, version }) {
     const body = new URLSearchParams({ ...params, access_token: token });
     let url = base + pathname;
     let init;
-    if (method === 'GET' || method === 'DELETE') { url += '?' + body; init = { method }; }
+    if (method === 'GET') { url += '?' + body; init = { method }; }
     else init = { method, headers: { 'content-type': 'application/x-www-form-urlencoded' }, body };
     let res;
     try { res = await fetchFn(url, init); }
@@ -175,7 +175,7 @@ export async function main({
   queuePath = DEFAULT_QUEUE,
   log = console.log,
 } = {}) {
-  if (!['check', 'dry-run', 'publish', 'delete'].includes(mode)) throw new Error(`Неизвестный режим «${mode}». Допустимо: check, dry-run, publish, delete`);
+  if (!['check', 'dry-run', 'publish'].includes(mode)) throw new Error(`Неизвестный режим «${mode}». Допустимо: check, dry-run, publish`);
   const missing = ['INSTAGRAM_ACCESS_TOKEN', 'INSTAGRAM_ACCOUNT_ID'].filter(k => !(env[k] || '').trim());
   if (missing.length) throw new Error('Не заданы секреты: ' + missing.join(', ') + ' (GitHub → Settings → Secrets and variables → Actions)');
   const token = env.INSTAGRAM_ACCESS_TOKEN.trim();
@@ -208,18 +208,6 @@ export async function main({
   const maxPerRun = Number(env.MAX_PER_RUN) || 3;
   const maxLate = (Number(env.MAX_LATE_HOURS) || 48) * HOUR;
   const save = () => writeFile(queuePath, JSON.stringify(queue, null, 2) + '\n');
-
-  if (mode === 'delete') { // удалить один уже опубликованный пост из Instagram: только по явному id записи
-    const id = (env.POST_ID || '').trim();
-    const item = posts.find(p => p.id === id);
-    if (!id || !item) throw new Error(`delete: укажите POST_ID — id записи из очереди (получено «${id}»)`);
-    if (item.status !== 'published' || !item.media_id) throw new Error(`delete: запись ${id} не опубликована, удалять нечего`);
-    await api.call('DELETE', `/${item.media_id}`);
-    item.status = 'deleted'; item.deleted_at = new Date(now()).toISOString(); item.note = 'удалён из Instagram по просьбе автора';
-    await save();
-    log(`🗑  ${id}: пост удалён из Instagram`);
-    return { ...summary, deleted: [id] };
-  }
   // ожидание обработки видео: до ~5 минут на пост (3 поста × 5 мин укладываются в лимит задания)
   const ctx = { api, igId, fetchFn, sleep, log, site: env.SITE_URL || SITE, pollMs: Number(env.POLL_MS) || 5000, maxPolls: Number(env.MAX_POLLS) || 60 };
 
