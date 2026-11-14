@@ -277,4 +277,23 @@ console.log('ok 16 dry-run: предпросмотр будущих постов
 }
 console.log('ok 17 карусель');
 
+// 18. delete: удаляет только указанный опубликованный пост и помечает запись deleted
+{
+  const calls = [];
+  const h = (m, u) => (m === 'DELETE' && u.pathname.endsWith('/M77') ? { status: 200, json: { success: true } } : undefined);
+  const q = await writeQueue([post({ id: 'old', status: 'published', media_id: 'M77' }), post({ id: 'keep', status: 'published', media_id: 'M78' })]);
+  const { s, logs } = await run('delete', q, fakeFetch(h, calls), { POST_ID: 'old' });
+  assert.deepEqual(s.deleted, ['old']);
+  assert.deepEqual(calls.map(c => [c.method, c.url.split('/').pop()]), [['DELETE', 'M77']]);
+  assert.equal(calls[0].params.access_token, TOKEN); assert.ok(!logs.join('\n').includes(TOKEN));
+  const posts = await readPosts(q); assert.equal(posts[0].status, 'deleted'); assert.equal(posts[1].status, 'published');
+  await assert.rejects(run('delete', q, fakeFetch(h), {}), /укажите POST_ID/);
+  await assert.rejects(run('delete', q, fakeFetch(h), { POST_ID: 'old' }), /не опубликована/);
+  // отказ Instagram: запись остаётся published
+  const q2 = await writeQueue([post({ id: 'x', status: 'published', media_id: 'M1' })], 'q2.json');
+  await assert.rejects(run('delete', q2, fakeFetch(() => ({ status: 400, json: { error: { message: 'Unsupported delete request', code: 100 } } })), { POST_ID: 'x' }), /Unsupported delete/);
+  assert.equal((await readPosts(q2))[0].status, 'published');
+}
+console.log('ok 18 удаление поста');
+
 console.log('\nВсе проверки пройдены');
