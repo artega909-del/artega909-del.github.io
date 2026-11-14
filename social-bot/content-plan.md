@@ -37,6 +37,14 @@
 > Спасибо за интерес! Вот фраза, с которой сделан ролик: «…» (фраза из сценария ниже).
 > Вставьте её на salammotion.com, нажмите кнопку улучшения промпта и Generate. Что получится — присылайте, посмотрю.
 
+### Что отправлять по каждому посту, где обещан промпт
+- **«5 ошибок в промпте» (вышла 14.11), «Формула промпта» (15.11)** — шаблон:
+  `[кто в кадре] [одно действие]. [движение камеры]. [свет]. [стиль], shallow depth of field, no text, no watermark.`
+  Пример: `A young barista in a beige apron pours steamed milk into a cup, latte art forms. Slow dolly-in, gentle arc around the cup. Warm morning light from the window, soft rim light. Premium coffee commercial, shallow depth of field, no text, no watermark.`
+- **«6 движений камеры» (20.11)** — пример с движениями:
+  `Macro shot of a perfume bottle on a marble table. Slow dolly-in, then the camera orbits around the bottle. Soft daylight from a window, soft rim light on the glass. Premium product commercial, no text, no watermark.`
+- **Reels про шоколад (13.11)** — фраза: `I need a product video of chocolate. Character is a little girl.`
+
 ### Шапка профиля (вносится вручную в Instagram)
 > Salam Motion · видео из одной фразы
 > 🏆 Победитель Startup World Cup Ashgabat 2026, финал в Сан-Франциско
