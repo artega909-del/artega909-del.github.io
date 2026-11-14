@@ -16,7 +16,7 @@ function fakeFetch(handler, calls = []) {
   return async (url, init = {}) => {
     const method = init.method || 'GET';
     const u = new URL(url);
-    const params = Object.fromEntries(method === 'GET' ? u.searchParams : new URLSearchParams(init.body));
+    const params = Object.fromEntries(method === 'GET' || method === 'DELETE' ? u.searchParams : new URLSearchParams(init.body));
     calls.push({ method, url: u.origin + u.pathname, params });
     const r = handler(method, u, params) || { status: 404, json: { error: { message: 'unhandled' } } };
     if (method === 'HEAD') return new Response(null, { status: r.status });
