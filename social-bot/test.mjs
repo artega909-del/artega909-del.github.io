@@ -45,7 +45,7 @@ console.log('ok 1 ссылки на файлы');
 
 // 2. проверка записей
 assert.deepEqual(validate(post()), []);
-assert.ok(validate(post({ type: 'VIDEO' })).some(e => /REELS, IMAGE или CAROUSEL/.test(e)));
+assert.ok(validate(post({ type: 'VIDEO' })).some(e => /REELS, IMAGE, CAROUSEL или STORY/.test(e)));
 assert.ok(validate(post({ media: 'assets/a.png', type: 'IMAGE' })).some(e => /JPEG/.test(e)));
 assert.ok(validate(post({ media: 'http://x.com/a.mp4' })).length > 0, 'http без s не принимается');
 assert.ok(validate(post({ media: '../secret.mp4' })).length > 0);
@@ -276,5 +276,21 @@ console.log('ok 16 dry-run: предпросмотр будущих постов
   assert.deepEqual(r2.s.skipped, ['p1']); assert.ok(!calls2.some(c => c.method === 'POST'));
 }
 console.log('ok 17 карусель');
+
+// 18. история: картинка или видео уходят как STORIES, без подписи
+{
+  for (const [media, key] of [['assets/s/a.jpg', 'image_url'], ['assets/s/a.mp4', 'video_url']]) {
+    const calls = [];
+    const st = post({ id: 'st', type: 'STORY', media, caption: '' });
+    assert.deepEqual(validate(st), []);
+    const { s } = await run('publish', await writeQueue([st]), fakeFetch(okInstagram(), calls));
+    assert.deepEqual(s.published, ['st']);
+    const create = calls.find(c => c.method === 'POST' && c.url.endsWith('/1784/media'));
+    assert.equal(create.params.media_type, 'STORIES'); assert.ok(create.params[key].endsWith(media.split('/').pop())); assert.ok(!('caption' in create.params));
+    assert.ok(!calls.some(c => c.method === 'GET' && c.url.endsWith('/1784/media')), 'у историй нет подписи — проверка повтора по подписи не выполняется');
+  }
+  assert.ok(validate(post({ type: 'STORY', media: 'assets/a.png' })).some(e => /STORY/.test(e)));
+}
+console.log('ok 18 история');
 
 console.log('\nВсе проверки пройдены');

@@ -26,7 +26,7 @@ export function validate(item) {
   const errs = [];
   if (!item.id) errs.push('нет id');
   if (item.platform !== 'instagram') errs.push(`платформа «${item.platform}» пока не поддерживается`);
-  if (!['REELS', 'IMAGE', 'CAROUSEL'].includes(item.type)) errs.push('type должен быть REELS, IMAGE или CAROUSEL');
+  if (!['REELS', 'IMAGE', 'CAROUSEL', 'STORY'].includes(item.type)) errs.push('type должен быть REELS, IMAGE, CAROUSEL или STORY');
   const checkOne = media => {
     if (typeof media !== 'string' || !media) { errs.push('не указан media'); return; }
     const isHttps = /^https:\/\//i.test(media);
@@ -34,7 +34,8 @@ export function validate(item) {
       errs.push('media: путь внутри репозитория (assets/…) или ссылка https://');
     }
     if (item.type === 'REELS' && !/\.(mp4|mov)(\?|#|$)/i.test(media)) errs.push('для REELS нужен файл .mp4 или .mov');
-    if (item.type !== 'REELS' && !/\.jpe?g(\?|#|$)/i.test(media)) errs.push(`для ${item.type} нужен JPEG (.jpg)`);
+    if (item.type === 'STORY' && !/\.(jpe?g|mp4|mov)(\?|#|$)/i.test(media)) errs.push('для STORY нужен JPEG (.jpg) или видео .mp4/.mov');
+    if (!['REELS', 'STORY'].includes(item.type) && !/\.jpe?g(\?|#|$)/i.test(media)) errs.push(`для ${item.type} нужен JPEG (.jpg)`);
   };
   if (item.type === 'CAROUSEL') {
     if (!Array.isArray(item.media) || item.media.length < 2 || item.media.length > 10) errs.push('для CAROUSEL media — список из 2–10 картинок');
@@ -116,7 +117,10 @@ async function publishOne(item, ctx) {
   }
 
   const params = { caption: item.caption || '' };
-  if (item.type === 'REELS') {
+  if (item.type === 'STORY') { // история: картинка или видео 9:16, подписи у историй нет
+    delete params.caption; params.media_type = 'STORIES';
+    if (/\.(mp4|mov)(\?|#|$)/i.test(url)) params.video_url = url; else params.image_url = url;
+  } else if (item.type === 'REELS') {
     params.media_type = 'REELS'; params.video_url = url; params.share_to_feed = 'true';
     if (item.cover_ms !== undefined) params.thumb_offset = String(item.cover_ms);
   } else if (item.type === 'CAROUSEL') { // сначала каждый слайд отдельно, потом общий контейнер
