@@ -198,7 +198,10 @@
       "media": "assets/social/stories/1115-am-sovet-dejstvie.jpg",
       "caption": "",
       "publish_at": "2026-11-15T05:00:00Z",
-      "status": "scheduled"
+      "status": "published",
+      "media_id": "18110118035252864",
+      "permalink": "https://www.instagram.com/stories/salammotion/4030726920887112087",
+      "published_at": "2026-11-15T05:22:03.686Z"
     },
     {
       "id": "story-1115-pm-formula",
