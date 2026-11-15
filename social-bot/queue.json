@@ -114,7 +114,7 @@
       "platform": "instagram",
       "type": "IMAGE",
       "media": "assets/social/salam-007-prompt-dnya-cvety/01.jpg",
-      "caption": "Промпт дня: реклама цветочного магазина 💐\nПолный промпт для любой нейросети для видео. Замените героя и продукт на свои:\n\nA florist in a linen apron ties a ribbon around a bouquet of pink peonies. Slow orbit around the bouquet. Soft daylight from a shop window, petals glowing. Premium floral commercial, shallow depth of field, no text, no watermark.\n\nСохраните пост. Для какого бизнеса сделать следующий промпт? Пишите в комментариях.\nПопробовать на своей идее: salammotion.com\n\n#промпт #нейросети #ии #цветочныймагазин #малыйбизнес",
+      "caption": "Промпт дня: реклама цветочного магазина 💐\nПолный промпт для любой нейросети для видео. Замените героя и продукт на свои:\n\nA florist in a linen apron ties a ribbon around a bouquet of pink peonies. Slow orbit around the bouquet. Soft daylight from a shop window, petals glowing. Premium floral commercial, shallow depth of field, clean frame.\n\nСохраните пост. Для какого бизнеса сделать следующий промпт? Пишите в комментариях.\nПопробовать на своей идее: salammotion.com\n\n#промпт #нейросети #ии #цветочныймагазин #малыйбизнес",
       "publish_at": "2026-11-16T14:00:00Z",
       "status": "scheduled"
     },
@@ -140,7 +140,7 @@
       "platform": "instagram",
       "type": "IMAGE",
       "media": "assets/social/salam-009-prompt-dnya-napitok/01.jpg",
-      "caption": "Промпт дня: реклама напитка 🍹\nЛимонад, который собирает себя сам: лёд, ягоды и мята падают в стакан в замедленной съёмке. Полный промпт для любой нейросети для видео. Замените напиток на свой:\n\nAn iced berry lemonade assembles itself in mid-air: ice cubes, berries and mint fall into a glass with a slow-motion splash. Macro shot, slow push-in. Bright backlight, sparkling droplets. Premium beverage commercial, no text, no watermark.\n\nСохраните пост. Какой промпт сделать следующим? Пишите в комментариях.\nПопробовать на своей идее: salammotion.com\n\n#промпт #нейросети #ии #реклама #малыйбизнес",
+      "caption": "Промпт дня: реклама напитка 🍹\nЛимонад, который собирает себя сам: лёд, ягоды и мята падают в стакан в замедленной съёмке. Полный промпт для любой нейросети для видео. Замените напиток на свой:\n\nAn iced berry lemonade assembles itself in mid-air: ice cubes, berries and mint fall into a glass with a slow-motion splash. Macro shot, slow push-in. Bright backlight, sparkling droplets. Premium beverage commercial, unbranded glass, clean frame.\n\nСохраните пост. Какой промпт сделать следующим? Пишите в комментариях.\nПопробовать на своей идее: salammotion.com\n\n#промпт #нейросети #ии #реклама #малыйбизнес",
       "publish_at": "2026-11-18T14:00:00Z",
       "status": "scheduled"
     },
@@ -337,6 +337,103 @@
       "media": "assets/social/stories/1121-pm-huki.jpg",
       "caption": "",
       "publish_at": "2026-11-21T14:05:00Z",
+      "status": "scheduled"
+    },
+    {
+      "id": "salam-014-reels-odna-fraza",
+      "brand": "salam",
+      "platform": "instagram",
+      "type": "REELS",
+      "media": "assets/salam-reels-odna-fraza.mp4",
+      "caption": "Я написал одну фразу — остальное дописал ИИ 🎬\nГероиня, камера, свет: сценарий Salam Motion дописывает сам. В ролике — как это выглядит и что получилось.\n\nНапишите ПРОМПТ в комментариях — пришлю эту фразу.\nПопробовать: ссылка в шапке профиля — salammotion.com\nИнтерфейс в ролике показан схематично. Видео сгенерировано ИИ в Salam Motion.\nМузыка: Push N Glide — Candy Floss\n\n#ии #нейросети #видеореклама #промпт #малыйбизнес",
+      "cover_ms": 1000,
+      "publish_at": "2026-11-17T05:00:00Z",
+      "status": "scheduled"
+    },
+    {
+      "id": "salam-015-reels-5-oshibok",
+      "brand": "salam",
+      "platform": "instagram",
+      "type": "REELS",
+      "media": "assets/salam-reels-5-oshibok.mp4",
+      "caption": "5 ошибок в промпте для видео — за 20 секунд 👇\nНет героя, нет камеры, нет света, всё в одном кадре и не описан чистый кадр. На каждую — как исправить.\n\nКакая ошибка ваша? Напишите номер в комментариях.\nА если не хочется вникать — одна фраза, и Salam Motion допишет остальное: salammotion.com\nМузыка: Push N Glide — Candy Floss\n\n#промпт #нейросети #ии #reels #видеомаркетинг",
+      "cover_ms": 1000,
+      "publish_at": "2026-11-19T05:00:00Z",
+      "status": "scheduled"
+    },
+    {
+      "id": "story-1122-am-sovet-konec",
+      "brand": "salam",
+      "platform": "instagram",
+      "type": "STORY",
+      "media": "assets/social/stories/1122-am-sovet-konec.jpg",
+      "caption": "",
+      "publish_at": "2026-11-22T05:00:00Z",
+      "status": "scheduled"
+    },
+    {
+      "id": "salam-012-10-uglov-huka",
+      "brand": "salam",
+      "platform": "instagram",
+      "type": "CAROUSEL",
+      "media": [
+        "assets/social/salam-012-10-uglov-huka/01.jpg",
+        "assets/social/salam-012-10-uglov-huka/02.jpg",
+        "assets/social/salam-012-10-uglov-huka/03.jpg",
+        "assets/social/salam-012-10-uglov-huka/04.jpg",
+        "assets/social/salam-012-10-uglov-huka/05.jpg",
+        "assets/social/salam-012-10-uglov-huka/06.jpg",
+        "assets/social/salam-012-10-uglov-huka/07.jpg"
+      ],
+      "caption": "Один товар — 10 углов хука 👉\nБоль, возражение, до и после, деталь, цена, честный минус… На примере кофейни: меняем не слова, а сторону, с которой заходим к зрителю.\n\nНапишите свою нишу в комментариях — подберу угол хука для вас.\nСохраните, пригодится перед следующим роликом. Хук есть, а ролика нет? salammotion.com\n\n#reels #хук #контент #малыйбизнес #видеомаркетинг",
+      "publish_at": "2026-11-22T14:00:00Z",
+      "status": "scheduled"
+    },
+    {
+      "id": "story-1122-pm-10-uglov",
+      "brand": "salam",
+      "platform": "instagram",
+      "type": "STORY",
+      "media": "assets/social/stories/1122-pm-10-uglov.jpg",
+      "caption": "",
+      "publish_at": "2026-11-22T14:05:00Z",
+      "status": "scheduled"
+    },
+    {
+      "id": "story-1123-am-sovet-pervye-slova",
+      "brand": "salam",
+      "platform": "instagram",
+      "type": "STORY",
+      "media": "assets/social/stories/1123-am-sovet-pervye-slova.jpg",
+      "caption": "",
+      "publish_at": "2026-11-23T05:00:00Z",
+      "status": "scheduled"
+    },
+    {
+      "id": "salam-013-prompt-ili-nastrojki",
+      "brand": "salam",
+      "platform": "instagram",
+      "type": "CAROUSEL",
+      "media": [
+        "assets/social/salam-013-prompt-ili-nastrojki/01.jpg",
+        "assets/social/salam-013-prompt-ili-nastrojki/02.jpg",
+        "assets/social/salam-013-prompt-ili-nastrojki/03.jpg",
+        "assets/social/salam-013-prompt-ili-nastrojki/04.jpg",
+        "assets/social/salam-013-prompt-ili-nastrojki/05.jpg",
+        "assets/social/salam-013-prompt-ili-nastrojki/06.jpg"
+      ],
+      "caption": "Что писать в промпт, а что нет 👉\nВ промпт — то, что видно и слышно в кадре: предмет, действие, камера, свет. Формат, длительность и качество выбираются в настройках.\n\nНапишите ПРОМПТ в комментариях — пришлю шаблон.\nСохраните шпаргалку. Не хочется разбираться? Одна фраза — и сценарий допишет Salam Motion: salammotion.com\n\n#промпт #нейросети #ии #видеомаркетинг #контент",
+      "publish_at": "2026-11-23T14:00:00Z",
+      "status": "scheduled"
+    },
+    {
+      "id": "story-1123-pm-nastrojki",
+      "brand": "salam",
+      "platform": "instagram",
+      "type": "STORY",
+      "media": "assets/social/stories/1123-pm-nastrojki.jpg",
+      "caption": "",
+      "publish_at": "2026-11-23T14:05:00Z",
       "status": "scheduled"
     }
   ]
