@@ -227,7 +227,10 @@
       "media": "assets/salam-001-chocolate.mp4",
       "caption": "",
       "publish_at": "2026-11-16T05:00:00Z",
-      "status": "scheduled"
+      "status": "published",
+      "media_id": "18135764620689876",
+      "permalink": "https://www.instagram.com/stories/salammotion/4031451513074670653",
+      "published_at": "2026-11-16T05:22:06.559Z"
     },
     {
       "id": "story-1116-pm-cvety",
