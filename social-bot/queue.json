@@ -256,7 +256,10 @@
       "media": "assets/social/stories/1117-am-sovet-geroj.jpg",
       "caption": "",
       "publish_at": "2026-11-17T05:00:00Z",
-      "status": "scheduled"
+      "status": "published",
+      "media_id": "17958758826300638",
+      "permalink": "https://www.instagram.com/stories/salammotion/4032377963082213685",
+      "published_at": "2026-11-17T12:02:23.113Z"
     },
     {
       "id": "story-1117-pm-svet",
@@ -357,7 +360,8 @@
       "caption": "Я написал одну фразу — остальное дописал ИИ 🎬\nГероиня, камера, свет: сценарий Salam Motion дописывает сам. В ролике — как это выглядит и что получилось.\n\nНапишите ПРОМПТ в комментариях — пришлю эту фразу.\nПопробовать: ссылка в шапке профиля — salammotion.com\nИнтерфейс в ролике показан схематично. Видео сгенерировано ИИ в Salam Motion.\nМузыка: Push N Glide — Candy Floss\n\n#ии #нейросети #видеореклама #промпт #малыйбизнес",
       "cover_ms": 1000,
       "publish_at": "2026-11-17T05:00:00Z",
-      "status": "scheduled"
+      "status": "failed",
+      "error": "Instagram не смог обработать файл: ERROR"
     },
     {
       "id": "salam-015-reels-5-oshibok",
