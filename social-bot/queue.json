@@ -343,7 +343,10 @@
       "media": "assets/social/stories/1120-am-vopros.jpg",
       "caption": "",
       "publish_at": "2026-11-20T05:00:00Z",
-      "status": "scheduled"
+      "status": "published",
+      "media_id": "18119669447002572",
+      "permalink": "https://www.instagram.com/stories/salammotion/4034350593099381685",
+      "published_at": "2026-11-20T05:21:44.680Z"
     },
     {
       "id": "story-1120-pm-kamera",
