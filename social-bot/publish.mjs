@@ -1,12 +1,13 @@
 #!/usr/bin/env node
-// Публикация в Instagram по очереди social-bot/queue.json (Instagram API через Meta Graph).
+// Публикация в Instagram и Threads по очереди social-bot/queue.json (официальные API Meta).
 //
 //   node social-bot/publish.mjs check     — проверить, что токен и аккаунт работают (ничего не публикует)
 //   node social-bot/publish.mjs dry-run   — показать, что вышло бы в эфир сейчас (ничего не публикует)
 //   node social-bot/publish.mjs publish   — опубликовать всё, что пора (режим по умолчанию)
 //
-// Секреты берутся только из переменных окружения INSTAGRAM_ACCESS_TOKEN и INSTAGRAM_ACCOUNT_ID.
-// Токен не печатается в логах и не попадает в файлы.
+// Секреты берутся только из переменных окружения INSTAGRAM_ACCESS_TOKEN, INSTAGRAM_ACCOUNT_ID
+// и THREADS_ACCESS_TOKEN (необязательный: без него записи для Threads просто ждут).
+// Токены не печатаются в логах и не попадают в файлы.
 import { readFile, writeFile } from 'node:fs/promises';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import path from 'node:path';
@@ -14,6 +15,8 @@ import path from 'node:path';
 const SITE = 'https://artega909-del.github.io';
 const DEFAULT_QUEUE = path.join(path.dirname(fileURLToPath(import.meta.url)), 'queue.json');
 const HOUR = 3600e3;
+const DAY = 24 * HOUR;
+const isVideo = u => /\.(mp4|mov)(\?|#|$)/i.test(u);
 
 // Файл из репозитория (assets/x.mp4) → публичная ссылка на GitHub Pages; готовую https-ссылку оставляем как есть.
 export function mediaUrl(media, site = SITE) {
@@ -25,27 +28,45 @@ export function mediaUrl(media, site = SITE) {
 export function validate(item) {
   const errs = [];
   if (!item.id) errs.push('нет id');
-  if (item.platform !== 'instagram') errs.push(`платформа «${item.platform}» пока не поддерживается`);
-  if (!['REELS', 'IMAGE', 'CAROUSEL', 'STORY'].includes(item.type)) errs.push('type должен быть REELS, IMAGE, CAROUSEL или STORY');
+  const threads = item.platform === 'threads';
+  if (item.platform !== 'instagram' && !threads) errs.push(`платформа «${item.platform}» пока не поддерживается`);
+  const types = threads ? ['TEXT', 'IMAGE', 'VIDEO', 'CAROUSEL'] : ['REELS', 'IMAGE', 'CAROUSEL', 'STORY'];
+  if (!types.includes(item.type)) errs.push(`type должен быть ${types.slice(0, -1).join(', ')} или ${types.at(-1)}${threads ? ' (для Threads)' : ''}`);
   const checkOne = media => {
     if (typeof media !== 'string' || !media) { errs.push('не указан media'); return; }
     const isHttps = /^https:\/\//i.test(media);
     if (!isHttps && (/^[a-z][a-z0-9+.-]*:/i.test(media) || media.split('/').includes('..'))) {
       errs.push('media: путь внутри репозитория (assets/…) или ссылка https://');
     }
-    if (item.type === 'REELS' && !/\.(mp4|mov)(\?|#|$)/i.test(media)) errs.push('для REELS нужен файл .mp4 или .mov');
+    if (threads) {
+      if (item.type === 'IMAGE' && !/\.(jpe?g|png)(\?|#|$)/i.test(media)) errs.push('для IMAGE в Threads нужен JPEG или PNG');
+      if (item.type === 'VIDEO' && !isVideo(media)) errs.push('для VIDEO нужен файл .mp4 или .mov');
+      if (item.type === 'CAROUSEL' && !/\.(jpe?g|png|mp4|mov)(\?|#|$)/i.test(media)) errs.push('в карусели Threads — JPEG, PNG или видео .mp4/.mov');
+      return;
+    }
+    if (item.type === 'REELS' && !isVideo(media)) errs.push('для REELS нужен файл .mp4 или .mov');
     if (item.type === 'STORY' && !/\.(jpe?g|mp4|mov)(\?|#|$)/i.test(media)) errs.push('для STORY нужен JPEG (.jpg) или видео .mp4/.mov');
     if (!['REELS', 'STORY'].includes(item.type) && !/\.jpe?g(\?|#|$)/i.test(media)) errs.push(`для ${item.type} нужен JPEG (.jpg)`);
   };
+  const maxSlides = threads ? 20 : 10;
   if (item.type === 'CAROUSEL') {
-    if (!Array.isArray(item.media) || item.media.length < 2 || item.media.length > 10) errs.push('для CAROUSEL media — список из 2–10 картинок');
+    if (!Array.isArray(item.media) || item.media.length < 2 || item.media.length > maxSlides) errs.push(`для CAROUSEL media — список из 2–${maxSlides} ${threads ? 'файлов' : 'картинок'}`);
     else item.media.forEach(checkOne);
+  } else if (threads && item.type === 'TEXT') {
+    if (item.media !== undefined) errs.push('у TEXT нет media: для поста с файлом укажите type IMAGE, VIDEO или CAROUSEL');
   } else checkOne(item.media);
   const caption = item.caption ?? '';
   if (typeof caption !== 'string') errs.push('caption должен быть текстом');
-  else {
+  else if (threads) {
+    if ([...caption].length > 500) errs.push('текст для Threads длиннее 500 символов');
+    if (item.type === 'TEXT' && !caption.trim()) errs.push('у TEXT должен быть текст в caption');
+  } else {
     if ([...caption].length > 2200) errs.push('подпись длиннее 2200 символов');
     if ((caption.match(/#[\p{L}\p{N}_]+/gu) || []).length > 30) errs.push('больше 30 хештегов');
+  }
+  if (item.link !== undefined) {
+    if (!threads || item.type !== 'TEXT') errs.push('link (ссылка с превью) бывает только у текстового поста Threads');
+    else if (typeof item.link !== 'string' || !/^https:\/\/\S+$/i.test(item.link)) errs.push('link: ссылка вида https://…');
   }
   if (Number.isNaN(Date.parse(item.publish_at))) errs.push('publish_at: время вида 2026-12-01T09:00:00Z');
   if (item.cover_ms !== undefined && !(Number.isInteger(item.cover_ms) && item.cover_ms >= 0)) errs.push('cover_ms: целое число миллисекунд от начала видео (кадр-обложка)');
@@ -53,23 +74,23 @@ export function validate(item) {
   return errs;
 }
 
-function graphClient({ fetchFn, token, version }) {
-  const base = 'https://graph.facebook.com/' + version;
+function graphClient({ fetchFn, token, host = 'https://graph.facebook.com', version, name = 'Instagram' }) {
   const redact = s => String(s).split(token).join('***');
-  async function call(method, pathname, params = {}) {
+  // noVersion — для адресов без версии API (продление токена Threads)
+  async function call(method, pathname, params = {}, { noVersion = false } = {}) {
     const body = new URLSearchParams({ ...params, access_token: token });
-    let url = base + pathname;
+    let url = host + (noVersion ? '' : '/' + version) + pathname;
     let init;
     if (method === 'GET') { url += '?' + body; init = { method }; }
     else init = { method, headers: { 'content-type': 'application/x-www-form-urlencoded' }, body };
     let res;
     try { res = await fetchFn(url, init); }
-    catch (e) { throw new Error(redact('нет связи с Instagram API: ' + (e && e.message))); }
+    catch (e) { throw new Error(redact(`нет связи с ${name} API: ` + (e && e.message))); }
     const data = await res.json().catch(() => ({}));
     if (!res.ok || data.error) {
       const e = data.error || {};
       const code = e.code ? ` (код ${e.code}${e.error_subcode ? '/' + e.error_subcode : ''})` : '';
-      throw new Error(redact(`Instagram API ${res.status}: ${e.message || 'ошибка'}${code}`));
+      throw new Error(redact(`${name} API ${res.status}: ${e.message || 'ошибка'}${code}`));
     }
     return data;
   }
@@ -78,6 +99,7 @@ function graphClient({ fetchFn, token, version }) {
 
 // Проверка, что все файлы поста доступны по публичной ссылке. bad — первый недоступный файл.
 async function checkFiles(item, ctx) {
+  if (item.media === undefined) return { urls: [], bad: null, text: 'текст без файла' };
   const urls = [].concat(item.media).map(m => mediaUrl(m, ctx.site));
   let bad = null;
   for (const url of urls) {
@@ -140,6 +162,84 @@ async function publishOne(item, ctx) {
   return { media_id: pub.id, permalink };
 }
 
+// Threads: порядок тот же, что у Instagram, — контейнер → ожидание обработки → публикация.
+async function threadsUser(ctx) {
+  if (!ctx.threadsMe) ctx.threadsMe = await ctx.threads.call('GET', '/me', { fields: 'id,username' });
+  return ctx.threadsMe;
+}
+
+async function publishThreads(item, ctx) {
+  const api = ctx.threads;
+  const files = await checkFiles(item, ctx);
+  if (files.bad) return { skipped: `файл пока не доступен по ссылке (${files.bad.status}): ${files.bad.url}` };
+  const uid = (await threadsUser(ctx)).id;
+  const waitReady = async id => {
+    for (let i = 0; ; i++) {
+      const st = await api.call('GET', `/${id}`, { fields: 'status,error_message' });
+      if (st.status === 'FINISHED' || st.status === 'PUBLISHED') return;
+      if (st.status === 'ERROR' || st.status === 'EXPIRED') throw new Error('Threads не смог обработать файл: ' + st.status + (st.error_message ? ' — ' + st.error_message : ''));
+      if (i >= ctx.maxPolls) throw new Error('Threads слишком долго обрабатывает файл');
+      await ctx.sleep(ctx.pollMs);
+    }
+  };
+
+  // Защита от повторной публикации — по тексту среди последних постов (как у Instagram по подписи).
+  const text = (item.caption || '').trim();
+  if (text && !item.repeat) {
+    try {
+      const recent = await api.call('GET', `/${uid}/threads`, { fields: 'id,text,permalink', limit: '25' });
+      const same = (recent.data || []).find(m => (m.text || '').trim() === text);
+      if (same) return { media_id: same.id, permalink: same.permalink || null, duplicate: true };
+    } catch (e) { ctx.log(`⚠️  ${item.id}: не удалось проверить последние посты Threads на повтор (${e.message}), публикую`); }
+  }
+
+  const one = u => (isVideo(u) ? { media_type: 'VIDEO', video_url: u } : { media_type: 'IMAGE', image_url: u });
+  let params;
+  if (item.type === 'TEXT') {
+    params = { media_type: 'TEXT', text };
+    if (item.link) params.link_attachment = item.link;
+  } else if (item.type === 'CAROUSEL') {
+    const children = [];
+    for (const u of files.urls) {
+      const child = await api.call('POST', `/${uid}/threads`, { ...one(u), is_carousel_item: 'true' });
+      await waitReady(child.id); children.push(child.id);
+    }
+    params = { media_type: 'CAROUSEL', children: children.join(','), text };
+  } else params = { ...one(files.urls[0]), text };
+
+  const created = await api.call('POST', `/${uid}/threads`, params);
+  if (item.type !== 'TEXT') await waitReady(created.id); // тексту обработка не нужна
+  const pub = await api.call('POST', `/${uid}/threads_publish`, { creation_id: created.id });
+  let permalink = null;
+  try { permalink = (await api.call('GET', `/${pub.id}`, { fields: 'permalink' })).permalink || null; } catch { /* ссылка не обязательна */ }
+  return { media_id: pub.id, permalink };
+}
+
+// Токен Threads живёт 60 дней. Пока он действует, его можно продлевать запросом — бот делает это сам.
+// Возвращает, сколько дней осталось (null — узнать не удалось), и предупреждение, если пора действовать вручную.
+async function threadsTokenCare({ api, log, now, renew }) {
+  let left = null;
+  try {
+    const d = (await api.call('GET', '/debug_token', { input_token: api.token })).data || {};
+    if (d.expires_at) left = (d.expires_at * 1000 - now()) / DAY;
+  } catch { /* срок узнаем из ответа на продление */ }
+  if (renew && (left === null || left < 45)) {
+    try {
+      const r = await api.call('GET', '/refresh_access_token', { grant_type: 'th_refresh_token' }, { noVersion: true });
+      if (r.access_token === api.token) {
+        if (r.expires_in) left = r.expires_in / 86400;
+        log(`Токен Threads продлён${left !== null ? `, действует ещё ${Math.floor(left)} дн.` : ''}`);
+      } else if (r.access_token) {
+        log('⚠️  Threads выдал при продлении другой токен. Бот не может сам записать его в секреты: срок текущего токена не изменился.');
+      }
+    } catch (e) { if (left === null || left < 20) log('⚠️  продлить токен Threads не удалось: ' + e.message); }
+  }
+  const warning = left !== null && left < 10
+    ? `токен Threads истекает через ${Math.max(0, Math.floor(left))} дн.: выпустите новый и обновите секрет THREADS_ACCESS_TOKEN` : null;
+  if (warning) log('⚠️  ' + warning);
+  return { left, warning };
+}
+
 // Подсказки, если доступ к аккаунту не получен. Секреты не показываем: ID печатается только началом и длиной.
 async function diagnose({ api, igId, log }) {
   log(`ID аккаунта в секрете: ${igId.length} цифр, начинается с «${igId.slice(0, 5)}». ID Instagram-аккаунта обычно из 17 цифр и начинается с 17841.`);
@@ -189,6 +289,9 @@ export async function main({
       'Заново скопируйте ID из Business Settings → Аккаунты → Аккаунты Instagram и сохраните секрет без пробелов, переносов строк и лишних чисел.');
   }
   const api = graphClient({ fetchFn, token, version: env.GRAPH_VERSION || 'v23.0' });
+  const thToken = (env.THREADS_ACCESS_TOKEN || '').trim();
+  const threads = thToken ? graphClient({ fetchFn, token: thToken, host: 'https://graph.threads.net', version: env.THREADS_VERSION || 'v1.0', name: 'Threads' }) : null;
+  const redact = s => [api, threads].filter(Boolean).reduce((t, a) => a.redact(t), s);
   const summary = { published: [], failed: [], missed: [], waiting: [], skipped: [] };
 
   if (mode === 'check') {
@@ -204,7 +307,28 @@ export async function main({
       const m = await api.call('GET', `/${igId}/media`, { fields: 'id', limit: '1' });
       log(`Чтение последних постов работает (защита от повтора), ${(m.data || []).length ? 'в аккаунте есть посты' : 'постов в аккаунте пока нет'}`);
     } catch (e) { log('⚠️  не удалось прочитать последние посты, защита от повтора не сработает: ' + e.message); }
-    return { ok: true, username: acc.username, ...summary };
+    let threadsUsername = null;
+    if (!threads) log('Threads: секрет THREADS_ACCESS_TOKEN не задан — публикация в Threads выключена');
+    else {
+      let me;
+      try { me = await threads.call('GET', '/me', { fields: 'id,username' }); }
+      catch (e) {
+        log('❌ Threads: ' + e.message);
+        log('Что проверить: 1) в секрете THREADS_ACCESS_TOKEN лежит токен Threads (из раздела «Доступ к Threads API» приложения), а не токен Instagram;');
+        log('2) аккаунт Threads добавлен в приложение как тестировщик, и приглашение принято в настройках Threads;');
+        log('3) токену выданы разрешения threads_basic и threads_content_publish; 4) токен не старше 60 дней.');
+        throw new Error('проверка доступа к Threads не пройдена, подсказки выше');
+      }
+      threadsUsername = me.username;
+      log(`Threads: доступ есть: @${me.username}`);
+      const { left } = await threadsTokenCare({ api: threads, log, now, renew: false });
+      log(left === null ? 'Threads: срок токена узнать не удалось' : `Threads: токен действует ещё ${Math.floor(left)} дн. (бот продлевает его сам при публикациях)`);
+      try {
+        await threads.call('GET', `/${me.id}/threads`, { fields: 'id', limit: '1' });
+        log('Threads: чтение последних постов работает (защита от повтора)');
+      } catch (e) { log('⚠️  Threads: не удалось прочитать последние посты, защита от повтора не сработает: ' + e.message); }
+    }
+    return { ok: true, username: acc.username, threadsUsername, ...summary };
   }
 
   const queue = JSON.parse(await readFile(queuePath, 'utf8'));
@@ -213,8 +337,13 @@ export async function main({
   const maxLate = (Number(env.MAX_LATE_HOURS) || 48) * HOUR;
   const save = () => writeFile(queuePath, JSON.stringify(queue, null, 2) + '\n');
   // ожидание обработки видео: до ~5 минут на пост (3 поста × 5 мин укладываются в лимит задания)
-  const ctx = { api, igId, fetchFn, sleep, log, site: env.SITE_URL || SITE, pollMs: Number(env.POLL_MS) || 5000, maxPolls: Number(env.MAX_POLLS) || 60 };
+  const ctx = { api, threads, igId, fetchFn, sleep, log, site: env.SITE_URL || SITE, pollMs: Number(env.POLL_MS) || 5000, maxPolls: Number(env.MAX_POLLS) || 60 };
 
+  if (threads && mode === 'publish') { // продление токена Threads и предупреждение, если он скоро истечёт
+    const care = await threadsTokenCare({ api: threads, log, now, renew: true });
+    if (care.warning) summary.warnings = [care.warning];
+  }
+  let noThreadsSaid = false;
   let done = 0;
   for (const item of posts) {
     if (item.status !== 'scheduled') continue;
@@ -240,16 +369,22 @@ export async function main({
       if (mode === 'publish') { item.status = 'failed'; item.error = errs.join('; '); await save(); }
       continue;
     }
+    if (item.platform === 'threads' && !threads) { // Threads ещё не подключён: запись ждёт, остальные публикуются
+      summary.skipped.push(item.id);
+      if (!noThreadsSaid) log(`⏳ ${item.id}: секрет THREADS_ACCESS_TOKEN не задан, записи для Threads ждут`);
+      noThreadsSaid = true;
+      continue;
+    }
     if (done >= maxPerRun) { summary.waiting.push(item.id); continue; }
 
     if (mode === 'dry-run') {
-      log(`🔎 вышло бы: ${item.id} (${item.type}) → ${(await checkFiles(item, ctx)).text}`);
+      log(`🔎 вышло бы: ${item.id} (${item.platform === 'threads' ? 'Threads, ' : ''}${item.type}) → ${(await checkFiles(item, ctx)).text}`);
       done++;
       continue;
     }
 
     try {
-      const r = await publishOne(item, ctx);
+      const r = await (item.platform === 'threads' ? publishThreads(item, ctx) : publishOne(item, ctx));
       if (r.skipped) { summary.skipped.push(item.id); log(`⏳ ${item.id}: ${r.skipped}`); continue; }
       item.status = 'published';
       item.media_id = r.media_id;
@@ -267,7 +402,7 @@ export async function main({
       done++;
     } catch (e) {
       item.status = 'failed';
-      item.error = api.redact(e.message);
+      item.error = redact(e.message);
       summary.failed.push(item.id);
       log(`❌ ${item.id}: ${item.error}`);
     }

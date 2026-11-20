@@ -293,4 +293,127 @@ console.log('ok 17 карусель');
 }
 console.log('ok 18 история');
 
+// ---------- Threads ----------
+const TH = 'THtest-SECRET-threads-456';
+const thPost = (over = {}) => ({ id: 't1', brand: 'salam', platform: 'threads', type: 'TEXT', caption: 'Совет дня: одно действие на кадр', publish_at: '2026-12-01T09:00:00Z', status: 'scheduled', ...over });
+// Threads, который успешно принимает всё; срок токена — daysLeft дней
+const okThreads = (o = {}) => { let n = 0; return (m, u, p) => {
+  if (u.host !== 'graph.threads.net') return m === 'HEAD' ? { status: 200 } : okInstagram()(m, u, p);
+  if (u.pathname === '/refresh_access_token') return o.refresh ? o.refresh(p) : { status: 200, json: { access_token: TH, token_type: 'bearer', expires_in: 60 * 86400 } };
+  if (u.pathname.endsWith('/debug_token')) return { status: 200, json: { data: { is_valid: true, expires_at: Math.floor(NOW / 1000) + (o.daysLeft ?? 50) * 86400 } } };
+  if (u.pathname.endsWith('/me')) return { status: 200, json: { id: '777', username: 'salammotion' } };
+  if (m === 'GET' && u.pathname.endsWith('/777/threads')) return { status: 200, json: { data: o.recent || [] } };
+  if (m === 'POST' && u.pathname.endsWith('/777/threads')) return { status: 200, json: { id: p.media_type === 'CAROUSEL' ? 'TPARENT' : 'TC' + (++n) } };
+  if (m === 'GET' && /\/(TC\d|TPARENT)$/.test(u.pathname)) return { status: 200, json: { status: o.status || 'FINISHED', error_message: o.error_message } };
+  if (u.pathname.endsWith('/777/threads_publish')) return { status: 200, json: { id: 'TM1' } };
+  if (u.pathname.endsWith('/TM1')) return { status: 200, json: { permalink: 'https://www.threads.net/@salammotion/post/ABC' } };
+}; };
+const thEnv = { THREADS_ACCESS_TOKEN: TH };
+
+// 19. проверка записей для Threads
+assert.deepEqual(validate(thPost()), []);
+assert.deepEqual(validate(thPost({ link: 'https://salammotion.com' })), []);
+assert.deepEqual(validate(thPost({ type: 'IMAGE', media: 'assets/a.png' })), []);
+assert.deepEqual(validate(thPost({ type: 'VIDEO', media: 'assets/a.mp4' })), []);
+assert.deepEqual(validate(thPost({ type: 'CAROUSEL', media: Array.from({ length: 12 }, (_, i) => `assets/c/${i}.jpg`) })), [], 'в Threads до 20 слайдов');
+assert.ok(validate(thPost({ caption: 'я'.repeat(501) })).some(e => /500/.test(e)));
+assert.ok(validate(thPost({ caption: ' ' })).some(e => /должен быть текст/.test(e)));
+assert.ok(validate(thPost({ media: 'assets/a.jpg' })).some(e => /у TEXT нет media/.test(e)));
+assert.ok(validate(thPost({ type: 'REELS', media: 'assets/a.mp4' })).some(e => /для Threads/.test(e)));
+assert.ok(validate(thPost({ type: 'VIDEO', media: 'assets/a.jpg' })).some(e => /mp4/.test(e)));
+assert.ok(validate(thPost({ type: 'IMAGE', media: 'assets/a.jpg', link: 'https://salammotion.com' })).some(e => /link/.test(e)));
+assert.ok(validate(post({ link: 'https://salammotion.com' })).some(e => /link/.test(e)), 'у Instagram ссылок с превью нет');
+console.log('ok 19 Threads: проверка записей');
+
+// 20. текстовый пост: уходит на graph.threads.net с токеном Threads, без ожидания обработки; токен не попадает в логи
+{
+  const calls = [];
+  const q = await writeQueue([thPost({ link: 'https://salammotion.com' })]);
+  const { s, logs } = await run('publish', q, fakeFetch(okThreads(), calls), thEnv);
+  assert.deepEqual(s.published, ['t1']);
+  const create = calls.find(c => c.method === 'POST' && c.url.endsWith('/777/threads'));
+  assert.equal(create.url, 'https://graph.threads.net/v1.0/777/threads');
+  assert.deepEqual([create.params.media_type, create.params.text, create.params.link_attachment, create.params.access_token], ['TEXT', 'Совет дня: одно действие на кадр', 'https://salammotion.com', TH]);
+  assert.ok(!calls.some(c => /\/TC\d$/.test(c.url)), 'текст не ждёт обработки');
+  assert.equal(calls.find(c => c.url.endsWith('/777/threads_publish')).params.creation_id, 'TC1');
+  const saved = (await readPosts(q))[0];
+  assert.deepEqual([saved.status, saved.media_id, saved.permalink], ['published', 'TM1', 'https://www.threads.net/@salammotion/post/ABC']);
+  assert.ok(!logs.join('\n').includes(TH) && !JSON.stringify(saved).includes(TH));
+  assert.ok(!calls.some(c => c.url.includes('graph.facebook.com')), 'к Instagram запросов нет');
+}
+console.log('ok 20 Threads: текстовый пост');
+
+// 21. картинка, видео и карусель; ошибка обработки сохраняется с причиной
+{
+  for (const [type, media, key] of [['IMAGE', 'assets/a.jpg', 'image_url'], ['VIDEO', 'assets/r.mp4', 'video_url']]) {
+    const calls = [];
+    const { s } = await run('publish', await writeQueue([thPost({ type, media })]), fakeFetch(okThreads(), calls), thEnv);
+    assert.deepEqual(s.published, ['t1']);
+    const create = calls.find(c => c.method === 'POST' && c.url.endsWith('/777/threads'));
+    assert.equal(create.params.media_type, type); assert.equal(create.params[key], 'https://artega909-del.github.io/' + media);
+    assert.ok(calls.some(c => c.method === 'GET' && c.url.endsWith('/TC1') && c.params.fields === 'status,error_message'));
+  }
+  const calls = [];
+  const car = thPost({ type: 'CAROUSEL', media: ['assets/c/01.jpg', 'assets/c/02.mp4'] });
+  await run('publish', await writeQueue([car]), fakeFetch(okThreads(), calls), thEnv);
+  const posts = calls.filter(c => c.method === 'POST' && c.url.endsWith('/777/threads'));
+  assert.deepEqual(posts.map(c => [c.params.media_type, c.params.is_carousel_item, c.params.text]),
+    [['IMAGE', 'true', undefined], ['VIDEO', 'true', undefined], ['CAROUSEL', undefined, car.caption]]);
+  assert.equal(posts[2].params.children, 'TC1,TC2');
+  assert.equal(calls.find(c => c.url.endsWith('/777/threads_publish')).params.creation_id, 'TPARENT');
+  const q = await writeQueue([thPost({ type: 'VIDEO', media: 'assets/r.mp4' })]);
+  const bad = await run('publish', q, fakeFetch(okThreads({ status: 'ERROR', error_message: 'FAILED_PROCESSING_VIDEO' })), thEnv);
+  assert.deepEqual(bad.s.failed, ['t1']); assert.match((await readPosts(q))[0].error, /Threads не смог обработать файл: ERROR — FAILED_PROCESSING_VIDEO/);
+}
+console.log('ok 21 Threads: картинка, видео, карусель');
+
+// 22. без секрета Threads запись ждёт, Instagram публикуется как обычно; повтор по тексту не публикуется
+{
+  const q = await writeQueue([thPost(), post()]);
+  const calls = [];
+  const { s, logs } = await run('publish', q, fakeFetch(okInstagram(), calls));
+  assert.deepEqual([s.skipped, s.published], [['t1'], ['p1']]); assert.match(logs.join('\n'), /THREADS_ACCESS_TOKEN не задан/);
+  assert.equal((await readPosts(q))[0].status, 'scheduled');
+  assert.ok(!calls.some(c => c.url.includes('threads.net')));
+  const q2 = await writeQueue([thPost()], 'q2.json');
+  const calls2 = [];
+  const r2 = await run('publish', q2, fakeFetch(okThreads({ recent: [{ id: 'OLD', text: thPost().caption, permalink: 'https://www.threads.net/@salammotion/post/OLD' }] }), calls2), thEnv);
+  assert.deepEqual(r2.s.duplicates, ['t1']); assert.ok(!calls2.some(c => c.method === 'POST'));
+}
+console.log('ok 22 Threads: без секрета запись ждёт, защита от повтора');
+
+// 23. токен Threads: при сроке больше 45 дней не трогаем; меньше — продлеваем; меньше 10 дней и продлить нельзя — предупреждение
+{
+  const refreshed = c => c.filter(x => x.url === 'https://graph.threads.net/refresh_access_token');
+  let calls = [];
+  await run('publish', await writeQueue([]), fakeFetch(okThreads({ daysLeft: 50 }), calls), thEnv);
+  assert.equal(refreshed(calls).length, 0);
+  calls = [];
+  let r = await run('publish', await writeQueue([]), fakeFetch(okThreads({ daysLeft: 30 }), calls), thEnv);
+  assert.equal(refreshed(calls).length, 1); assert.equal(refreshed(calls)[0].params.grant_type, 'th_refresh_token');
+  assert.match(r.logs.join('\n'), /Токен Threads продлён, действует ещё 60 дн/); assert.equal(r.s.warnings, undefined);
+  r = await run('publish', await writeQueue([]), fakeFetch(okThreads({ daysLeft: 5, refresh: () => ({ status: 200, json: { access_token: 'ANOTHER-token', expires_in: 60 * 86400 } }) })), thEnv);
+  assert.match(r.s.warnings[0], /истекает через 5 дн/); assert.match(r.logs.join('\n'), /другой токен/); assert.ok(!r.logs.join('\n').includes('ANOTHER-token'));
+  r = await run('publish', await writeQueue([]), fakeFetch(okThreads({ daysLeft: 5, refresh: () => ({ status: 400, json: { error: { message: 'cannot refresh', code: 190 } } }) })), thEnv);
+  assert.match(r.logs.join('\n'), /продлить токен Threads не удалось/); assert.equal(r.s.warnings.length, 1);
+  // dry-run токен не продлевает
+  calls = [];
+  await run('dry-run', await writeQueue([thPost()]), fakeFetch(okThreads({ daysLeft: 5 }), calls), thEnv);
+  assert.ok(!calls.some(c => c.url.includes('refresh_access_token') || c.method === 'POST'));
+}
+console.log('ok 23 Threads: продление токена');
+
+// 24. check: Threads проверяется вместе с Instagram; без секрета — сообщение, что Threads выключен
+{
+  let r = await run('check', await writeQueue([]), fakeFetch(okThreads({ daysLeft: 41 })), thEnv);
+  assert.equal(r.s.threadsUsername, 'salammotion'); assert.match(r.logs.join('\n'), /Threads: доступ есть: @salammotion[\s\S]*ещё 41 дн/);
+  r = await run('check', await writeQueue([]), fakeFetch(okInstagram()));
+  assert.match(r.logs.join('\n'), /публикация в Threads выключена/);
+  const broken = (m, u, p) => (u.host === 'graph.threads.net' ? { status: 400, json: { error: { message: `Invalid OAuth access token ${TH}`, code: 190 } } } : okInstagram()(m, u, p));
+  const logs = [];
+  await assert.rejects(main({ mode: 'check', env: { ...env, ...thEnv }, fetchFn: fakeFetch(broken), log: s => logs.push(s), now: () => NOW, sleep: async () => {} }), /Threads не пройдена/);
+  assert.ok(!logs.join('\n').includes(TH));
+}
+console.log('ok 24 Threads: check');
+
 console.log('\nВсе проверки пройдены');
