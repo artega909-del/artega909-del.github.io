@@ -497,6 +497,127 @@
       "caption": "",
       "publish_at": "2026-11-23T14:05:00Z",
       "status": "scheduled"
+    },
+    {
+      "id": "th-1121-text-kofe",
+      "brand": "salam",
+      "platform": "threads",
+      "type": "TEXT",
+      "caption": "Сегодня выложили рекламу кофейни, которую никто не снимал. Ни камеры, ни бариста, ни съёмочного дня — каждый кадр сгенерировал ИИ по текстовому описанию.\n\nЧестный минус: с первого раза так не выходит. Хороший ролик — это пять клипов, и для каждого по секундам расписано, что происходит в кадре.\n\nКакой бизнес разобрать следующим? Пишите в ответах.",
+      "publish_at": "2026-11-21T05:10:00Z",
+      "status": "scheduled"
+    },
+    {
+      "id": "th-1121-video-kofe",
+      "brand": "salam",
+      "platform": "threads",
+      "type": "VIDEO",
+      "media": "assets/salam-reels-kofe-reklama.mp4",
+      "caption": "Реклама кофейни: зерно → эспрессо → молоко → чашка. Пять клипов, сгенерированных ИИ, и монтаж под музыку.\n\nХотите такую же для своего бизнеса? Напишите РЕКЛАМА в ответах — расскажем, как её сделать.\n\nМузыка: Push N Glide — Candy Floss",
+      "publish_at": "2026-11-21T14:10:00Z",
+      "status": "scheduled"
+    },
+    {
+      "id": "th-1122-text-odno-dejstvie",
+      "brand": "salam",
+      "platform": "threads",
+      "type": "TEXT",
+      "caption": "Самая частая ошибка в промпте для видео — весь сюжет в одном клипе.\n\n«Бариста варит кофе, наливает молоко, подаёт гостю и улыбается» — нейросеть сделает кашу.\n«Бариста наливает молоко в чашку, на пенке появляется рисунок» — сделает кадр.\n\nОдно действие на клип. Остальное — следующими клипами.\n\nА вы как пишете: одним абзацем или по кадрам?",
+      "publish_at": "2026-11-22T05:10:00Z",
+      "status": "scheduled"
+    },
+    {
+      "id": "th-1123-text-kto-my",
+      "brand": "salam",
+      "platform": "threads",
+      "type": "TEXT",
+      "caption": "Пара слов о том, кто мы.\n\nSalam Motion — сервис, где из одной фразы получается рекламный ролик: ИИ сам дописывает сценарий, камеру и свет.\n\nВ 2026 году мы победили в региональном этапе Startup World Cup в Ашхабаде и представляли Туркменистан на финале в Сан-Франциско.\n\nДелаем это для малого бизнеса: реклама нужна каждую неделю, а съёмка — это дорого и долго.\n\nЧто бы вы прорекламировали первым?",
+      "link": "https://salammotion.com",
+      "publish_at": "2026-11-23T05:10:00Z",
+      "status": "scheduled"
+    },
+    {
+      "id": "th-1123-carousel-5-oshibok",
+      "brand": "salam",
+      "platform": "threads",
+      "type": "CAROUSEL",
+      "media": [
+        "assets/social/salam-003-oshibki-v-prompte/01.jpg",
+        "assets/social/salam-003-oshibki-v-prompte/02.jpg",
+        "assets/social/salam-003-oshibki-v-prompte/03.jpg",
+        "assets/social/salam-003-oshibki-v-prompte/04.jpg",
+        "assets/social/salam-003-oshibki-v-prompte/05.jpg",
+        "assets/social/salam-003-oshibki-v-prompte/06.jpg",
+        "assets/social/salam-003-oshibki-v-prompte/07.jpg"
+      ],
+      "caption": "5 ошибок в промпте для видео и как их исправить. Листайте.\n\nКакая из них ваша? Напишите номер в ответах.",
+      "publish_at": "2026-11-23T14:10:00Z",
+      "status": "scheduled"
+    },
+    {
+      "id": "th-1124-text-svet",
+      "brand": "salam",
+      "platform": "threads",
+      "type": "TEXT",
+      "caption": "Хотите, чтобы кадр из нейросети не выглядел пластиковым? Назовите один главный источник света и откуда он падает.\n\nНе «красивое освещение», а «тёплый утренний свет из окна слева».\n\nОдна фраза — и у кадра появляются объём, тени и настроение. Попробуйте в следующем промпте и расскажите, что изменилось.",
+      "publish_at": "2026-11-24T05:10:00Z",
+      "status": "scheduled"
+    },
+    {
+      "id": "th-1125-text-vopros",
+      "brand": "salam",
+      "platform": "threads",
+      "type": "TEXT",
+      "caption": "Вопрос владельцам бизнеса: что мешает выкладывать видео каждую неделю?\n\n1 — дорого снимать\n2 — нет времени\n3 — не знаю, что снимать\n4 — другое\n\nНапишите цифру в ответах — следующие посты сделаем под самый частый ответ.",
+      "publish_at": "2026-11-25T05:10:00Z",
+      "status": "scheduled"
+    },
+    {
+      "id": "th-1125-carousel-formula",
+      "brand": "salam",
+      "platform": "threads",
+      "type": "CAROUSEL",
+      "media": [
+        "assets/social/salam-006-formula-prompta/01.jpg",
+        "assets/social/salam-006-formula-prompta/02.jpg",
+        "assets/social/salam-006-formula-prompta/03.jpg",
+        "assets/social/salam-006-formula-prompta/04.jpg",
+        "assets/social/salam-006-formula-prompta/05.jpg",
+        "assets/social/salam-006-formula-prompta/06.jpg",
+        "assets/social/salam-006-formula-prompta/07.jpg",
+        "assets/social/salam-006-formula-prompta/08.jpg"
+      ],
+      "caption": "Формула промпта для видео из пяти частей. Сохраните и подставьте свою нишу.\n\nНужен готовый шаблон? Напишите ПРОМПТ в ответах — пришлём.",
+      "publish_at": "2026-11-25T14:10:00Z",
+      "status": "scheduled"
+    },
+    {
+      "id": "th-1126-text-konec",
+      "brand": "salam",
+      "platform": "threads",
+      "type": "TEXT",
+      "caption": "Почему ролик из нейросети «зависает» на середине? Чаще всего в промпте нет конца движения.\n\n«Наливает молоко» — нейросеть не знает, когда остановиться.\n«Наливает молоко, рисунок на пенке готов, кувшин уходит из кадра» — у клипа есть финал.\n\nПишите не только что происходит, но и чем заканчивается.",
+      "publish_at": "2026-11-26T05:10:00Z",
+      "status": "scheduled"
+    },
+    {
+      "id": "th-1127-text-pervye-slova",
+      "brand": "salam",
+      "platform": "threads",
+      "type": "TEXT",
+      "caption": "Порядок слов в промпте важнее, чем кажется. Начинайте с плана и главного предмета: «Крупный план: чашка капучино на деревянной стойке…»\n\nДальше — действие, камера, свет. Формат и длительность — в настройках, не в тексте.\n\nКакую тему про промпты разобрать дальше? Предлагайте в ответах.",
+      "publish_at": "2026-11-27T05:10:00Z",
+      "status": "scheduled"
+    },
+    {
+      "id": "th-1127-video-odna-fraza",
+      "brand": "salam",
+      "platform": "threads",
+      "type": "VIDEO",
+      "media": "assets/salam-reels-odna-fraza.mp4",
+      "caption": "Одна фраза → сценарий → ролик. Показываем, как Salam Motion сам дописывает героиню, камеру и свет.\n\nХотите эту фразу? Напишите ПРОМПТ в ответах.\n\nИнтерфейс в ролике показан схематично. Музыка: Push N Glide — Candy Floss",
+      "publish_at": "2026-11-27T14:10:00Z",
+      "status": "scheduled"
     }
   ]
 }
