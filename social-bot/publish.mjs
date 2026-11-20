@@ -97,9 +97,9 @@ async function publishOne(item, ctx) {
   const url = files.urls[0];
   const waitReady = async id => { // ждём, пока Instagram обработает файл
     for (let i = 0; ; i++) {
-      const st = await api.call('GET', `/${id}`, { fields: 'status_code' });
+      const st = await api.call('GET', `/${id}`, { fields: 'status_code,status' });
       if (st.status_code === 'FINISHED') return;
-      if (st.status_code === 'ERROR' || st.status_code === 'EXPIRED') throw new Error('Instagram не смог обработать файл: ' + st.status_code);
+      if (st.status_code === 'ERROR' || st.status_code === 'EXPIRED') throw new Error('Instagram не смог обработать файл: ' + st.status_code + (st.status && st.status !== st.status_code ? ' — ' + st.status : ''));
       if (i >= ctx.maxPolls) throw new Error('Instagram слишком долго обрабатывает файл');
       await sleep(ctx.pollMs);
     }
