@@ -639,6 +639,295 @@
       "caption": "Одна фраза → сценарий → ролик. Показываем, как Salam Motion сам дописывает героиню, камеру и свет.\n\nХотите эту фразу? Напишите ПРОМПТ в ответах.\n\nИнтерфейс в ролике показан схематично. Музыка: Push N Glide — Candy Floss",
       "publish_at": "2026-11-27T14:10:00Z",
       "status": "scheduled"
+    },
+    {
+      "id": "salam-017-kak-sdelana-kofejnya",
+      "brand": "salam",
+      "platform": "instagram",
+      "type": "CAROUSEL",
+      "media": [
+        "assets/social/salam-017-kak-sdelana-kofejnya/01.jpg",
+        "assets/social/salam-017-kak-sdelana-kofejnya/02.jpg",
+        "assets/social/salam-017-kak-sdelana-kofejnya/03.jpg",
+        "assets/social/salam-017-kak-sdelana-kofejnya/04.jpg",
+        "assets/social/salam-017-kak-sdelana-kofejnya/05.jpg",
+        "assets/social/salam-017-kak-sdelana-kofejnya/06.jpg",
+        "assets/social/salam-017-kak-sdelana-kofejnya/07.jpg"
+      ],
+      "caption": "Как сделана реклама кофейни без камеры и бариста ☕\nПять клипов, сгенерированных ИИ, промпты по секундам и монтаж под музыку. Листайте — пять шагов от монтажного листа до финального кадра.\n\nХотите промпты всех пяти клипов? Напишите ПРОМПТ в комментариях — пришлём целиком.\nПопробовать: ссылка в шапке профиля — salammotion.com\n\n#ии #нейросети #видеореклама #реклама #малыйбизнес",
+      "publish_at": "2026-11-24T14:00:00Z",
+      "status": "scheduled"
+    },
+    {
+      "id": "salam-018-prompt-dnya-espresso",
+      "brand": "salam",
+      "platform": "instagram",
+      "type": "IMAGE",
+      "media": "assets/social/salam-018-prompt-dnya-espresso/01.jpg",
+      "caption": "Промпт дня: эспрессо крупным планом ☕\nКлип из нашей рекламы кофейни. Каждые 2–3 секунды — своё действие, у последнего есть конец. Копируйте и меняйте под свой продукт:\n\nScene: a dark espresso bar, polished chrome machine, warm amber key light from the left, deep brown shadows.\nSubject: a steel portafilter and a matte black ceramic cup on the drip tray.\nAction:\n0-2s: extreme close-up, a hand locks the portafilter into the machine with one firm twist.\n2-6s: two thin streams of espresso begin to flow in slow motion, tiger-striped and golden, thickening as they fall.\n6-8s: the streams land in the matte black ceramic cup, golden crema swirling and settling on the surface.\nCamera: extreme close-up, eye level, 85mm macro lens feel, shallow depth of field, slow tilt-down following the streams, rack focus from the spout to the surface of the cup.\nLighting and texture: warm amber backlight that makes the streams glow like honey, soft reflections sliding across the chrome, fine steam.\nAudio: low pump hum, liquid trickling into ceramic.\nEnd on: the top of the matte black ceramic cup filled with dark espresso and golden crema. Clean unbranded frame.\n\nНастройки: формат 9:16, 8 секунд, звук включён.\nКакой клип расписать следующим? Напишите в комментариях.\nКадр сгенерирован ИИ.\n\n#промпт #нейросети #ии #видеомаркетинг #контент",
+      "publish_at": "2026-11-25T14:00:00Z",
+      "status": "scheduled"
+    },
+    {
+      "id": "salam-019-do-i-posle",
+      "brand": "salam",
+      "platform": "instagram",
+      "type": "CAROUSEL",
+      "media": [
+        "assets/social/salam-019-do-i-posle/01.jpg",
+        "assets/social/salam-019-do-i-posle/02.jpg",
+        "assets/social/salam-019-do-i-posle/03.jpg",
+        "assets/social/salam-019-do-i-posle/04.jpg",
+        "assets/social/salam-019-do-i-posle/05.jpg"
+      ],
+      "caption": "Одна реклама — две версии 👀\nПервая получилась скучной: кадры с одной высоты, чашка меняла цвет, в кадре почти ничего не происходило. Нейросеть та же — поменяли только промпты. Три ошибки и как их исправили — в карусели.\n\nВставьте свой промпт в комментарий — ответим, что поправить, чтобы кадр ожил.\nОбе версии сгенерированы ИИ.\n\n#промпт #нейросети #ии #видеомаркетинг #контент",
+      "publish_at": "2026-11-26T14:00:00Z",
+      "status": "scheduled"
+    },
+    {
+      "id": "salam-020-stroka-kamery",
+      "brand": "salam",
+      "platform": "instagram",
+      "type": "CAROUSEL",
+      "media": [
+        "assets/social/salam-020-stroka-kamery/01.jpg",
+        "assets/social/salam-020-stroka-kamery/02.jpg",
+        "assets/social/salam-020-stroka-kamery/03.jpg",
+        "assets/social/salam-020-stroka-kamery/04.jpg",
+        "assets/social/salam-020-stroka-kamery/05.jpg",
+        "assets/social/salam-020-stroka-kamery/06.jpg"
+      ],
+      "caption": "Камера в промпте: 5 частей 🎥\nКрупность → угол → объектив → одно движение → где остановиться. Одна строка решает, будет ли кадр живым. Сохраните, чтобы не искать.\n\nНапишите ПРОМПТ в комментариях — пришлём три готовые строки камеры: для еды, косметики и недвижимости.\n\n#промпт #нейросети #ии #видеомаркетинг #контент",
+      "publish_at": "2026-11-27T14:00:00Z",
+      "status": "scheduled"
+    },
+    {
+      "id": "salam-021-plastik",
+      "brand": "salam",
+      "platform": "instagram",
+      "type": "CAROUSEL",
+      "media": [
+        "assets/social/salam-021-plastik/01.jpg",
+        "assets/social/salam-021-plastik/02.jpg",
+        "assets/social/salam-021-plastik/03.jpg",
+        "assets/social/salam-021-plastik/04.jpg",
+        "assets/social/salam-021-plastik/05.jpg",
+        "assets/social/salam-021-plastik/06.jpg",
+        "assets/social/salam-021-plastik/07.jpg"
+      ],
+      "caption": "Почему кадр из нейросети выглядит «пластиковым» 🫠\nСвет без направления, блеск везде, капли по линейке, пар на светлом фоне, стерильная чистота. На каждую ошибку — как переписать промпт.\n\nКакая ошибка была у вас? Напишите номер в комментариях.\n\n#промпт #нейросети #ии #видеомаркетинг #контент",
+      "publish_at": "2026-11-28T14:00:00Z",
+      "status": "scheduled"
+    },
+    {
+      "id": "salam-022-vasha-nisha",
+      "brand": "salam",
+      "platform": "instagram",
+      "type": "IMAGE",
+      "media": "assets/social/salam-022-vasha-nisha/01.jpg",
+      "caption": "Распишем рекламу для вашего бизнеса по секундам 🎬\nНапишите в комментариях свою нишу: кофейня, салон, автосервис, магазин одежды — любая. Для трёх самых частых ниш сделаем монтажный лист и промпт для каждого клипа, как в рекламе кофейни, и выложим отдельными постами.\n\nВаша ниша — в комментарии 👇\n\n#ии #нейросети #видеореклама #реклама #малыйбизнес",
+      "publish_at": "2026-11-29T14:00:00Z",
+      "status": "scheduled"
+    },
+    {
+      "id": "salam-023-edinye-detali",
+      "brand": "salam",
+      "platform": "instagram",
+      "type": "CAROUSEL",
+      "media": [
+        "assets/social/salam-023-edinye-detali/01.jpg",
+        "assets/social/salam-023-edinye-detali/02.jpg",
+        "assets/social/salam-023-edinye-detali/03.jpg",
+        "assets/social/salam-023-edinye-detali/04.jpg",
+        "assets/social/salam-023-edinye-detali/05.jpg",
+        "assets/social/salam-023-edinye-detali/06.jpg"
+      ],
+      "caption": "Почему в ИИ-ролике всё меняется от кадра к кадру 🔄\nГерой, чашка, свет — в каждом клипе разные. Четыре правила, которые склеивают клипы в один ролик: один абзац деталей, одна модель, свет с одной стороны и продуманный стык.\n\nНапишите ПРОМПТ в комментариях — пришлём шаблон абзаца деталей.\n\n#промпт #нейросети #ии #видеомаркетинг #контент",
+      "publish_at": "2026-11-30T14:00:00Z",
+      "status": "scheduled"
+    },
+    {
+      "id": "story-1124-am-sovet-pik",
+      "brand": "salam",
+      "platform": "instagram",
+      "type": "STORY",
+      "media": "assets/social/stories/1124-am-sovet-pik.jpg",
+      "caption": "",
+      "publish_at": "2026-11-24T05:00:00Z",
+      "status": "scheduled"
+    },
+    {
+      "id": "story-1124-pm-kofejnya",
+      "brand": "salam",
+      "platform": "instagram",
+      "type": "STORY",
+      "media": "assets/social/stories/1124-pm-kofejnya.jpg",
+      "caption": "",
+      "publish_at": "2026-11-24T14:05:00Z",
+      "status": "scheduled"
+    },
+    {
+      "id": "story-1125-am-reels-kofe",
+      "brand": "salam",
+      "platform": "instagram",
+      "type": "STORY",
+      "media": "assets/salam-reels-kofe-reklama.mp4",
+      "caption": "",
+      "publish_at": "2026-11-25T05:00:00Z",
+      "status": "scheduled"
+    },
+    {
+      "id": "story-1125-pm-espresso",
+      "brand": "salam",
+      "platform": "instagram",
+      "type": "STORY",
+      "media": "assets/social/stories/1125-pm-espresso.jpg",
+      "caption": "",
+      "publish_at": "2026-11-25T14:05:00Z",
+      "status": "scheduled"
+    },
+    {
+      "id": "story-1126-am-sovet-kamera",
+      "brand": "salam",
+      "platform": "instagram",
+      "type": "STORY",
+      "media": "assets/social/stories/1126-am-sovet-kamera.jpg",
+      "caption": "",
+      "publish_at": "2026-11-26T05:00:00Z",
+      "status": "scheduled"
+    },
+    {
+      "id": "story-1126-pm-do-i-posle",
+      "brand": "salam",
+      "platform": "instagram",
+      "type": "STORY",
+      "media": "assets/social/stories/1126-pm-do-i-posle.jpg",
+      "caption": "",
+      "publish_at": "2026-11-26T14:05:00Z",
+      "status": "scheduled"
+    },
+    {
+      "id": "story-1127-am-vopros",
+      "brand": "salam",
+      "platform": "instagram",
+      "type": "STORY",
+      "media": "assets/social/stories/1127-am-vopros.jpg",
+      "caption": "",
+      "publish_at": "2026-11-27T05:00:00Z",
+      "status": "scheduled"
+    },
+    {
+      "id": "story-1127-pm-kamera",
+      "brand": "salam",
+      "platform": "instagram",
+      "type": "STORY",
+      "media": "assets/social/stories/1127-pm-kamera.jpg",
+      "caption": "",
+      "publish_at": "2026-11-27T14:05:00Z",
+      "status": "scheduled"
+    },
+    {
+      "id": "story-1128-am-sovet-par",
+      "brand": "salam",
+      "platform": "instagram",
+      "type": "STORY",
+      "media": "assets/social/stories/1128-am-sovet-par.jpg",
+      "caption": "",
+      "publish_at": "2026-11-28T05:00:00Z",
+      "status": "scheduled"
+    },
+    {
+      "id": "story-1128-pm-plastik",
+      "brand": "salam",
+      "platform": "instagram",
+      "type": "STORY",
+      "media": "assets/social/stories/1128-pm-plastik.jpg",
+      "caption": "",
+      "publish_at": "2026-11-28T14:05:00Z",
+      "status": "scheduled"
+    },
+    {
+      "id": "story-1129-am-sovet-krupnost",
+      "brand": "salam",
+      "platform": "instagram",
+      "type": "STORY",
+      "media": "assets/social/stories/1129-am-sovet-krupnost.jpg",
+      "caption": "",
+      "publish_at": "2026-11-29T05:00:00Z",
+      "status": "scheduled"
+    },
+    {
+      "id": "story-1129-pm-nisha",
+      "brand": "salam",
+      "platform": "instagram",
+      "type": "STORY",
+      "media": "assets/social/stories/1129-pm-nisha.jpg",
+      "caption": "",
+      "publish_at": "2026-11-29T14:05:00Z",
+      "status": "scheduled"
+    },
+    {
+      "id": "story-1130-am-sovet-styk",
+      "brand": "salam",
+      "platform": "instagram",
+      "type": "STORY",
+      "media": "assets/social/stories/1130-am-sovet-styk.jpg",
+      "caption": "",
+      "publish_at": "2026-11-30T05:00:00Z",
+      "status": "scheduled"
+    },
+    {
+      "id": "story-1130-pm-detali",
+      "brand": "salam",
+      "platform": "instagram",
+      "type": "STORY",
+      "media": "assets/social/stories/1130-pm-detali.jpg",
+      "caption": "",
+      "publish_at": "2026-11-30T14:05:00Z",
+      "status": "scheduled"
+    },
+    {
+      "id": "th-1128-text-pervaya-versiya",
+      "brand": "salam",
+      "platform": "threads",
+      "type": "TEXT",
+      "caption": "Первая версия нашей рекламы кофейни была скучной.\n\nВсе кадры с одной высоты. Чашка в одном клипе белая, в другом — чёрная. В кадре почти ничего не происходило.\n\nНейросеть не меняли — переписали промпты: у каждого клипа своя камера, одна строка деталей на весь ролик и действие по секундам.\n\nСталкивались с таким? Расскажите в ответах.",
+      "publish_at": "2026-11-28T05:10:00Z",
+      "status": "scheduled"
+    },
+    {
+      "id": "th-1129-text-kamera",
+      "brand": "salam",
+      "platform": "threads",
+      "type": "TEXT",
+      "caption": "Строка камеры в промпте — пять частей:\n\n1. крупность\n2. угол\n3. объектив\n4. одно движение\n5. где остановиться\n\nПример: «Camera: extreme close-up at a low angle, 100mm macro feel, slow push-in, ending on a centered hero frame».\n\n«Cinematic» и «4K» — это не камера. Сохраните.",
+      "publish_at": "2026-11-29T05:10:00Z",
+      "status": "scheduled"
+    },
+    {
+      "id": "th-1129-carousel-do-i-posle",
+      "brand": "salam",
+      "platform": "threads",
+      "type": "CAROUSEL",
+      "media": [
+        "assets/social/salam-019-do-i-posle/01.jpg",
+        "assets/social/salam-019-do-i-posle/02.jpg",
+        "assets/social/salam-019-do-i-posle/03.jpg",
+        "assets/social/salam-019-do-i-posle/04.jpg",
+        "assets/social/salam-019-do-i-posle/05.jpg"
+      ],
+      "caption": "Одна реклама — две версии. Нейросеть та же, поменяли только промпты. Листайте.\n\nВставьте свой промпт в ответ — подскажем, что поправить.",
+      "publish_at": "2026-11-29T14:10:00Z",
+      "status": "scheduled"
+    },
+    {
+      "id": "th-1130-text-vopros",
+      "brand": "salam",
+      "platform": "threads",
+      "type": "TEXT",
+      "caption": "Вопрос к тем, кто делает видео в нейросетях: на каком языке пишете промпты — на русском или на английском?\n\nИ почему так? Ответьте — соберём опыт в один пост.",
+      "publish_at": "2026-11-30T05:10:00Z",
+      "status": "scheduled"
     }
   ]
 }
