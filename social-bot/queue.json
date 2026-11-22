@@ -1061,8 +1061,8 @@
       "type": "TEXT",
       "caption": "Hi Threads 👋 I'm Artega. 10+ years editing video, now building Salam Motion: you write one phrase, AI writes the script and makes the ad.\n\nHere I'll share how AI ads are actually made — prompts, second-by-second breakdowns, before and after.\n\nWhat kind of business should I make an ad for first?",
       "link": "https://salammotion.com",
-      "publish_at": "2026-11-24T14:12:00Z",
-      "status": "draft"
+      "publish_at": "2026-11-22T14:12:00Z",
+      "status": "scheduled"
     },
     {
       "id": "en-th-02-one-action",
@@ -1071,8 +1071,8 @@
       "platform": "threads",
       "type": "TEXT",
       "caption": "The most common AI video prompt mistake: the whole story in one clip.\n\n\"A barista makes coffee, pours milk, serves it and smiles\" → mush.\n\"A barista pours milk into a cup, a rosetta appears on the foam\" → a shot.\n\nOne action per clip. The rest goes into the next clips.",
-      "publish_at": "2026-11-25T14:12:00Z",
-      "status": "draft"
+      "publish_at": "2026-11-23T14:12:00Z",
+      "status": "scheduled"
     },
     {
       "id": "en-th-03-reel-coffee",
@@ -1082,8 +1082,8 @@
       "type": "VIDEO",
       "media": "assets/salam-reels-kofe-reklama-en.mp4",
       "caption": "Nobody filmed this coffee ad. Five AI-generated clips and one edit.\n\nWant one for your business? Reply AD.\n\nMusic: Push N Glide — Candy Floss",
-      "publish_at": "2026-11-26T14:12:00Z",
-      "status": "draft"
+      "publish_at": "2026-11-24T14:12:00Z",
+      "status": "scheduled"
     },
     {
       "id": "en-th-04-first-version",
@@ -1092,8 +1092,8 @@
       "platform": "threads",
       "type": "TEXT",
       "caption": "My first AI coffee ad was boring. Every shot from the same height, the cup was white in one clip and black in the next, nothing really happened.\n\nI didn't change the model. I changed the prompts: its own camera for each clip, one line of details for the whole video, actions by the second.\n\nEver had this?",
-      "publish_at": "2026-11-27T14:12:00Z",
-      "status": "draft"
+      "publish_at": "2026-11-25T14:12:00Z",
+      "status": "scheduled"
     },
     {
       "id": "en-th-05-camera",
@@ -1102,8 +1102,8 @@
       "platform": "threads",
       "type": "TEXT",
       "caption": "A camera line in a prompt has 5 parts:\n\n1. shot size\n2. angle\n3. lens\n4. one move\n5. where it stops\n\n\"Camera: extreme close-up at a low angle, 100mm macro feel, slow push-in, ending on a centered hero frame.\"\n\n\"Cinematic\" and \"4K\" aren't camera moves. Save this.",
-      "publish_at": "2026-11-28T14:12:00Z",
-      "status": "draft"
+      "publish_at": "2026-11-26T14:12:00Z",
+      "status": "scheduled"
     },
     {
       "id": "en-th-06-light",
@@ -1112,8 +1112,8 @@
       "platform": "threads",
       "type": "TEXT",
       "caption": "Want AI video that doesn't look plastic? Name one main light source and where it comes from.\n\nNot \"beautiful lighting\" but \"warm morning light from a window on the left\".\n\nOne phrase, and the shot gets depth, shadows and mood. Try it on your next prompt.",
-      "publish_at": "2026-11-29T14:12:00Z",
-      "status": "draft"
+      "publish_at": "2026-11-27T14:12:00Z",
+      "status": "scheduled"
     },
     {
       "id": "en-th-07-question",
@@ -1122,8 +1122,8 @@
       "platform": "threads",
       "type": "TEXT",
       "caption": "Question for anyone making AI video: what's hardest for you?\n\n1 — writing prompts\n2 — consistency between clips\n3 — making it look real\n4 — editing it all together\n\nReply with a number — my next posts will be about the most common answer.",
-      "publish_at": "2026-11-30T14:12:00Z",
-      "status": "draft"
+      "publish_at": "2026-11-28T14:12:00Z",
+      "status": "scheduled"
     }
   ]
 }
