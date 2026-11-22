@@ -304,7 +304,11 @@ export async function main({
     const id = (env['INSTAGRAM_ACCOUNT_ID' + sfx] || '').trim();
     const thT = (env['THREADS_ACCESS_TOKEN' + sfx] || '').trim();
     if (!id && !thT) continue;
-    if (id && !/^\d{4,20}$/.test(id)) throw new Error(`INSTAGRAM_ACCOUNT_ID${sfx} должен состоять только из цифр, а в секрете ${id.length} символов`);
+    if (id && !/^\d{4,20}$/.test(id)) { // ошибка в секретах второго аккаунта не должна останавливать основной
+      log(`⚠️  INSTAGRAM_ACCOUNT_ID${sfx} должен состоять только из цифр, а в секрете ${id.length} символов — аккаунт ${name.toUpperCase()} пропускаю. ` +
+        (id.length > 40 ? 'Похоже, туда попал маркер: маркер кладут в INSTAGRAM_ACCESS_TOKEN' + sfx + ', а сюда — ID аккаунта.' : ''));
+      continue;
+    }
     const igT = (env['INSTAGRAM_ACCESS_TOKEN' + sfx] || '').trim() || token;
     accounts[name] = { name, label: name.toUpperCase(), api: id ? (igT === token ? api : igClient(igT)) : null, igId: id || null, threads: thClient(thT), sfx, igLogin: /^IG/.test(igT) };
   }
