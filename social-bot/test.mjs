@@ -505,4 +505,25 @@ console.log('ok 25 второй аккаунт (en)');
 }
 console.log('ok 26 второй аккаунт: токен входа через Instagram');
 
+// 27. карусель Instagram с анимированной обложкой: первый слайд — видео
+{
+  const calls = []; let n = 0;
+  const h = (m, u, p) => {
+    if (m === 'HEAD') return { status: 200 };
+    if (m === 'POST' && u.pathname.endsWith('/1784/media')) return { status: 200, json: { id: p.media_type === 'CAROUSEL' ? 'PARENT' : 'CH' + (++n) } };
+    if (m === 'GET' && /\/(CH\d|PARENT)$/.test(u.pathname)) return { status: 200, json: { status_code: 'FINISHED' } };
+    if (u.pathname.endsWith('/1784/media_publish')) return { status: 200, json: { id: 'M9' } };
+    if (u.pathname.endsWith('/M9')) return { status: 200, json: { permalink: 'https://www.instagram.com/p/CAR/' } };
+    if (m === 'GET' && u.pathname.endsWith('/1784/media')) return { status: 200, json: { data: [] } };
+  };
+  const car = post({ type: 'CAROUSEL', media: ['assets/c/01.mp4', 'assets/c/02.jpg'] });
+  assert.deepEqual(validate(car), []);
+  const { s } = await run('publish', await writeQueue([car]), fakeFetch(h, calls));
+  assert.deepEqual(s.published, ['p1']);
+  const kids = calls.filter(c => c.method === 'POST' && c.url.endsWith('/1784/media') && c.params.is_carousel_item);
+  assert.deepEqual(kids.map(c => [c.params.media_type, c.params.video_url ? 'v' : 'i']), [['VIDEO', 'v'], [undefined, 'i']]);
+  assert.ok(validate(post({ type: 'IMAGE', media: 'assets/a.mp4' })).some(e => /JPEG/.test(e)), 'одиночный пост — только JPEG');
+}
+console.log('ok 27 карусель с видео-обложкой');
+
 console.log('\nВсе проверки пройдены');
