@@ -947,7 +947,7 @@
         "assets/social/en-01-intro/06.jpg"
       ],
       "caption": "Hi, I'm Artega 👋 I've spent 10+ years making video. Now I'm building Salam Motion: you write one phrase, AI writes the script (character, camera, light) and makes the ad.\n\nOn this page: AI ads broken down second by second, prompts you can copy, and before/after fixes.\n\nWhat would you advertise first? Tell me your business in the comments — I'll pick one and write the ad prompt for it.\n\n#aivideo #aiads #smallbusiness #videomarketing #founder",
-      "publish_at": "2026-11-22T14:10:00Z",
+      "publish_at": "2026-11-23T00:10:00Z",
       "status": "scheduled"
     },
     {
@@ -966,7 +966,7 @@
         "assets/social/en-02-coffee-breakdown/07.jpg"
       ],
       "caption": "How I made a coffee ad with no camera and no barista ☕ Five AI-generated clips, second-by-second prompts, one edit. Swipe for the 5 steps.\n\nComment PROMPT and I'll send you all five prompts.\nTry it: link in bio — salammotion.com\n\n#aivideo #aiads #promptengineering #coffeeshop #videomarketing",
-      "publish_at": "2026-11-23T14:10:00Z",
+      "publish_at": "2026-11-24T00:10:00Z",
       "status": "scheduled"
     },
     {
@@ -978,7 +978,7 @@
       "media": "assets/salam-reels-kofe-reklama-en.mp4",
       "caption": "Nobody filmed this coffee ad ☕ Beans, espresso, latte art, barista — every frame is AI-generated from text prompts.\n\nWant one for your business? Comment AD and I'll show you how to make it.\nMusic: Push N Glide — Candy Floss\n\n#aivideo #aiads #coffeeshop #smallbusiness #videomarketing",
       "cover_ms": 1000,
-      "publish_at": "2026-11-24T14:10:00Z",
+      "publish_at": "2026-11-25T00:10:00Z",
       "status": "scheduled"
     },
     {
@@ -995,7 +995,7 @@
         "assets/social/en-03-before-after/05.jpg"
       ],
       "caption": "Same ad, two versions 👀 The first one was boring: every shot from the same height, the cup changed colour, nothing really happened. Same AI model — I only changed the prompts.\n\nPaste your prompt in the comments and I'll reply with what to fix.\nBoth versions are AI-generated.\n\n#aivideo #promptengineering #aiart #videomarketing #contentcreator",
-      "publish_at": "2026-11-25T14:10:00Z",
+      "publish_at": "2026-11-26T00:10:00Z",
       "status": "scheduled"
     },
     {
@@ -1013,7 +1013,7 @@
         "assets/social/en-04-camera-line/06.jpg"
       ],
       "caption": "Camera in a prompt: 5 parts 🎥 Shot size → angle → lens → one move → where it stops. Save this.\n\nComment PROMPT and I'll send three ready-made camera lines: food, beauty and real estate.\n\n#promptengineering #aivideo #aifilmmaking #videomarketing #contentcreator",
-      "publish_at": "2026-11-26T14:10:00Z",
+      "publish_at": "2026-11-27T00:10:00Z",
       "status": "scheduled"
     },
     {
@@ -1032,7 +1032,7 @@
         "assets/social/en-05-plastic/07.jpg"
       ],
       "caption": "Why your AI shot looks plastic 🫠 Light with no direction, shine everywhere, perfect droplets, steam on a bright wall, sterile clean. Here's how to rewrite each one.\n\nWhich one was yours? Drop the number in the comments.\n\n#aivideo #promptengineering #aiart #aifilmmaking #productvideo",
-      "publish_at": "2026-11-27T14:10:00Z",
+      "publish_at": "2026-11-28T00:10:00Z",
       "status": "scheduled"
     },
     {
@@ -1050,7 +1050,7 @@
         "assets/social/en-06-consistency/06.jpg"
       ],
       "caption": "Why everything changes from shot to shot in AI video 🔄 Four rules that turn separate clips into one ad: one line of details, one model, light from one side and a planned cut.\n\nComment PROMPT and I'll send the template.\n\n#aivideo #promptengineering #aifilmmaking #videomarketing #aiads",
-      "publish_at": "2026-11-28T14:10:00Z",
+      "publish_at": "2026-11-29T00:10:00Z",
       "status": "scheduled"
     },
     {
@@ -1061,7 +1061,7 @@
       "type": "TEXT",
       "caption": "Hi Threads 👋 I'm Artega. 10+ years editing video, now building Salam Motion: you write one phrase, AI writes the script and makes the ad.\n\nHere I'll share how AI ads are actually made — prompts, second-by-second breakdowns, before and after.\n\nWhat kind of business should I make an ad for first?",
       "link": "https://salammotion.com",
-      "publish_at": "2026-11-22T14:12:00Z",
+      "publish_at": "2026-11-23T00:12:00Z",
       "status": "scheduled"
     },
     {
@@ -1071,7 +1071,7 @@
       "platform": "threads",
       "type": "TEXT",
       "caption": "The most common AI video prompt mistake: the whole story in one clip.\n\n\"A barista makes coffee, pours milk, serves it and smiles\" → mush.\n\"A barista pours milk into a cup, a rosetta appears on the foam\" → a shot.\n\nOne action per clip. The rest goes into the next clips.",
-      "publish_at": "2026-11-23T14:12:00Z",
+      "publish_at": "2026-11-24T00:12:00Z",
       "status": "scheduled"
     },
     {
@@ -1082,7 +1082,7 @@
       "type": "VIDEO",
       "media": "assets/salam-reels-kofe-reklama-en.mp4",
       "caption": "Nobody filmed this coffee ad. Five AI-generated clips and one edit.\n\nWant one for your business? Reply AD.\n\nMusic: Push N Glide — Candy Floss",
-      "publish_at": "2026-11-24T14:12:00Z",
+      "publish_at": "2026-11-25T00:12:00Z",
       "status": "scheduled"
     },
     {
@@ -1092,7 +1092,7 @@
       "platform": "threads",
       "type": "TEXT",
       "caption": "My first AI coffee ad was boring. Every shot from the same height, the cup was white in one clip and black in the next, nothing really happened.\n\nI didn't change the model. I changed the prompts: its own camera for each clip, one line of details for the whole video, actions by the second.\n\nEver had this?",
-      "publish_at": "2026-11-25T14:12:00Z",
+      "publish_at": "2026-11-26T00:12:00Z",
       "status": "scheduled"
     },
     {
@@ -1102,7 +1102,7 @@
       "platform": "threads",
       "type": "TEXT",
       "caption": "A camera line in a prompt has 5 parts:\n\n1. shot size\n2. angle\n3. lens\n4. one move\n5. where it stops\n\n\"Camera: extreme close-up at a low angle, 100mm macro feel, slow push-in, ending on a centered hero frame.\"\n\n\"Cinematic\" and \"4K\" aren't camera moves. Save this.",
-      "publish_at": "2026-11-26T14:12:00Z",
+      "publish_at": "2026-11-27T00:12:00Z",
       "status": "scheduled"
     },
     {
@@ -1112,7 +1112,7 @@
       "platform": "threads",
       "type": "TEXT",
       "caption": "Want AI video that doesn't look plastic? Name one main light source and where it comes from.\n\nNot \"beautiful lighting\" but \"warm morning light from a window on the left\".\n\nOne phrase, and the shot gets depth, shadows and mood. Try it on your next prompt.",
-      "publish_at": "2026-11-27T14:12:00Z",
+      "publish_at": "2026-11-28T00:12:00Z",
       "status": "scheduled"
     },
     {
@@ -1122,7 +1122,7 @@
       "platform": "threads",
       "type": "TEXT",
       "caption": "Question for anyone making AI video: what's hardest for you?\n\n1 — writing prompts\n2 — consistency between clips\n3 — making it look real\n4 — editing it all together\n\nReply with a number — my next posts will be about the most common answer.",
-      "publish_at": "2026-11-28T14:12:00Z",
+      "publish_at": "2026-11-29T00:12:00Z",
       "status": "scheduled"
     }
   ]
