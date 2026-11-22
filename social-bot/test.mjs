@@ -470,4 +470,36 @@ console.log('ok 24 Threads: check');
 }
 console.log('ok 25 второй аккаунт (en)');
 
+// 26. токен входа через Instagram (IG…) для второго аккаунта: запросы на graph.instagram.com, токен продлевается
+{
+  const IGT = 'IGtest-SECRET-555';
+  const calls = [];
+  const h = (m, u, p) => {
+    if (m === 'HEAD') return { status: 200 };
+    if (u.host === 'graph.instagram.com') {
+      if (u.pathname === '/refresh_access_token') return { status: 200, json: { access_token: IGT, expires_in: 5184000 } };
+      if (m === 'POST' && u.pathname.endsWith('/1785/media')) return { status: 200, json: { id: 'CI' } };
+      if (m === 'GET' && u.pathname.endsWith('/1785/media')) return { status: 200, json: { data: [] } };
+      if (u.pathname.endsWith('/CI')) return { status: 200, json: { status_code: 'FINISHED' } };
+      if (u.pathname.endsWith('/1785/media_publish')) return { status: 200, json: { id: 'MI' } };
+      if (u.pathname.endsWith('/MI')) return { status: 200, json: { permalink: 'https://www.instagram.com/p/EN/' } };
+      if (u.pathname.endsWith('/1785')) return { status: 200, json: { username: 'artega.videodesigner' } };
+    }
+    return okInstagram()(m, u, p);
+  };
+  const q = await writeQueue([post({ id: 'ig-en', account: 'en', caption: 'Hello' })]);
+  const r = await run('publish', q, fakeFetch(h, calls), { INSTAGRAM_ACCOUNT_ID_EN: '1785', INSTAGRAM_ACCESS_TOKEN_EN: IGT });
+  assert.deepEqual(r.s.published, ['ig-en']);
+  const ref = calls.find(c => c.url === 'https://graph.instagram.com/refresh_access_token');
+  assert.equal(ref.params.grant_type, 'ig_refresh_token'); assert.equal(ref.params.access_token, IGT);
+  assert.ok(calls.some(c => c.url === 'https://graph.instagram.com/v23.0/1785/media_publish' && c.params.access_token === IGT));
+  assert.ok(!calls.some(c => c.url.includes('graph.facebook.com/v23.0/1785')));
+  assert.match(r.logs.join('\n'), /Токен Instagram EN продлён, действует ещё 60 дн/);
+  assert.ok(!r.logs.join('\n').includes(IGT));
+  assert.equal((await readPosts(q))[0].permalink, 'https://www.instagram.com/p/EN/');
+  const c = await run('check', await writeQueue([]), fakeFetch(h), { INSTAGRAM_ACCOUNT_ID_EN: '1785', INSTAGRAM_ACCESS_TOKEN_EN: IGT });
+  assert.equal(c.s.extra.en.username, 'artega.videodesigner');
+}
+console.log('ok 26 второй аккаунт: токен входа через Instagram');
+
 console.log('\nВсе проверки пройдены');

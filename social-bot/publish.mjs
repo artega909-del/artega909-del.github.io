@@ -9,6 +9,7 @@
 // и THREADS_ACCESS_TOKEN (необязательный: без него записи для Threads просто ждут).
 // Второй аккаунт (поле "account": "en" в записи очереди): INSTAGRAM_ACCOUNT_ID_EN, THREADS_ACCESS_TOKEN_EN
 // и при необходимости INSTAGRAM_ACCESS_TOKEN_EN (иначе берётся основной токен системного пользователя).
+// Токен «входа через Instagram» (начинается с IG) работает через graph.instagram.com и живёт 60 дней — бот его продлевает.
 // Токены не печатаются в логах и не попадают в файлы.
 import { readFile, writeFile } from 'node:fs/promises';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -291,7 +292,8 @@ export async function main({
     throw new Error(`INSTAGRAM_ACCOUNT_ID должен состоять только из цифр (у Instagram-аккаунта их около 17), а в секрете ${igId.length} символов. ` +
       'Заново скопируйте ID из Business Settings → Аккаунты → Аккаунты Instagram и сохраните секрет без пробелов, переносов строк и лишних чисел.');
   }
-  const igClient = t => graphClient({ fetchFn, token: t, version: env.GRAPH_VERSION || 'v23.0' });
+  const igClient = t => graphClient({ fetchFn, token: t, version: env.GRAPH_VERSION || 'v23.0',
+    ...(/^IG/.test(t) ? { host: 'https://graph.instagram.com' } : {}) });
   const thClient = t => (t ? graphClient({ fetchFn, token: t, host: 'https://graph.threads.net', version: env.THREADS_VERSION || 'v1.0', name: 'Threads' }) : null);
   const api = igClient(token);
   const threads = thClient((env.THREADS_ACCESS_TOKEN || '').trim());
@@ -304,7 +306,7 @@ export async function main({
     if (!id && !thT) continue;
     if (id && !/^\d{4,20}$/.test(id)) throw new Error(`INSTAGRAM_ACCOUNT_ID${sfx} должен состоять только из цифр, а в секрете ${id.length} символов`);
     const igT = (env['INSTAGRAM_ACCESS_TOKEN' + sfx] || '').trim() || token;
-    accounts[name] = { name, label: name.toUpperCase(), api: id ? (igT === token ? api : igClient(igT)) : null, igId: id || null, threads: thClient(thT), sfx };
+    accounts[name] = { name, label: name.toUpperCase(), api: id ? (igT === token ? api : igClient(igT)) : null, igId: id || null, threads: thClient(thT), sfx, igLogin: /^IG/.test(igT) };
   }
   const clients = Object.values(accounts).flatMap(a => [a.api, a.threads]).filter(Boolean);
   const redact = s => clients.reduce((t, a) => a.redact(t), s);
@@ -375,6 +377,15 @@ export async function main({
   // ожидание обработки видео: до ~5 минут на пост (3 поста × 5 мин укладываются в лимит задания)
   const ctx = { api, threads, igId, fetchFn, sleep, log, site: env.SITE_URL || SITE, pollMs: Number(env.POLL_MS) || 5000, maxPolls: Number(env.MAX_POLLS) || 60 };
 
+  if (mode === 'publish') { // токены «входа через Instagram» живут 60 дней: продлеваем при каждой публикации
+    for (const a of Object.values(accounts).filter(x => x.igLogin && x.api)) {
+      try {
+        const r = await a.api.call('GET', '/refresh_access_token', { grant_type: 'ig_refresh_token' }, { noVersion: true });
+        if (r.access_token && r.access_token !== a.api.token) log(`⚠️  Instagram ${a.label}: при продлении выдан другой токен, бот не может записать его в секреты сам`);
+        else if (r.expires_in) log(`Токен Instagram ${a.label} продлён, действует ещё ${Math.floor(r.expires_in / 86400)} дн.`);
+      } catch (e) { log(`⚠️  Instagram ${a.label}: продлить токен не удалось (${e.message}). Если до конца 60 дней с выпуска меньше недели — выпустите новый и обновите INSTAGRAM_ACCESS_TOKEN${a.sfx}`); }
+    }
+  }
   if (mode === 'publish') { // продление токенов Threads и предупреждение, если какой-то скоро истечёт
     for (const a of Object.values(accounts).filter(x => x.threads)) {
       const care = await threadsTokenCare({ api: a.threads, log, now, renew: true });
