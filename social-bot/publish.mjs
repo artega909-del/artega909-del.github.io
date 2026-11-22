@@ -361,6 +361,14 @@ export async function main({
           log(`Что проверить: аккаунт назначен системному пользователю salam-bot (Назначенные объекты), в секрете INSTAGRAM_ACCOUNT_ID${a.sfx} — ID этого Instagram-аккаунта.`);
           throw new Error(`проверка доступа к аккаунту ${a.label} не пройдена, подсказки выше`);
         }
+        if (!a.igLogin && a.api !== api) { // токен не системного пользователя: показать, сколько он проживёт
+          try {
+            const d = (await a.api.call('GET', '/debug_token', { input_token: a.api.token })).data || {};
+            r.expires = d.expires_at ? new Date(d.expires_at * 1000).toISOString() : 'never';
+            const h = d.expires_at ? (d.expires_at * 1000 - now()) / HOUR : null;
+            log(`Аккаунт ${a.label}: токен Instagram ${h === null ? 'без срока действия' : h < 48 ? `истекает через ${Math.max(0, Math.round(h))} ч — это короткий токен, нужен долгий` : `действует ещё ${Math.floor(h / 24)} дн.`}`);
+          } catch (e) { log(`Аккаунт ${a.label}: срок токена узнать не удалось (${e.message})`); }
+        }
       }
       if (!a.threads) log(`Аккаунт ${a.label}: секрет THREADS_ACCESS_TOKEN${a.sfx} не задан — Threads для него выключен`);
       else {
