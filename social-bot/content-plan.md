@@ -67,6 +67,50 @@ Instagram подключён 22.11 (маркер портфолио Artega), п�
 | 6 | Карусель «Why your AI shot looks plastic» | Один источник света |
 | 7 | Карусель «Why it all changes shot to shot» | Вопрос: что сложнее всего |
 
+### Месяц 22.11–21.12: 2 поста в день по времени США
+
+Каждый день: **12:10 по Нью-Йорку** (22:10 Ашхабад) — одиночный пост (промпт дня, совет, вопрос, заметка основателя) в Instagram
+и тот же текст в Threads; **19:10 по Нью-Йорку** (05:10 Ашхабад) — карусель с анимированной первой страницей (видео 4:5, 5 с)
+в Instagram и короткий текст по её теме в Threads. Проверки бота — 4 раза в день (05:20, 10:20, 19:20, 22:20 по Ашхабаду).
+Стаж автора в текстах — 22 года.
+
+| Дата (США) | 12:10 | 19:10 |
+|---|---|---|
+| 22.11 | — | Hi, I’m Artega |
+| 23.11 | Prompt of the day: Espresso close-up | How I made a coffee ad |
+| 24.11 | Совет: Write what the camera sees | Reels «Nobody filmed this ad» |
+| 25.11 | Вопрос: Which ad should I break down next? | Same ad, two versions |
+| 26.11 | Prompt of the day: A florist ad | Camera in a prompt: 5 parts |
+| 27.11 | Совет: Give every move an ending | Why your AI shot looks plastic |
+| 28.11 | Prompt of the day: Lemonade in mid-air | Why it all changes shot to shot |
+| 29.11 | Совет: Start with the shot size | 5 prompt mistakes in AI video — and how to fix each one |
+| 30.11 | Вопрос: What business should I make an AI ad for next? | An AI ad plan for a restaurant 🍽️ Five clips, one idea: fire → precision → the plate → the guest. Edit plan, the details line and the main-moment prompt inside. Save it. |
+| 01.12 | Prompt of the day: A perfume ad | 6 camera moves for AI video prompts 🎥 Push-in, whip-pan, orbit, macro, crane up, FPV — with the exact words to use. Save this. |
+| 02.12 | Совет: One main light source | 5 hook formulas for Reels 🪝 Result first, a number, before/after, a question, a stop line — with examples. |
+| 03.12 | Prompt of the day: A sneaker drop | An AI ad plan for a beauty salon 💅 Motion → precision → the mirror reveal → confidence. Edit plan and the main-moment prompt inside. |
+| 04.12 | Совет: Describe the clean frame first | 5 kinds of light for AI video prompts 💡 Golden hour, window light, rim light, softbox, neon — and the words that make each one work. |
+| 05.12 | Заметка основателя: Why I built Salam Motion | 22 years of editing. Then this. |
+| 06.12 | Prompt of the day: A burger ad | The prompt formula: 5 parts ✍️ Subject, action, camera, light, look — we build a café ad step by step, full prompt at the end. |
+| 07.12 | Совет: Format goes in settings, not the prompt | An apartment tour that wasn't filmed 🏠 Plan → entrance → golden hour → detail → the view. Edit plan and prompts inside. |
+| 08.12 | Prompt of the day: A skincare ad | 5 opening shots that stop the scroll ⏸️ The result, a motion burst, extreme detail, the unexpected, a face — with prompts. |
+| 09.12 | Вопрос: In what language do you write AI prompts? | 5 AI ads a small business can run this week 🚀 Café, florist, real estate, beauty, fitness — each with a one-line idea. |
+| 10.12 | Prompt of the day: A watch ad | An AI ad plan for a gym 🏋️ Energy → effort → victory → calm. Edit plan and the last-rep prompt inside. |
+| 11.12 | Совет: Steam only shows in backlight | Weird hands in AI video? ✋ 4 prompt fixes: show fewer fingers, use a simple grip, slow the motion, give anatomy cues. |
+| 12.12 | Prompt of the day: An apartment tour | What goes in the prompt — and what doesn't 🧹 Subject, action, camera, light, sound go in. Format, length and quality go in settings. “4K masterpiece” goes nowhere. |
+| 13.12 | Совет: One model for the whole video | A clothing brand ad with no model shoot 🧥 Fabric → craft → movement → attitude. Edit plan and the walk prompt inside. |
+| 14.12 | Prompt of the day: A car ad | Sound in AI video: 4 layers 🔊 Ambience, effects, dialogue, music — and why you should leave music out if you add your own. |
+| 15.12 | Заметка основателя: From Ashgabat to San Francisco | One product, 10 hook angles ☕ Pain, result, detail, number, question, before/after, process, honest minus, POV, save. |
+| 16.12 | Prompt of the day: A cake ad | A perfume ad from one idea 🌸 Drop → light → bloom → orbit → stillness. Edit plan and prompts inside. |
+| 17.12 | Совет: Plan the cut in the prompt | Text to video or image to video? 🤔 When each one wins — and the one rule for animating a frame. |
+| 18.12 | Prompt of the day: A cocktail ad | 5 edit rules for AI ads, from 22 years of editing ✂️ Cut on the beat, one music, soft effects, short text, logo last. |
+| 19.12 | Вопрос: Would you run an AI-made ad for your brand? | A car detailing ad, AI-made 🚗 Dirty → foam → water → mirror shine. Edit plan and the polish-reveal prompt inside. |
+| 20.12 | Prompt of the day: A jewelry ad | The perfect start frame for a product 🖼️ Product first, surface and space, one light, room to move. |
+| 21.12 | Совет: One music at a time | A bakery ad that smells good 🥖 Flour → craft → the tear → warmth. Edit plan and prompts inside. |
+
+Слово PLAN в нишевых каруселях (ресторан, салон, недвижимость, фитнес, одежда, духи, детейлинг, пекарня): автор отвечает,
+что пришлёт план под нишу человека, и передаёт нишу в работу. Вопросы (что разобрать дальше, на каком языке промпты) —
+ответы собрать и использовать в следующих постах.
+
 Слова для комментариев: PROMPT (промпты, строки камеры, шаблон — те же, что в русском плане, на английском) и AD (как сделать такую рекламу).
 
 ## Истории

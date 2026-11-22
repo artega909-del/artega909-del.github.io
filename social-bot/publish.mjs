@@ -49,6 +49,7 @@ export function validate(item) {
     }
     if (item.type === 'REELS' && !isVideo(media)) errs.push('для REELS нужен файл .mp4 или .mov');
     if (item.type === 'STORY' && !/\.(jpe?g|mp4|mov)(\?|#|$)/i.test(media)) errs.push('для STORY нужен JPEG (.jpg) или видео .mp4/.mov');
+    if (item.type === 'CAROUSEL' && isVideo(media)) return; // в карусели Instagram можно видео (например, анимированная обложка)
     if (!['REELS', 'STORY'].includes(item.type) && !/\.jpe?g(\?|#|$)/i.test(media)) errs.push(`для ${item.type} нужен JPEG (.jpg)`);
   };
   const maxSlides = threads ? 20 : 10;
@@ -152,7 +153,7 @@ async function publishOne(item, ctx) {
   } else if (item.type === 'CAROUSEL') { // сначала каждый слайд отдельно, потом общий контейнер
     const children = [];
     for (const u of files.urls) {
-      const child = await api.call('POST', `/${igId}/media`, { image_url: u, is_carousel_item: 'true' });
+      const child = await api.call('POST', `/${igId}/media`, { ...(isVideo(u) ? { media_type: 'VIDEO', video_url: u } : { image_url: u }), is_carousel_item: 'true' });
       await waitReady(child.id); children.push(child.id);
     }
     params.media_type = 'CAROUSEL'; params.children = children.join(',');
