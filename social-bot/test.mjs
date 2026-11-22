@@ -466,7 +466,10 @@ console.log('ok 24 Threads: check');
   assert.deepEqual(r.s.extra.en, { username: 'salammotion.en', threadsUsername: 'salammotion.en' });
   // проверка записи и секрета
   assert.ok(validate(post({ account: 'EN' })).some(e => /account/.test(e)));
-  await assert.rejects(run('check', await writeQueue([]), fakeFetch(h), { INSTAGRAM_ACCOUNT_ID_EN: '17841 123' }), /INSTAGRAM_ACCOUNT_ID_EN/);
+  // неверный ID второго аккаунта (например, вставлен маркер) — основной аккаунт работает, en пропускается
+  r = await run('publish', await writeQueue(enPosts(), 'q4.json'), fakeFetch(h), { INSTAGRAM_ACCOUNT_ID_EN: 'IG' + 'x'.repeat(254) });
+  assert.deepEqual([r.s.published, r.s.skipped], [['ig-main'], ['ig-en', 'th-en']]);
+  assert.match(r.logs.join('\n'), /попал маркер/); assert.ok(!r.logs.join('\n').includes('x'.repeat(50)));
 }
 console.log('ok 25 второй аккаунт (en)');
 
