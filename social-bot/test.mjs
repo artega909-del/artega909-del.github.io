@@ -416,4 +416,58 @@ console.log('ok 23 Threads: продление токена');
 }
 console.log('ok 24 Threads: check');
 
+// 25. второй аккаунт (en): Instagram идёт на свой ID с тем же токеном, Threads — со своим токеном; без секретов записи ждут
+{
+  const TH_EN = 'THen-SECRET-789';
+  const h = (m, u, p) => {
+    if (m === 'HEAD') return { status: 200 };
+    if (u.host === 'graph.threads.net') {
+      const en = p.access_token === TH_EN;
+      if (u.pathname === '/refresh_access_token') return { status: 200, json: { access_token: p.access_token, expires_in: 60 * 86400 } };
+      if (u.pathname.endsWith('/debug_token')) return { status: 200, json: { data: { expires_at: Math.floor(NOW / 1000) + 50 * 86400 } } };
+      if (u.pathname.endsWith('/me')) return { status: 200, json: en ? { id: '888', username: 'salammotion.en' } : { id: '777', username: 'salammotion' } };
+      if (m === 'GET' && /\/(777|888)\/threads$/.test(u.pathname)) return { status: 200, json: { data: [] } };
+      if (m === 'POST' && /\/(777|888)\/threads$/.test(u.pathname)) return { status: 200, json: { id: 'TC_' + u.pathname.split('/')[2] } };
+      if (/\/(777|888)\/threads_publish$/.test(u.pathname)) return { status: 200, json: { id: 'TP_' + u.pathname.split('/')[2] } };
+      if (/\/TP_\d+$/.test(u.pathname)) return { status: 200, json: { permalink: 'https://www.threads.com/p/' + u.pathname.split('_')[1] } };
+    }
+    const m2 = u.pathname.match(/\/(1784|1785)(\/media|\/media_publish)?$/);
+    if (m2 && m2[2] === '/media' && m === 'POST') return { status: 200, json: { id: 'C_' + m2[1] } };
+    if (m2 && m2[2] === '/media') return { status: 200, json: { data: [] } };
+    if (m2 && m2[2] === '/media_publish') return { status: 200, json: { id: 'M_' + m2[1] } };
+    if (m2) return { status: 200, json: { username: m2[1] === '1785' ? 'salammotion.en' : 'salammotion' } };
+    if (/\/C_\d+$/.test(u.pathname)) return { status: 200, json: { status_code: 'FINISHED' } };
+    if (/\/M_\d+$/.test(u.pathname)) return { status: 200, json: { permalink: 'https://www.instagram.com/p/' + u.pathname.split('_')[1] } };
+  };
+  const enPosts = () => [post({ id: 'ig-en', account: 'en', caption: 'Hello #ai' }), thPost({ id: 'th-en', account: 'en', caption: 'Tip of the day' }), post({ id: 'ig-main' })];
+  // без секретов en: записи en ждут, основной публикуется
+  let q = await writeQueue(enPosts());
+  let r = await run('publish', q, fakeFetch(h));
+  assert.deepEqual([r.s.published, r.s.skipped], [['ig-main'], ['ig-en', 'th-en']]);
+  assert.match(r.logs.join('\n'), /аккаунт «en» не подключён/);
+  // с секретами: каждая запись уходит в свой аккаунт
+  const calls = [];
+  q = await writeQueue(enPosts(), 'q2.json');
+  r = await run('publish', q, fakeFetch(h, calls), { INSTAGRAM_ACCOUNT_ID_EN: '1785', THREADS_ACCESS_TOKEN_EN: TH_EN, ...thEnv });
+  assert.deepEqual(r.s.published, ['ig-en', 'th-en', 'ig-main']);
+  const pubs = calls.filter(c => c.method === 'POST' && /media_publish|threads_publish/.test(c.url)).map(c => c.url.replace(/^.*\/(\d+)\/(\w+)$/, '$1/$2'));
+  assert.deepEqual(pubs, ['1785/media_publish', '888/threads_publish', '1784/media_publish']);
+  assert.equal(calls.find(c => c.url.endsWith('/888/threads_publish')).params.access_token, TH_EN);
+  assert.equal(calls.find(c => c.url.endsWith('/1785/media_publish')).params.access_token, TOKEN, 'Instagram en — токен системного пользователя');
+  const saved = await readPosts(q);
+  assert.deepEqual(saved.map(x => x.permalink), ['https://www.instagram.com/p/1785', 'https://www.threads.com/p/888', 'https://www.instagram.com/p/1784']);
+  assert.ok(!r.logs.join('\n').includes(TH_EN));
+  // только Threads для en подключён — Instagram en ждёт
+  r = await run('publish', await writeQueue(enPosts(), 'q3.json'), fakeFetch(h), { THREADS_ACCESS_TOKEN_EN: TH_EN });
+  assert.deepEqual([r.s.published, r.s.skipped], [['th-en', 'ig-main'], ['ig-en']]);
+  assert.match(r.logs.join('\n'), /INSTAGRAM_ACCOUNT_ID_EN не задан/);
+  // check проверяет оба аккаунта
+  r = await run('check', await writeQueue([]), fakeFetch(h), { INSTAGRAM_ACCOUNT_ID_EN: '1785', THREADS_ACCESS_TOKEN_EN: TH_EN });
+  assert.deepEqual(r.s.extra.en, { username: 'salammotion.en', threadsUsername: 'salammotion.en' });
+  // проверка записи и секрета
+  assert.ok(validate(post({ account: 'EN' })).some(e => /account/.test(e)));
+  await assert.rejects(run('check', await writeQueue([]), fakeFetch(h), { INSTAGRAM_ACCOUNT_ID_EN: '17841 123' }), /INSTAGRAM_ACCOUNT_ID_EN/);
+}
+console.log('ok 25 второй аккаунт (en)');
+
 console.log('\nВсе проверки пройдены');

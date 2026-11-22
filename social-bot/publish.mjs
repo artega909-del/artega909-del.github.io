@@ -7,6 +7,8 @@
 //
 // Секреты берутся только из переменных окружения INSTAGRAM_ACCESS_TOKEN, INSTAGRAM_ACCOUNT_ID
 // и THREADS_ACCESS_TOKEN (необязательный: без него записи для Threads просто ждут).
+// Второй аккаунт (поле "account": "en" в записи очереди): INSTAGRAM_ACCOUNT_ID_EN, THREADS_ACCESS_TOKEN_EN
+// и при необходимости INSTAGRAM_ACCESS_TOKEN_EN (иначе берётся основной токен системного пользователя).
 // Токены не печатаются в логах и не попадают в файлы.
 import { readFile, writeFile } from 'node:fs/promises';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -68,6 +70,7 @@ export function validate(item) {
     if (!threads || item.type !== 'TEXT') errs.push('link (ссылка с превью) бывает только у текстового поста Threads');
     else if (typeof item.link !== 'string' || !/^https:\/\/\S+$/i.test(item.link)) errs.push('link: ссылка вида https://…');
   }
+  if (item.account !== undefined && !/^[a-z]{2,10}$/.test(item.account)) errs.push('account: короткое имя аккаунта латиницей, например en (без поля — основной аккаунт)');
   if (Number.isNaN(Date.parse(item.publish_at))) errs.push('publish_at: время вида 2026-12-01T09:00:00Z');
   if (item.cover_ms !== undefined && !(Number.isInteger(item.cover_ms) && item.cover_ms >= 0)) errs.push('cover_ms: целое число миллисекунд от начала видео (кадр-обложка)');
   if (item.cover_ms !== undefined && item.type !== 'REELS') errs.push('cover_ms бывает только у REELS');
@@ -164,8 +167,8 @@ async function publishOne(item, ctx) {
 
 // Threads: порядок тот же, что у Instagram, — контейнер → ожидание обработки → публикация.
 async function threadsUser(ctx) {
-  if (!ctx.threadsMe) ctx.threadsMe = await ctx.threads.call('GET', '/me', { fields: 'id,username' });
-  return ctx.threadsMe;
+  if (!ctx.threads.me) ctx.threads.me = await ctx.threads.call('GET', '/me', { fields: 'id,username' });
+  return ctx.threads.me;
 }
 
 async function publishThreads(item, ctx) {
@@ -288,10 +291,23 @@ export async function main({
     throw new Error(`INSTAGRAM_ACCOUNT_ID должен состоять только из цифр (у Instagram-аккаунта их около 17), а в секрете ${igId.length} символов. ` +
       'Заново скопируйте ID из Business Settings → Аккаунты → Аккаунты Instagram и сохраните секрет без пробелов, переносов строк и лишних чисел.');
   }
-  const api = graphClient({ fetchFn, token, version: env.GRAPH_VERSION || 'v23.0' });
-  const thToken = (env.THREADS_ACCESS_TOKEN || '').trim();
-  const threads = thToken ? graphClient({ fetchFn, token: thToken, host: 'https://graph.threads.net', version: env.THREADS_VERSION || 'v1.0', name: 'Threads' }) : null;
-  const redact = s => [api, threads].filter(Boolean).reduce((t, a) => a.redact(t), s);
+  const igClient = t => graphClient({ fetchFn, token: t, version: env.GRAPH_VERSION || 'v23.0' });
+  const thClient = t => (t ? graphClient({ fetchFn, token: t, host: 'https://graph.threads.net', version: env.THREADS_VERSION || 'v1.0', name: 'Threads' }) : null);
+  const api = igClient(token);
+  const threads = thClient((env.THREADS_ACCESS_TOKEN || '').trim());
+  // Аккаунты: main — основной; дополнительные (например en) — по секретам с суффиксом _EN.
+  const accounts = { main: { name: 'main', label: 'основной', api, igId, threads, sfx: '' } };
+  for (const name of ['en']) {
+    const sfx = '_' + name.toUpperCase();
+    const id = (env['INSTAGRAM_ACCOUNT_ID' + sfx] || '').trim();
+    const thT = (env['THREADS_ACCESS_TOKEN' + sfx] || '').trim();
+    if (!id && !thT) continue;
+    if (id && !/^\d{4,20}$/.test(id)) throw new Error(`INSTAGRAM_ACCOUNT_ID${sfx} должен состоять только из цифр, а в секрете ${id.length} символов`);
+    const igT = (env['INSTAGRAM_ACCESS_TOKEN' + sfx] || '').trim() || token;
+    accounts[name] = { name, label: name.toUpperCase(), api: id ? (igT === token ? api : igClient(igT)) : null, igId: id || null, threads: thClient(thT), sfx };
+  }
+  const clients = Object.values(accounts).flatMap(a => [a.api, a.threads]).filter(Boolean);
+  const redact = s => clients.reduce((t, a) => a.redact(t), s);
   const summary = { published: [], failed: [], missed: [], waiting: [], skipped: [] };
 
   if (mode === 'check') {
@@ -328,22 +344,44 @@ export async function main({
         log('Threads: чтение последних постов работает (защита от повтора)');
       } catch (e) { log('⚠️  Threads: не удалось прочитать последние посты, защита от повтора не сработает: ' + e.message); }
     }
-    return { ok: true, username: acc.username, threadsUsername, ...summary };
+    const extra = {};
+    for (const a of Object.values(accounts).filter(x => x.name !== 'main')) {
+      const r = extra[a.name] = {};
+      if (!a.igId) log(`Аккаунт ${a.label}: секрет INSTAGRAM_ACCOUNT_ID${a.sfx} не задан — Instagram для него выключен`);
+      else {
+        try { r.username = (await a.api.call('GET', `/${a.igId}`, { fields: 'username' })).username; log(`Аккаунт ${a.label}: Instagram, доступ есть: @${r.username}`); }
+        catch (e) {
+          log(`❌ Аккаунт ${a.label}, Instagram: ${e.message}`);
+          log(`Что проверить: аккаунт назначен системному пользователю salam-bot (Назначенные объекты), в секрете INSTAGRAM_ACCOUNT_ID${a.sfx} — ID этого Instagram-аккаунта.`);
+          throw new Error(`проверка доступа к аккаунту ${a.label} не пройдена, подсказки выше`);
+        }
+      }
+      if (!a.threads) log(`Аккаунт ${a.label}: секрет THREADS_ACCESS_TOKEN${a.sfx} не задан — Threads для него выключен`);
+      else {
+        try { r.threadsUsername = (await a.threads.call('GET', '/me', { fields: 'id,username' })).username; log(`Аккаунт ${a.label}: Threads, доступ есть: @${r.threadsUsername}`); }
+        catch (e) { log(`❌ Аккаунт ${a.label}, Threads: ${e.message}`); throw new Error(`проверка доступа к Threads аккаунта ${a.label} не пройдена`); }
+        const { left } = await threadsTokenCare({ api: a.threads, log, now, renew: false });
+        if (left !== null) log(`Аккаунт ${a.label}: токен Threads действует ещё ${Math.floor(left)} дн.`);
+      }
+    }
+    return { ok: true, username: acc.username, threadsUsername, extra, ...summary };
   }
 
   const queue = JSON.parse(await readFile(queuePath, 'utf8'));
   const posts = Array.isArray(queue.posts) ? queue.posts : [];
-  const maxPerRun = Number(env.MAX_PER_RUN) || 3;
+  const maxPerRun = Number(env.MAX_PER_RUN) || 6;
   const maxLate = (Number(env.MAX_LATE_HOURS) || 48) * HOUR;
   const save = () => writeFile(queuePath, JSON.stringify(queue, null, 2) + '\n');
   // ожидание обработки видео: до ~5 минут на пост (3 поста × 5 мин укладываются в лимит задания)
   const ctx = { api, threads, igId, fetchFn, sleep, log, site: env.SITE_URL || SITE, pollMs: Number(env.POLL_MS) || 5000, maxPolls: Number(env.MAX_POLLS) || 60 };
 
-  if (threads && mode === 'publish') { // продление токена Threads и предупреждение, если он скоро истечёт
-    const care = await threadsTokenCare({ api: threads, log, now, renew: true });
-    if (care.warning) summary.warnings = [care.warning];
+  if (mode === 'publish') { // продление токенов Threads и предупреждение, если какой-то скоро истечёт
+    for (const a of Object.values(accounts).filter(x => x.threads)) {
+      const care = await threadsTokenCare({ api: a.threads, log, now, renew: true });
+      if (care.warning) summary.warnings = [...(summary.warnings || []), a.name === 'main' ? care.warning : `аккаунт ${a.label}: ${care.warning.replace('THREADS_ACCESS_TOKEN', 'THREADS_ACCESS_TOKEN' + a.sfx)}`];
+    }
   }
-  let noThreadsSaid = false;
+  const saidMissing = new Set();
   let done = 0;
   for (const item of posts) {
     if (item.status !== 'scheduled') continue;
@@ -369,10 +407,16 @@ export async function main({
       if (mode === 'publish') { item.status = 'failed'; item.error = errs.join('; '); await save(); }
       continue;
     }
-    if (item.platform === 'threads' && !threads) { // Threads ещё не подключён: запись ждёт, остальные публикуются
+    // аккаунт или площадка ещё не подключены: запись ждёт, остальные публикуются
+    const acc = accounts[item.account || 'main'];
+    const sfx = item.account && item.account !== 'main' ? '_' + item.account.toUpperCase() : '';
+    const missing = !acc ? `аккаунт «${item.account}» не подключён (нет секретов с суффиксом ${sfx})`
+      : item.platform === 'threads' && !acc.threads ? `секрет THREADS_ACCESS_TOKEN${sfx} не задан, записи для Threads ждут`
+      : item.platform !== 'threads' && !acc.igId ? `секрет INSTAGRAM_ACCOUNT_ID${sfx} не задан, записи для Instagram ждут` : null;
+    if (missing) {
       summary.skipped.push(item.id);
-      if (!noThreadsSaid) log(`⏳ ${item.id}: секрет THREADS_ACCESS_TOKEN не задан, записи для Threads ждут`);
-      noThreadsSaid = true;
+      if (!saidMissing.has(missing)) log(`⏳ ${item.id}: ${missing}`);
+      saidMissing.add(missing);
       continue;
     }
     if (done >= maxPerRun) { summary.waiting.push(item.id); continue; }
@@ -384,7 +428,8 @@ export async function main({
     }
 
     try {
-      const r = await (item.platform === 'threads' ? publishThreads(item, ctx) : publishOne(item, ctx));
+      const ictx = { ...ctx, api: acc.api, igId: acc.igId, threads: acc.threads };
+      const r = await (item.platform === 'threads' ? publishThreads(item, ictx) : publishOne(item, ictx));
       if (r.skipped) { summary.skipped.push(item.id); log(`⏳ ${item.id}: ${r.skipped}`); continue; }
       item.status = 'published';
       item.media_id = r.media_id;

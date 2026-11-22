@@ -35,6 +35,10 @@ jobs:
           INSTAGRAM_ACCESS_TOKEN: ${{ secrets.INSTAGRAM_ACCESS_TOKEN }}
           INSTAGRAM_ACCOUNT_ID: ${{ secrets.INSTAGRAM_ACCOUNT_ID }}
           THREADS_ACCESS_TOKEN: ${{ secrets.THREADS_ACCESS_TOKEN }} # необязательный: без него записи для Threads ждут
+          # второй аккаунт (англоязычный), записи с "account": "en"; без секретов эти записи ждут
+          INSTAGRAM_ACCOUNT_ID_EN: ${{ secrets.INSTAGRAM_ACCOUNT_ID_EN }}
+          INSTAGRAM_ACCESS_TOKEN_EN: ${{ secrets.INSTAGRAM_ACCESS_TOKEN_EN }}
+          THREADS_ACCESS_TOKEN_EN: ${{ secrets.THREADS_ACCESS_TOKEN_EN }}
           MODE: ${{ inputs.mode || (github.event_name == 'push' && 'check') || 'publish' }}
         run: node social-bot/publish.mjs "$MODE"
       - name: Сохранить статусы очереди
