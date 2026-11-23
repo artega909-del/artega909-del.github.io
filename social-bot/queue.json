@@ -1851,21 +1851,23 @@
       "brand": "salam",
       "account": "en",
       "platform": "instagram",
-      "type": "IMAGE",
-      "media": "assets/social/en-s-pod-flowers/01.jpg",
-      "caption": "Prompt of the day: a florist ad 🎬\nCopy it and swap the details for your product:\n\nMedium close-up: a florist's hands in a linen apron tie a bouquet of peonies on a wooden table. 0-3s: the last stem slides into place. 3-6s: she wraps twine and pulls the bow tight. 6-8s: her hands leave the frame. Soft daylight from a window on the left. End on the bouquet. Clean unbranded frame.\n\nSettings: 9:16, 8 seconds.\nWant a prompt for your product? Comment PROMPT.\n\n#aivideo #promptengineering #aiads #videomarketing #contentcreator",
+      "type": "REELS",
+      "media": "assets/salam-reels-phrase-flowers-en.mp4",
+      "caption": "One phrase → a flower shop ad 💐\nI typed: “I need a commercial for a flower shop. A florist ties a bouquet of peonies.”\nAI wrote the script — shots, camera, light — and generated every frame. No camera, no florist, no shoot.\n\nWant one for your business? Comment AD and I’ll show you how.\nAI-generated video.\n\n#aivideo #aiads #smallbusiness #videomarketing #contentcreator #flowershop",
       "publish_at": "2026-11-26T17:10:00Z",
-      "status": "scheduled"
+      "status": "scheduled",
+      "cover_ms": 2500
     },
     {
       "id": "en-th-s-pod-flowers",
       "brand": "salam",
       "account": "en",
       "platform": "threads",
-      "type": "TEXT",
-      "caption": "Prompt of the day — a florist ad:\n\nMedium close-up: a florist's hands in a linen apron tie a bouquet of peonies on a wooden table. 0-3s: the last stem slides into place. 3-6s: she wraps twine and pulls the bow tight. 6-8s: her hands leave the frame. Soft daylight from a window on the left. End on the bouquet. Clean unbranded frame.\n\nSwap the details for your product. 9:16, 8 seconds.",
+      "type": "VIDEO",
+      "caption": "One phrase → a flower shop ad 💐\n\nI typed: “I need a commercial for a flower shop. A florist ties a bouquet of peonies.”\nAI wrote the script and generated every frame. No camera, no florist, no shoot.\n\nWant one for your business? Reply AD.",
       "publish_at": "2026-11-26T17:12:00Z",
-      "status": "scheduled"
+      "status": "scheduled",
+      "media": "assets/salam-reels-phrase-flowers-en.mp4"
     },
     {
       "id": "en-ig-s-give-an-ending",
@@ -1893,21 +1895,23 @@
       "brand": "salam",
       "account": "en",
       "platform": "instagram",
-      "type": "IMAGE",
-      "media": "assets/social/en-s-pod-lemonade/01.jpg",
-      "caption": "Prompt of the day: lemonade in mid-air 🎬\nCopy it and swap the details for your product:\n\nClose-up: raspberries, lemon wheels, mint and ice float above an empty tall glass. 0-2s: they drift and turn in the sunlight. 2-5s: they spiral toward the glass. 5-8s: one raspberry drops in. Low angle, slow push-in. Bright backlight from behind and to the right. Clean unbranded frame.\n\nSettings: 9:16, 8 seconds.\nWant a prompt for your product? Comment PROMPT.\n\n#aivideo #promptengineering #aiads #videomarketing #contentcreator",
+      "type": "REELS",
+      "media": "assets/salam-reels-phrase-lemonade-en.mp4",
+      "caption": "One phrase → a lemonade ad 🍋\nI typed: “I need a product video of an iced berry lemonade assembling itself in mid-air.”\nAI wrote the script — shots, camera, light — and generated every frame. No studio, no props, no shoot.\n\nWant one for your business? Comment AD and I’ll show you how.\nAI-generated video.\n\n#aivideo #aiads #smallbusiness #videomarketing #contentcreator #beverage",
       "publish_at": "2026-11-28T17:10:00Z",
-      "status": "scheduled"
+      "status": "scheduled",
+      "cover_ms": 2500
     },
     {
       "id": "en-th-s-pod-lemonade",
       "brand": "salam",
       "account": "en",
       "platform": "threads",
-      "type": "TEXT",
-      "caption": "Prompt of the day — lemonade in mid-air:\n\nClose-up: raspberries, lemon wheels, mint and ice float above an empty tall glass. 0-2s: they drift and turn in the sunlight. 2-5s: they spiral toward the glass. 5-8s: one raspberry drops in. Low angle, slow push-in. Bright backlight from behind and to the right. Clean unbranded frame.\n\nSwap the details for your product. 9:16, 8 seconds.",
+      "type": "VIDEO",
+      "caption": "One phrase → a lemonade ad 🍋\n\nI typed: “I need a product video of an iced berry lemonade assembling itself in mid-air.”\nAI wrote the script and generated every frame. No studio, no props, no shoot.\n\nWant one for your business? Reply AD.",
       "publish_at": "2026-11-28T17:12:00Z",
-      "status": "scheduled"
+      "status": "scheduled",
+      "media": "assets/salam-reels-phrase-lemonade-en.mp4"
     },
     {
       "id": "en-ig-s-size-first",
@@ -1931,25 +1935,27 @@
       "status": "scheduled"
     },
     {
-      "id": "en-ig-s-niche-next",
+      "id": "en-ig-s-reel-restaurant",
       "brand": "salam",
       "account": "en",
       "platform": "instagram",
-      "type": "IMAGE",
-      "media": "assets/social/en-s-niche-next/01.jpg",
-      "caption": "What business should I make an AI ad for next? 🤔\n\n1 — café or restaurant\n2 — beauty or fashion\n3 — real estate\n4 — something else — tell me\n\nReply with a number.\n\n#aivideo #contentcreator #smallbusiness #videomarketing #aiads",
+      "type": "REELS",
+      "media": "assets/salam-reels-phrase-restaurant-en.mp4",
+      "caption": "One phrase → a restaurant ad 🍽️\nI typed: “I need a commercial for a restaurant. A chef finishes a plate of salmon.”\nAI wrote the script — shots, camera, light — and generated every frame. No chef, no kitchen, no shoot.\n\nWant one for your business? Comment AD and I’ll show you how.\nAI-generated video.\n\n#aivideo #aiads #smallbusiness #videomarketing #contentcreator #restaurant",
       "publish_at": "2026-11-30T17:10:00Z",
-      "status": "scheduled"
+      "status": "scheduled",
+      "cover_ms": 2500
     },
     {
-      "id": "en-th-s-niche-next",
+      "id": "en-th-s-reel-restaurant",
       "brand": "salam",
       "account": "en",
       "platform": "threads",
-      "type": "TEXT",
-      "caption": "What business should I make an AI ad for next?\n\n1 — café or restaurant\n2 — beauty or fashion\n3 — real estate\n4 — something else — tell me\n\nReply with a number.",
+      "type": "VIDEO",
+      "caption": "One phrase → a restaurant ad 🍽️\n\nI typed: “I need a commercial for a restaurant. A chef finishes a plate of salmon.”\nAI wrote the script and generated every frame. No chef, no kitchen, no shoot.\n\nWant one for your business? Reply AD.",
       "publish_at": "2026-11-30T17:12:00Z",
-      "status": "scheduled"
+      "status": "scheduled",
+      "media": "assets/salam-reels-phrase-restaurant-en.mp4"
     },
     {
       "id": "en-ig-s-pod-perfume",
