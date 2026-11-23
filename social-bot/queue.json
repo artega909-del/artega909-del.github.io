@@ -1807,7 +1807,10 @@
       "media": "assets/social/en-s-pod-espresso/01.jpg",
       "caption": "Prompt of the day: espresso close-up 🎬\nCopy it and swap the details for your product:\n\nExtreme close-up: a steel portafilter above a matte black cup. 0-2s: a hand locks it in with one twist. 2-6s: two thin golden streams flow in slow motion. 6-8s: crema swirls and settles. Slow tilt-down following the streams. Warm amber backlight. End on the cup top. Clean unbranded frame.\n\nSettings: 9:16, 8 seconds.\nWant a prompt for your product? Comment PROMPT.\n\n#aivideo #promptengineering #aiads #videomarketing #contentcreator",
       "publish_at": "2026-11-23T17:10:00Z",
-      "status": "scheduled"
+      "status": "published",
+      "media_id": "17917941093275258",
+      "permalink": "https://www.instagram.com/p/DgF55jLEhS2/",
+      "published_at": "2026-11-23T17:21:41.562Z"
     },
     {
       "id": "en-th-s-pod-espresso",
@@ -1817,7 +1820,8 @@
       "type": "TEXT",
       "caption": "Prompt of the day — espresso close-up:\n\nExtreme close-up: a steel portafilter above a matte black cup. 0-2s: a hand locks it in with one twist. 2-6s: two thin golden streams flow in slow motion. 6-8s: crema swirls and settles. Slow tilt-down following the streams. Warm amber backlight. End on the cup top. Clean unbranded frame.\n\nSwap the details for your product. 9:16, 8 seconds.",
       "publish_at": "2026-11-23T17:12:00Z",
-      "status": "scheduled"
+      "status": "failed",
+      "error": "Threads API 400: The requested resource does not exist (код 24/4279009)"
     },
     {
       "id": "en-ig-s-describe-what-you-see",
