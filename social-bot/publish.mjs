@@ -213,8 +213,16 @@ async function publishThreads(item, ctx) {
   } else params = { ...one(files.urls[0]), text };
 
   const created = await api.call('POST', `/${uid}/threads`, params);
-  if (item.type !== 'TEXT') await waitReady(created.id); // тексту обработка не нужна
-  const pub = await api.call('POST', `/${uid}/threads_publish`, { creation_id: created.id });
+  // Ждём готовности контейнера и для текста: если опубликовать сразу, Threads отвечает «resource does not exist».
+  await waitReady(created.id);
+  let pub;
+  for (let i = 0; ; i++) {
+    try { pub = await api.call('POST', `/${uid}/threads_publish`, { creation_id: created.id }); break; }
+    catch (e) { // контейнер ещё не виден сервису публикации — короткая пауза и ещё попытка
+      if (i >= 3 || !/does not exist|4279009/.test(e.message)) throw e;
+      await ctx.sleep(Math.max(ctx.pollMs, 1) * 2);
+    }
+  }
   let permalink = null;
   try { permalink = (await api.call('GET', `/${pub.id}`, { fields: 'permalink' })).permalink || null; } catch { /* ссылка не обязательна */ }
   return { media_id: pub.id, permalink };

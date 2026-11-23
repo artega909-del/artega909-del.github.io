@@ -1820,8 +1820,7 @@
       "type": "TEXT",
       "caption": "Prompt of the day — espresso close-up:\n\nExtreme close-up: a steel portafilter above a matte black cup. 0-2s: a hand locks it in with one twist. 2-6s: two thin golden streams flow in slow motion. 6-8s: crema swirls and settles. Slow tilt-down following the streams. Warm amber backlight. End on the cup top. Clean unbranded frame.\n\nSwap the details for your product. 9:16, 8 seconds.",
       "publish_at": "2026-11-23T17:12:00Z",
-      "status": "failed",
-      "error": "Threads API 400: The requested resource does not exist (код 24/4279009)"
+      "status": "scheduled"
     },
     {
       "id": "en-ig-s-describe-what-you-see",

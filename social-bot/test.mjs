@@ -334,7 +334,7 @@ console.log('ok 19 Threads: проверка записей');
   const create = calls.find(c => c.method === 'POST' && c.url.endsWith('/777/threads'));
   assert.equal(create.url, 'https://graph.threads.net/v1.0/777/threads');
   assert.deepEqual([create.params.media_type, create.params.text, create.params.link_attachment, create.params.access_token], ['TEXT', 'Совет дня: одно действие на кадр', 'https://salammotion.com', TH]);
-  assert.ok(!calls.some(c => /\/TC\d$/.test(c.url)), 'текст не ждёт обработки');
+  assert.ok(calls.some(c => c.method === 'GET' && /\/TC1$/.test(c.url)), 'текст тоже ждёт готовности контейнера');
   assert.equal(calls.find(c => c.url.endsWith('/777/threads_publish')).params.creation_id, 'TC1');
   const saved = (await readPosts(q))[0];
   assert.deepEqual([saved.status, saved.media_id, saved.permalink], ['published', 'TM1', 'https://www.threads.net/@salammotion/post/ABC']);
@@ -428,6 +428,7 @@ console.log('ok 24 Threads: check');
       if (u.pathname.endsWith('/me')) return { status: 200, json: en ? { id: '888', username: 'salammotion.en' } : { id: '777', username: 'salammotion' } };
       if (m === 'GET' && /\/(777|888)\/threads$/.test(u.pathname)) return { status: 200, json: { data: [] } };
       if (m === 'POST' && /\/(777|888)\/threads$/.test(u.pathname)) return { status: 200, json: { id: 'TC_' + u.pathname.split('/')[2] } };
+      if (m === 'GET' && /\/TC_\d+$/.test(u.pathname)) return { status: 200, json: { status: 'FINISHED' } };
       if (/\/(777|888)\/threads_publish$/.test(u.pathname)) return { status: 200, json: { id: 'TP_' + u.pathname.split('/')[2] } };
       if (/\/TP_\d+$/.test(u.pathname)) return { status: 200, json: { permalink: 'https://www.threads.com/p/' + u.pathname.split('_')[1] } };
     }
@@ -525,5 +526,21 @@ console.log('ok 26 второй аккаунт: токен входа через
   assert.ok(validate(post({ type: 'IMAGE', media: 'assets/a.mp4' })).some(e => /JPEG/.test(e)), 'одиночный пост — только JPEG');
 }
 console.log('ok 27 карусель с видео-обложкой');
+
+// 28. Threads: публикация сразу после создания иногда отвечает «resource does not exist» — бот повторяет
+{
+  let tries = 0; const calls = [];
+  const base = okThreads();
+  const h = (m, u, p) => (u.pathname.endsWith('/777/threads_publish') && ++tries < 3
+    ? { status: 400, json: { error: { message: 'The requested resource does not exist', code: 24, error_subcode: 4279009 } } } : base(m, u, p));
+  const q = await writeQueue([thPost()]);
+  const { s } = await run('publish', q, fakeFetch(h, calls), thEnv);
+  assert.deepEqual(s.published, ['t1']); assert.equal(tries, 3);
+  // другая ошибка не повторяется
+  let n2 = 0; const h2 = (m, u, p) => (u.pathname.endsWith('/777/threads_publish') ? (n2++, { status: 400, json: { error: { message: 'Invalid parameter', code: 100 } } }) : base(m, u, p));
+  const r2 = await run('publish', await writeQueue([thPost()], 'q2.json'), fakeFetch(h2), thEnv);
+  assert.deepEqual(r2.s.failed, ['t1']); assert.equal(n2, 1);
+}
+console.log('ok 28 Threads: повтор публикации, если контейнер ещё не виден');
 
 console.log('\nВсе проверки пройдены');
