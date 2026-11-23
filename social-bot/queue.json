@@ -490,7 +490,10 @@
       "media": "assets/social/stories/1123-am-sovet-pervye-slova.jpg",
       "caption": "",
       "publish_at": "2026-11-23T05:00:00Z",
-      "status": "scheduled"
+      "status": "published",
+      "media_id": "18198879634361141",
+      "permalink": "https://www.instagram.com/stories/salammotion/4036524834276452474",
+      "published_at": "2026-11-23T05:21:32.027Z"
     },
     {
       "id": "salam-013-prompt-ili-nastrojki",
@@ -564,7 +567,10 @@
       "caption": "Пара слов о том, кто мы.\n\nSalam Motion — сервис, где из одной фразы получается рекламный ролик: ИИ сам дописывает сценарий, камеру и свет.\n\nВ 2026 году мы победили в региональном этапе Startup World Cup в Ашхабаде и представляли Туркменистан на финале в Сан-Франциско.\n\nДелаем это для малого бизнеса: реклама нужна каждую неделю, а съёмка — это дорого и долго.\n\nЧто бы вы прорекламировали первым?",
       "link": "https://salammotion.com",
       "publish_at": "2026-11-23T05:10:00Z",
-      "status": "scheduled"
+      "status": "published",
+      "media_id": "18170484388468183",
+      "permalink": "https://www.threads.com/@art_motion909/post/DgEng7GkXEa",
+      "published_at": "2026-11-23T05:21:39.415Z"
     },
     {
       "id": "th-1123-carousel-5-oshibok",
