@@ -606,7 +606,10 @@
       "type": "TEXT",
       "caption": "Хотите, чтобы кадр из нейросети не выглядел пластиковым? Назовите один главный источник света и откуда он падает.\n\nНе «красивое освещение», а «тёплый утренний свет из окна слева».\n\nОдна фраза — и у кадра появляются объём, тени и настроение. Попробуйте в следующем промпте и расскажите, что изменилось.",
       "publish_at": "2026-11-24T05:10:00Z",
-      "status": "scheduled"
+      "status": "published",
+      "media_id": "17869077534678779",
+      "permalink": "https://www.threads.com/@art_motion909/post/DgHMSRvDpQq",
+      "published_at": "2026-11-24T05:21:36.698Z"
     },
     {
       "id": "th-1125-text-vopros",
@@ -778,7 +781,10 @@
       "media": "assets/social/stories/1124-am-sovet-pik.jpg",
       "caption": "",
       "publish_at": "2026-11-24T05:00:00Z",
-      "status": "scheduled"
+      "status": "published",
+      "media_id": "17997716283065574",
+      "permalink": "https://www.instagram.com/stories/salammotion/4037249772814412068",
+      "published_at": "2026-11-24T05:21:50.324Z"
     },
     {
       "id": "story-1124-pm-kofejnya",
