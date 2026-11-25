@@ -618,7 +618,10 @@
       "type": "TEXT",
       "caption": "Вопрос владельцам бизнеса: что мешает выкладывать видео каждую неделю?\n\n1 — дорого снимать\n2 — нет времени\n3 — не знаю, что снимать\n4 — другое\n\nНапишите цифру в ответах — следующие посты сделаем под самый частый ответ.",
       "publish_at": "2026-11-25T05:10:00Z",
-      "status": "scheduled"
+      "status": "published",
+      "media_id": "18141928072764440",
+      "permalink": "https://www.threads.com/@art_motion909/post/DgJxGvikdQX",
+      "published_at": "2026-11-25T05:21:45.707Z"
     },
     {
       "id": "th-1125-carousel-formula",
@@ -810,7 +813,10 @@
       "media": "assets/salam-reels-kofe-reklama.mp4",
       "caption": "",
       "publish_at": "2026-11-25T05:00:00Z",
-      "status": "scheduled"
+      "status": "published",
+      "media_id": "18001655112042619",
+      "permalink": "https://www.instagram.com/stories/salammotion/4037974776005508381",
+      "published_at": "2026-11-25T05:22:42.178Z"
     },
     {
       "id": "story-1125-pm-espresso",
