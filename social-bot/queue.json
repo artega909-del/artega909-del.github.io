@@ -652,7 +652,10 @@
       "type": "TEXT",
       "caption": "Почему ролик из нейросети «зависает» на середине? Чаще всего в промпте нет конца движения.\n\n«Наливает молоко» — нейросеть не знает, когда остановиться.\n«Наливает молоко, рисунок на пенке готов, кувшин уходит из кадра» — у клипа есть финал.\n\nПишите не только что происходит, но и чем заканчивается.",
       "publish_at": "2026-11-26T05:10:00Z",
-      "status": "scheduled"
+      "status": "published",
+      "media_id": "18119861896831542",
+      "permalink": "https://www.threads.com/@art_motion909/post/DgNJLJFkZQc",
+      "published_at": "2026-11-26T12:49:43.804Z"
     },
     {
       "id": "th-1127-text-pervye-slova",
@@ -845,7 +848,10 @@
       "media": "assets/social/stories/1126-am-sovet-kamera.jpg",
       "caption": "",
       "publish_at": "2026-11-26T05:00:00Z",
-      "status": "scheduled"
+      "status": "published",
+      "media_id": "18148394104578746",
+      "permalink": "https://www.instagram.com/stories/salammotion/4038924878091424437",
+      "published_at": "2026-11-26T12:50:01.693Z"
     },
     {
       "id": "story-1126-pm-do-i-posle",
