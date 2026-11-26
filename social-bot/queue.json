@@ -724,7 +724,10 @@
       ],
       "caption": "Одна реклама — две версии 👀\nПервая получилась скучной: кадры с одной высоты, чашка меняла цвет, в кадре почти ничего не происходило. Нейросеть та же — поменяли только промпты. Три ошибки и как их исправили — в карусели.\n\nВставьте свой промпт в комментарий — ответим, что поправить, чтобы кадр ожил.\nОбе версии сгенерированы ИИ.\n\n#промпт #нейросети #ии #видеомаркетинг #контент",
       "publish_at": "2026-11-26T14:00:00Z",
-      "status": "scheduled"
+      "status": "published",
+      "media_id": "18090423263316422",
+      "permalink": "https://www.instagram.com/p/DgOLHAFjav-/",
+      "published_at": "2026-11-26T22:25:54.872Z"
     },
     {
       "id": "salam-020-stroka-kamery",
@@ -861,7 +864,10 @@
       "media": "assets/social/stories/1126-pm-do-i-posle.jpg",
       "caption": "",
       "publish_at": "2026-11-26T14:05:00Z",
-      "status": "scheduled"
+      "status": "published",
+      "media_id": "18292466278292111",
+      "permalink": "https://www.instagram.com/stories/salammotion/4039214864987427539",
+      "published_at": "2026-11-26T22:26:07.382Z"
     },
     {
       "id": "story-1127-am-vopros",
@@ -1939,8 +1945,11 @@
       "media": "assets/salam-reels-phrase-flowers-en.mp4",
       "caption": "One phrase → script → a flower shop ad 💐\nI typed: “I need a commercial for a flower shop. A florist ties a bouquet of peonies.”\nAI turned it into a second-by-second script — shots, camera, light — and then into the video. That's the idea behind Salam Motion.\n\nWant one for your business? Comment AD and I’ll show you how.\nInterface shown schematically. Script and video made with AI.\n\n#aivideo #aiads #smallbusiness #videomarketing #salammotion #flowershop",
       "publish_at": "2026-11-26T17:10:00Z",
-      "status": "scheduled",
-      "cover_ms": 1500
+      "status": "published",
+      "cover_ms": 1500,
+      "media_id": "18098977328679054",
+      "permalink": "https://www.instagram.com/reel/DgOLKmkuFaa/",
+      "published_at": "2026-11-26T22:26:47.217Z"
     },
     {
       "id": "en-th-s-pod-flowers",
@@ -1950,8 +1959,11 @@
       "type": "VIDEO",
       "caption": "One phrase → script → a flower shop ad 💐\n\nI typed: “I need a commercial for a flower shop. A florist ties a bouquet of peonies.”\nAI wrote the script by the second and made the video. That's the idea behind Salam Motion.\n\nWant one? Reply AD.\nInterface shown schematically.",
       "publish_at": "2026-11-26T17:12:00Z",
-      "status": "scheduled",
-      "media": "assets/salam-reels-phrase-flowers-en.mp4"
+      "status": "published",
+      "media": "assets/salam-reels-phrase-flowers-en.mp4",
+      "media_id": "18124957088068842",
+      "permalink": "https://www.threads.com/@artega.videodesigner/post/DgOLPFfAyin",
+      "published_at": "2026-11-26T22:27:23.655Z"
     },
     {
       "id": "en-ig-s-give-an-ending",
