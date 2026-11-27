@@ -2514,6 +2514,24 @@
       "caption": "One music at a time\n\nIf your clip has its own sound, your music goes quiet underneath. Two tracks at once feel like chaos.\n\nBad: \"music + the clip's own soundtrack at full volume\"\nBetter: \"one track; clip sound soft underneath\"",
       "publish_at": "2026-12-21T17:12:00Z",
       "status": "scheduled"
+    },
+    {
+      "id": "yt-test-flowers-ru",
+      "brand": "salam",
+      "platform": "youtube",
+      "type": "SHORT",
+      "media": "assets/salam-shorts-phrase-flowers-ru.mp4",
+      "title": "Одна фраза → реклама цветочного магазина #shorts",
+      "caption": "Я написал одну фразу: «I need a commercial for a flower shop. A florist ties a bouquet of peonies.»\nИИ расписал сценарий — кадры, камеру, свет — и сгенерировал каждый кадр. Без съёмки.\n\nХотите такую рекламу для своего бизнеса? Напишите РЕКЛАМА в комментариях.\nsalammotion.com\n\nВидео сгенерировано ИИ.",
+      "tags": [
+        "ии реклама",
+        "нейросети",
+        "видео из фразы",
+        "salam motion"
+      ],
+      "privacy": "unlisted",
+      "publish_at": "2026-11-27T14:47:00Z",
+      "status": "scheduled"
     }
   ]
 }
