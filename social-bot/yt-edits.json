@@ -2,7 +2,8 @@
   {
     "channel": true,
     "description": "Salam Motion — рекламные ролики из одной фразы. Пишете идею, ИИ раскладывает её на сценарий по секундам и генерирует видео.\n\nЗдесь: шортсы и примеры рекламы для бизнеса, разборы промптов, мультфильмы и короткие истории, сделанные нейросетями.\n\n🏆 Победитель регионального этапа Startup World Cup (Ашхабад, 2026), участник финала в Сан-Франциско.\n\nПопробовать: salammotion.com\n\nSalam Motion turns one phrase into a video ad: AI writes a shot-by-shot script and generates the video.",
-    "keywords": "Salam Motion \"ИИ реклама\" нейросети \"видео из фразы\" \"AI video\" \"AI ads\""
+    "keywords": "Salam Motion \"ИИ реклама\" нейросети \"видео из фразы\" \"AI video\" \"AI ads\"",
+    "error": "YouTube правка канала 403: Request had insufficient authentication scopes. (insufficientPermissions)"
   },
   {
     "idHash": "bf4535e94e9dc0cb",
@@ -21,7 +22,8 @@
       "туркменистан",
       "детский юмор",
       "salam motion"
-    ]
+    ],
+    "error": "YouTube правка видео 403: Request had insufficient authentication scopes. (insufficientPermissions)"
   },
   {
     "idHash": "3c374a1480b377b3",
@@ -40,7 +42,8 @@
       "ai animation",
       "turkmen",
       "salam motion"
-    ]
+    ],
+    "error": "YouTube правка видео 403: Request had insufficient authentication scopes. (insufficientPermissions)"
   },
   {
     "id": "0iLliZl2k68",
@@ -57,6 +60,7 @@
       "panda",
       "ai video",
       "salam motion"
-    ]
+    ],
+    "error": "YouTube правка видео 403: Request had insufficient authentication scopes. (insufficientPermissions)"
   }
 ]
