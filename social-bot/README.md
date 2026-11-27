@@ -99,6 +99,22 @@
 
 Пока секретов нет, записи `en` ждут, основной аккаунт публикуется как обычно. Режим `check` проверяет оба аккаунта.
 
+## YouTube Shorts
+
+Запись: `"platform": "youtube"`, `"type": "SHORT"`, `media` — вертикальное видео .mp4 до 3 минут, `title` — заголовок
+(до 100 символов), `caption` — описание, `tags` — список слов (необязательно), `account` — как у Instagram (без поля —
+Salam Motion, `en` — Artega). Бот ставит отметку «сгенерировано ИИ» (`ai: false` — снять), доступ `public`
+(`privacy` — `unlisted` или `private`) и проверяет повтор по заголовку среди 25 последних видео канала.
+
+| Секрет | Что это |
+|---|---|
+| `YOUTUBE_CLIENT_ID`, `YOUTUBE_CLIENT_SECRET` | OAuth-клиент проекта Google Cloud с включённым YouTube Data API v3 |
+| `YOUTUBE_REFRESH_TOKEN` | постоянный ключ канала Salam Motion (OAuth Playground, права youtube.upload и youtube.readonly) |
+| `YOUTUBE_REFRESH_TOKEN_EN` | то же для канала Artega |
+
+Экран согласия OAuth должен быть в рабочем режиме: в тестовом ключ перестаёт действовать через 7 дней.
+Если YouTube оставит видео приватным (API-проект без проверки YouTube), бот запишет это в `note`.
+
 ## Проверка
 
 GitHub → Actions → «Instagram — публикация по очереди» → Run workflow:
