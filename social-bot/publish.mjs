@@ -478,7 +478,14 @@ export async function main({
         const ch = await a.yt.get('/channels', { part: 'snippet', mine: 'true' });
         youtube[a.name] = ch.items && ch.items[0] ? ch.items[0].snippet.title : null;
         log(youtube[a.name] ? `YouTube (${a.label}): доступ есть, канал «${youtube[a.name]}»` : `⚠️  YouTube (${a.label}): вход есть, но канала у этого Google-аккаунта нет`);
-      } catch (e) { log(`❌ YouTube (${a.label}): ${a.yt.redact(e.message)}`); log('Что проверить: включён YouTube Data API v3; ключ выдан с правами youtube.upload и youtube.readonly; экран согласия в рабочем режиме (в тестовом ключ живёт 7 дней).'); }
+      } catch (e) {
+        log(`❌ YouTube (${a.label}): ${a.yt.redact(e.message)}`);
+        // подсказка о формате ключей без вывода значений
+        const id = (env['YOUTUBE_CLIENT_ID' + a.sfx] || env.YOUTUBE_CLIENT_ID || '').trim(), sec = (env['YOUTUBE_CLIENT_SECRET' + a.sfx] || env.YOUTUBE_CLIENT_SECRET || '').trim();
+        const rt = (env['YOUTUBE_REFRESH_TOKEN' + a.sfx] || '').trim();
+        log(`Формат ключей: ID клиента ${id.endsWith('.apps.googleusercontent.com') ? 'похож на ID клиента' : 'НЕ похож на ID клиента (должен оканчиваться на .apps.googleusercontent.com)'}; ` +
+          `секрет ${sec.startsWith('GOCSPX-') ? 'начинается с GOCSPX-' : 'НЕ начинается с GOCSPX-'}, ${sec.length} символов${/["'\s]/.test(sec) ? ', есть кавычки или пробелы внутри' : ''}; ` +
+          `refresh token ${rt.startsWith('1//') ? 'начинается с 1//' : 'НЕ начинается с 1//'}, ${rt.length} символов`); log('Что проверить: включён YouTube Data API v3; ключ выдан с правами youtube.upload и youtube.readonly; экран согласия в рабочем режиме (в тестовом ключ живёт 7 дней).'); }
     }
     return { ok: true, username: acc.username, threadsUsername, extra, youtube, ...summary };
   }
