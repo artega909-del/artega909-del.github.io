@@ -1,0 +1,70 @@
+name: YouTube — оформление загруженных видео
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'report — собрать список видео (зашифрованно), apply — применить social-bot/yt-edits.json'
+        type: choice
+        options: [report, apply]
+        default: report
+      account:
+        description: 'main — SalamMotion, en — Artega'
+        type: choice
+        options: [main, en]
+        default: main
+
+permissions:
+  contents: write
+
+concurrency:
+  group: social-post
+  cancel-in-progress: false
+
+jobs:
+  yt:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
+      YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
+      YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
+      YOUTUBE_REFRESH_TOKEN_EN: ${{ secrets.YOUTUBE_REFRESH_TOKEN_EN }}
+      REPORT_BRANCH: ccr-c4657446-m4wbw4
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Отчёт о видео канала
+        if: inputs.action == 'report'
+        run: |
+          node social-bot/yt-channel.mjs report "${{ inputs.account }}"
+          # шифруем: случайный ключ AES, сам ключ — открытым ключом RSA из репозитория
+          tar -czf /tmp/r.tgz yt-report
+          openssl rand -hex 32 > /tmp/k
+          openssl enc -aes-256-cbc -pbkdf2 -salt -pass file:/tmp/k -in /tmp/r.tgz -out /tmp/report.enc
+          openssl pkeyutl -encrypt -pubin -inkey social-bot/report-pub.pem -pkeyopt rsa_padding_mode:oaep -in /tmp/k -out /tmp/report.key
+          rm -rf yt-report /tmp/k /tmp/r.tgz
+          git config user.name "social-bot"
+          git config user.email "social-bot@users.noreply.github.com"
+          git fetch -q origin "$REPORT_BRANCH"
+          git checkout -q -B report FETCH_HEAD
+          mkdir -p social-bot/reports
+          mv /tmp/report.enc /tmp/report.key social-bot/reports/
+          git add social-bot/reports
+          git commit -q -m "social-bot: зашифрованный отчёт о видео YouTube (${{ inputs.account }})"
+          git push -q origin "HEAD:$REPORT_BRANCH"
+          echo "Отчёт зашифрован и сохранён в ветку $REPORT_BRANCH"
+      - name: Применить правки
+        if: inputs.action == 'apply'
+        run: |
+          node social-bot/yt-channel.mjs apply "${{ inputs.account }}" || failed=1
+          git config user.name "social-bot"
+          git config user.email "social-bot@users.noreply.github.com"
+          git add social-bot/yt-edits.json
+          if ! git diff --cached --quiet; then
+            git commit -q -m "social-bot: отметки о применённых правках YouTube"
+            for i in 1 2 3; do git pull --rebase -q origin "$GITHUB_REF_NAME" && git push -q && break; sleep $((i * 5)); done
+          fi
+          exit ${failed:-0}
