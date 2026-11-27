@@ -85,7 +85,7 @@ export async function apply({ account = 'main', env = process.env, fetchFn = fet
   }
   for (const e of todo) {
     if (e.error) continue;
-    const vid = e.id || e._id; const label = e.id || e.idHash;
+    const vid = e.id || e._id; const label = e.channel ? 'канал' : e.id || e.idHash;
     try {
       if (e.channel) { // описание канала: brandingSettings целиком, чтобы не стереть остальное
         if (!e.description || e.description.length > 1000) throw new Error('описание канала обязательно и не длиннее 1000 знаков');
