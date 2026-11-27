@@ -5,6 +5,7 @@
 // (social-bot/report-pub.pem) — в публичный лог и репозиторий попадает только шифр.
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import path from 'node:path';
+import { createHash } from 'node:crypto';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { ytClient } from './publish.mjs';
 
@@ -62,6 +63,9 @@ export async function report({ account = 'main', env = process.env, fetchFn = fe
 
 // yt-edits.json: [{ "account": "main", "id": "<videoId>", "title": "...", "description": "...", "tags": [...],
 //   "categoryId": "22", "defaultLanguage": "ru", "thumbnail": "assets/...jpg", "privacy": "public" }]
+// Видео с доступом по ссылке и приватные указываются не ссылкой, а отпечатком: "idHash" — первые 16 знаков
+// sha256 от ID видео (репозиторий публичный). Бот сам находит такое видео среди загрузок канала.
+export const idHash = id => createHash('sha256').update(id).digest('hex').slice(0, 16);
 // Поля, которых нет в записи, остаются как были. Применённые записи помечаются "applied".
 export async function apply({ account = 'main', env = process.env, fetchFn = fetch, file = path.join(ROOT, 'social-bot', 'yt-edits.json'), repoRoot = ROOT } = {}) {
   const edits = JSON.parse(await readFile(file, 'utf8'));
@@ -69,32 +73,56 @@ export async function apply({ account = 'main', env = process.env, fetchFn = fet
   if (!todo.length) { log('Правок для применения нет.'); return []; }
   const yt = clientFor(account, env, fetchFn); const token = await yt.token();
   const done = [];
+  let uploads = null;
+  todo.forEach(e => delete e.error);
   for (const e of todo) {
+    if (!e.id && e.idHash) {
+      try {
+        if (!uploads) uploads = (await listVideos(yt)).videos.map(v => v.id);
+        e._id = uploads.find(i => idHash(i) === e.idHash);
+      } catch (err) { e.error = yt.redact(err.message); log(`❌ ${e.idHash}: ${e.error}`); continue; }
+    }
+  }
+  for (const e of todo) {
+    if (e.error) continue;
+    const vid = e.id || e._id; const label = e.id || e.idHash;
     try {
+      if (e.channel) { // описание канала: brandingSettings целиком, чтобы не стереть остальное
+        if (!e.description || e.description.length > 1000) throw new Error('описание канала обязательно и не длиннее 1000 знаков');
+        const ch = await yt.get('/channels', { part: 'brandingSettings', mine: 'true' });
+        const c = ch.items && ch.items[0]; if (!c) throw new Error('канал не найден');
+        const bs = c.brandingSettings || {}; bs.channel = { ...(bs.channel || {}), description: e.description };
+        if (e.keywords) bs.channel.keywords = e.keywords;
+        await yt.json(await fetchFn('https://www.googleapis.com/youtube/v3/channels?part=brandingSettings', {
+          method: 'PUT', headers: { authorization: 'Bearer ' + token, 'content-type': 'application/json' }, body: JSON.stringify({ id: c.id, brandingSettings: bs }) }), 'правка канала');
+        e.applied = new Date().toISOString(); delete e.error; done.push('channel'); log('✅ описание канала'); continue;
+      }
       if (e.title && (e.title.length > 100 || /[<>]/.test(e.title))) throw new Error('название длиннее 100 знаков или содержит < >');
       if (e.description && e.description.length > 5000) throw new Error('описание длиннее 5000 знаков');
-      const cur = await yt.get('/videos', { part: 'snippet,status', id: e.id });
+      if (!vid) throw new Error('видео не найдено на канале');
+      const cur = await yt.get('/videos', { part: 'snippet,status', id: vid });
       const v = cur.items && cur.items[0]; if (!v) throw new Error('видео не найдено на канале');
       const sn = v.snippet;
       const snippet = { title: e.title || sn.title, description: e.description ?? sn.description, tags: e.tags || sn.tags || [],
         categoryId: e.categoryId || sn.categoryId, defaultLanguage: e.defaultLanguage || sn.defaultLanguage, defaultAudioLanguage: e.defaultAudioLanguage || sn.defaultAudioLanguage };
       Object.keys(snippet).forEach(k => snippet[k] === undefined && delete snippet[k]);
-      const body = { id: e.id, snippet };
+      const body = { id: vid, snippet };
       let parts = 'snippet';
       if (e.privacy) { body.status = { privacyStatus: e.privacy, selfDeclaredMadeForKids: v.status.selfDeclaredMadeForKids ?? false }; parts += ',status'; }
       await yt.json(await fetchFn('https://www.googleapis.com/youtube/v3/videos?part=' + parts, {
         method: 'PUT', headers: { authorization: 'Bearer ' + token, 'content-type': 'application/json' }, body: JSON.stringify(body) }), 'правка видео');
       if (e.thumbnail) {
         const img = await readFile(path.join(repoRoot, e.thumbnail));
-        await yt.json(await fetchFn(`https://www.googleapis.com/upload/youtube/v3/thumbnails/set?videoId=${e.id}&uploadType=media`, {
+        await yt.json(await fetchFn(`https://www.googleapis.com/upload/youtube/v3/thumbnails/set?videoId=${vid}&uploadType=media`, {
           method: 'POST', headers: { authorization: 'Bearer ' + token, 'content-type': 'image/jpeg' }, body: img }), 'превью');
       }
-      e.applied = new Date().toISOString(); delete e.error; done.push(e.id);
-      log(`✅ ${e.id}: «${snippet.title}»` + (e.thumbnail ? ' + превью' : ''));
+      e.applied = new Date().toISOString(); delete e.error; done.push(label);
+      log(`✅ ${label}: «${snippet.title}»` + (e.thumbnail ? ' + превью' : ''));
     } catch (err) {
-      e.error = yt.redact(err.message); log(`❌ ${e.id}: ${e.error}`);
+      e.error = yt.redact(err.message); log(`❌ ${label}: ${e.error}`);
     }
   }
+  edits.forEach(e => delete e._id);
   await writeFile(file, JSON.stringify(edits, null, 2) + '\n');
   if (done.length < todo.length) process.exitCode = 1;
   return done;
