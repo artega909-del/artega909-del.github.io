@@ -606,7 +606,7 @@ console.log('ok 29 YouTube Shorts');
 
 // 30. Оформление загруженных видео: отчёт со списком и превью, правки названия/описания/превью, ошибки не роняют остальные
 {
-  const { report, apply } = await import('./yt-channel.mjs');
+  const { report, apply, idHash } = await import('./yt-channel.mjs');
   const yEnv = { YOUTUBE_CLIENT_ID: 'cid', YOUTUBE_CLIENT_SECRET: 'GOCSPX-sec', YOUTUBE_REFRESH_TOKEN: '1//rt' };
   const vids = { V1: { title: 'IMG_0001', description: '', categoryId: '22' }, V2: { title: 'old', description: 'd', categoryId: '22', tags: ['a'] } };
   const h = (method, u, p) => {
@@ -630,16 +630,26 @@ console.log('ok 29 YouTube Shorts');
     { id: 'V1', title: 'Реклама шоколада из одной фразы', description: 'Описание', tags: ['ии'], thumbnail: 'th.jpg' },
     { id: 'V2', title: 'x'.repeat(101) },
     { id: 'NO', title: 'нет такого' },
+    { idHash: idHash('V2'), title: 'По отпечатку' },
+    { idHash: '0000000000000000', title: 'чужое' },
     { id: 'V2', account: 'en', title: 'чужой аккаунт' }]));
   const calls = [];
   const done = await apply({ env: yEnv, fetchFn: fakeFetch(h, calls), file: ef, repoRoot: dir });
   process.exitCode = 0;
-  assert.deepEqual(done, ['V1']);
+  assert.deepEqual(done, ['V1', idHash('V2')]);
   const put = calls.find(c => c.method === 'PUT');
+  assert.equal(calls.filter(c => c.method === 'PUT')[1].params.id, 'V2');
   assert.equal(put.params.snippet.title, 'Реклама шоколада из одной фразы'); assert.equal(put.params.snippet.categoryId, '22');
   assert.ok(calls.some(c => c.url.endsWith('/thumbnails/set')), 'превью загружено');
   const saved = JSON.parse(await readFile(ef, 'utf8'));
-  assert.ok(saved[0].applied); assert.match(saved[1].error, /100/); assert.match(saved[2].error, /не найдено/); assert.ok(!saved[3].applied && !saved[3].error);
+  assert.ok(saved[0].applied); assert.match(saved[1].error, /100/); assert.match(saved[2].error, /не найдено/); assert.ok(saved[3].applied && !saved[3].id); assert.match(saved[4].error, /не найдено/); assert.ok(!saved[5].applied && !saved[5].error);
+  assert.ok(!JSON.stringify(saved).includes('"V2"') || saved[1].id === 'V2');
+  // описание канала: остальные настройки оформления сохраняются
+  const ch = []; const hc = (m, u, p) => u.pathname.endsWith('/channels') && m === 'GET' ? { status: 200, json: { items: [{ id: 'UC1', brandingSettings: { channel: { title: 'SalamMotion', country: 'TM' }, image: { x: 1 } } }] } } : u.pathname.endsWith('/channels') ? { status: 200, json: {} } : h(m, u, p);
+  const ef2 = path.join(dir, 'edits2.json'); await writeFile(ef2, JSON.stringify([{ channel: true, description: 'Видео из одной фразы' }]));
+  assert.deepEqual(await apply({ env: yEnv, fetchFn: fakeFetch(hc, ch), file: ef2, repoRoot: dir }), ['channel']);
+  const cput = ch.find(c => c.method === 'PUT').params;
+  assert.deepEqual(cput.brandingSettings, { channel: { title: 'SalamMotion', country: 'TM', description: 'Видео из одной фразы' }, image: { x: 1 } });
   // повторный запуск ничего не трогает у применённых
   const calls2 = []; await apply({ env: yEnv, fetchFn: fakeFetch(h, calls2), file: ef, repoRoot: dir }); process.exitCode = 0;
   assert.ok(!calls2.some(c => c.method === 'PUT' && c.params.id === 'V1'));
