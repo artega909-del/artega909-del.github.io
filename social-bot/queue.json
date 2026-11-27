@@ -877,7 +877,10 @@
       "media": "assets/social/stories/1127-am-vopros.jpg",
       "caption": "",
       "publish_at": "2026-11-27T05:00:00Z",
-      "status": "scheduled"
+      "status": "published",
+      "media_id": "17900199657612584",
+      "permalink": "https://www.instagram.com/stories/salammotion/4039417125165614411",
+      "published_at": "2026-11-27T05:08:01.637Z"
     },
     {
       "id": "story-1127-pm-kamera",
