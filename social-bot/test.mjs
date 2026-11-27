@@ -604,4 +604,46 @@ console.log('ok 28 Threads: повтор публикации, если конт
 }
 console.log('ok 29 YouTube Shorts');
 
+// 30. Оформление загруженных видео: отчёт со списком и превью, правки названия/описания/превью, ошибки не роняют остальные
+{
+  const { report, apply } = await import('./yt-channel.mjs');
+  const yEnv = { YOUTUBE_CLIENT_ID: 'cid', YOUTUBE_CLIENT_SECRET: 'GOCSPX-sec', YOUTUBE_REFRESH_TOKEN: '1//rt' };
+  const vids = { V1: { title: 'IMG_0001', description: '', categoryId: '22' }, V2: { title: 'old', description: 'd', categoryId: '22', tags: ['a'] } };
+  const h = (method, u, p) => {
+    if (u.hostname === 'oauth2.googleapis.com') return { status: 200, json: { access_token: 'AT' } };
+    if (u.hostname === 'i.ytimg.com') return { status: 200, json: {} };
+    if (u.pathname.endsWith('/channels')) return { status: 200, json: { items: [{ id: 'UC1', snippet: { title: 'SalamMotion', description: '' }, contentDetails: { relatedPlaylists: { uploads: 'UU1' } } }] } };
+    if (u.pathname.endsWith('/playlistItems')) return { status: 200, json: p.pageToken ? { items: [{ contentDetails: { videoId: 'V2' } }] } : { items: [{ contentDetails: { videoId: 'V1' } }], nextPageToken: 'n' } };
+    if (u.pathname.endsWith('/videos') && method === 'GET') return { status: 200, json: { items: p.id.split(',').filter(i => vids[i]).map(i => ({ id: i, snippet: { ...vids[i], publishedAt: 'x', thumbnails: {} }, contentDetails: { duration: 'PT3M' }, status: { privacyStatus: i === 'V1' ? 'unlisted' : 'public', selfDeclaredMadeForKids: false }, statistics: {} })) } };
+    if (u.pathname.endsWith('/videos') && method === 'PUT') return { status: 200, json: { id: p.id } };
+    if (u.pathname.endsWith('/thumbnails/set')) return { status: 200, json: {} };
+  };
+  const out = path.join(dir, 'rep');
+  const rows = await report({ env: yEnv, fetchFn: fakeFetch(h), outDir: out });
+  assert.deepEqual(rows.map(r => [r.id, r.privacy]), [['V1', 'unlisted'], ['V2', 'public']]);
+  const rj = JSON.parse(await readFile(path.join(out, 'report.json'), 'utf8'));
+  assert.equal(rj.channel.title, 'SalamMotion'); assert.ok(!JSON.stringify(rj).includes('1//rt'));
+  await readFile(path.join(out, 'img', 'V1-hq2.jpg'));
+  // правки
+  const ef = path.join(dir, 'edits.json'); await writeFile(path.join(dir, 'th.jpg'), 'jpg');
+  await writeFile(ef, JSON.stringify([
+    { id: 'V1', title: 'Реклама шоколада из одной фразы', description: 'Описание', tags: ['ии'], thumbnail: 'th.jpg' },
+    { id: 'V2', title: 'x'.repeat(101) },
+    { id: 'NO', title: 'нет такого' },
+    { id: 'V2', account: 'en', title: 'чужой аккаунт' }]));
+  const calls = [];
+  const done = await apply({ env: yEnv, fetchFn: fakeFetch(h, calls), file: ef, repoRoot: dir });
+  process.exitCode = 0;
+  assert.deepEqual(done, ['V1']);
+  const put = calls.find(c => c.method === 'PUT');
+  assert.equal(put.params.snippet.title, 'Реклама шоколада из одной фразы'); assert.equal(put.params.snippet.categoryId, '22');
+  assert.ok(calls.some(c => c.url.endsWith('/thumbnails/set')), 'превью загружено');
+  const saved = JSON.parse(await readFile(ef, 'utf8'));
+  assert.ok(saved[0].applied); assert.match(saved[1].error, /100/); assert.match(saved[2].error, /не найдено/); assert.ok(!saved[3].applied && !saved[3].error);
+  // повторный запуск ничего не трогает у применённых
+  const calls2 = []; await apply({ env: yEnv, fetchFn: fakeFetch(h, calls2), file: ef, repoRoot: dir }); process.exitCode = 0;
+  assert.ok(!calls2.some(c => c.method === 'PUT' && c.params.id === 'V1'));
+}
+console.log('ok 30 оформление видео YouTube');
+
 console.log('\nВсе проверки пройдены');

@@ -245,7 +245,7 @@ async function publishThreads(item, ctx) {
 }
 
 // YouTube: доступ по постоянному ключу (refresh token) — каждый запуск получает временный ключ доступа.
-function ytClient({ fetchFn, clientId, clientSecret, refreshToken }) {
+export function ytClient({ fetchFn, clientId, clientSecret, refreshToken }) {
   const secrets = [clientSecret, refreshToken].filter(Boolean);
   let access = null;
   const redact = s => [...secrets, access].filter(Boolean).reduce((t, x) => t.split(x).join('***'), String(s));
