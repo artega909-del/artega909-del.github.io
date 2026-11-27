@@ -2535,6 +2535,96 @@
       "media_id": "Gkh5ww8qs2w",
       "permalink": "https://www.youtube.com/shorts/Gkh5ww8qs2w",
       "published_at": "2026-11-27T14:58:09.796Z"
+    },
+    {
+      "id": "yt-ru-phrase-restaurant",
+      "brand": "salam",
+      "platform": "youtube",
+      "type": "SHORT",
+      "media": "assets/salam-shorts-phrase-restaurant-ru.mp4",
+      "title": "Одна фраза → реклама ресторана #shorts",
+      "caption": "Я написал одну фразу: «I need a commercial for a restaurant. A chef finishes a plate of salmon.»\nИИ расписал сценарий — кадры, камеру, свет — и сгенерировал каждый кадр. Без съёмки, без повара и без студии.\n\nХотите такую рекламу для своего бизнеса? Напишите РЕКЛАМА в комментариях.\nsalammotion.com\n\nВидео сгенерировано ИИ.",
+      "tags": [
+        "ии реклама",
+        "нейросети",
+        "видео из фразы",
+        "salam motion",
+        "реклама для бизнеса"
+      ],
+      "publish_at": "2026-11-28T16:05:00Z",
+      "status": "scheduled"
+    },
+    {
+      "id": "yt-ru-sm-flowers",
+      "brand": "salam",
+      "platform": "youtube",
+      "type": "SHORT",
+      "media": "assets/salam-shorts-sm-flowers-ru.mp4",
+      "title": "Как из одной фразы получается реклама цветочного магазина #shorts",
+      "caption": "Пишешь одну фразу — ИИ раскладывает её по секундам: кадр, камера, свет. Потом генерирует видео.\nВот как выглядит путь от фразы до готового ролика для цветочного магазина.\n\nХотите такую рекламу для своего бизнеса? Напишите РЕКЛАМА в комментариях.\nsalammotion.com\n\nИнтерфейс показан схематично. Сценарий и видео сделаны ИИ.",
+      "tags": [
+        "ии реклама",
+        "нейросети",
+        "видео из фразы",
+        "salam motion",
+        "реклама для бизнеса"
+      ],
+      "publish_at": "2026-11-29T16:05:00Z",
+      "status": "scheduled"
+    },
+    {
+      "id": "yt-ru-phrase-lemonade",
+      "brand": "salam",
+      "platform": "youtube",
+      "type": "SHORT",
+      "media": "assets/salam-shorts-phrase-lemonade-ru.mp4",
+      "title": "Этот лимонад никто не снимал #shorts",
+      "caption": "Одна фраза: «I need a product video of an iced berry lemonade assembling itself in mid-air.»\nЛёд, ягоды и лимонад собираются в стакан сами. Каждый кадр сгенерировал ИИ.\n\nХотите такую рекламу для своего бизнеса? Напишите РЕКЛАМА в комментариях.\nsalammotion.com\n\nВидео сгенерировано ИИ.",
+      "tags": [
+        "ии реклама",
+        "нейросети",
+        "видео из фразы",
+        "salam motion",
+        "реклама для бизнеса"
+      ],
+      "publish_at": "2026-11-30T16:05:00Z",
+      "status": "scheduled"
+    },
+    {
+      "id": "yt-ru-sm-restaurant",
+      "brand": "salam",
+      "platform": "youtube",
+      "type": "SHORT",
+      "media": "assets/salam-shorts-sm-restaurant-ru.mp4",
+      "title": "Фраза → сценарий → реклама ресторана за минуту #shorts",
+      "caption": "ИИ превращает одну фразу в сценарий по секундам: макро соуса, пинцет, взгляд шефа, наезд на тарелку. Потом — видео.\n\nХотите такую рекламу для своего бизнеса? Напишите РЕКЛАМА в комментариях.\nsalammotion.com\n\nИнтерфейс показан схематично. Сценарий и видео сделаны ИИ.",
+      "tags": [
+        "ии реклама",
+        "нейросети",
+        "видео из фразы",
+        "salam motion",
+        "реклама для бизнеса"
+      ],
+      "publish_at": "2026-12-01T16:05:00Z",
+      "status": "scheduled"
+    },
+    {
+      "id": "yt-ru-sm-lemonade",
+      "brand": "salam",
+      "platform": "youtube",
+      "type": "SHORT",
+      "media": "assets/salam-shorts-sm-lemonade-ru.mp4",
+      "title": "Предметная съёмка без съёмки: лимонад из одной фразы #shorts",
+      "caption": "Для товара не нужна студия: одна фраза → сценарий по секундам → видео, где продукт собирается в воздухе.\n\nХотите такую рекламу для своего бизнеса? Напишите РЕКЛАМА в комментариях.\nsalammotion.com\n\nИнтерфейс показан схематично. Сценарий и видео сделаны ИИ.",
+      "tags": [
+        "ии реклама",
+        "нейросети",
+        "видео из фразы",
+        "salam motion",
+        "реклама для бизнеса"
+      ],
+      "publish_at": "2026-12-02T16:05:00Z",
+      "status": "scheduled"
     }
   ]
 }
