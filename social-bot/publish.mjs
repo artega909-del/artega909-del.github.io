@@ -10,6 +10,7 @@
 // Второй аккаунт (поле "account": "en" в записи очереди): INSTAGRAM_ACCOUNT_ID_EN, THREADS_ACCESS_TOKEN_EN
 // и при необходимости INSTAGRAM_ACCESS_TOKEN_EN (иначе берётся основной токен системного пользователя).
 // Токен «входа через Instagram» (начинается с IG) работает через graph.instagram.com и живёт 60 дней — бот его продлевает.
+// YouTube Shorts (platform: youtube): YOUTUBE_CLIENT_ID, YOUTUBE_CLIENT_SECRET и YOUTUBE_REFRESH_TOKEN (для en — YOUTUBE_REFRESH_TOKEN_EN).
 // Токены не печатаются в логах и не попадают в файлы.
 import { readFile, writeFile } from 'node:fs/promises';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -27,11 +28,26 @@ export function mediaUrl(media, site = SITE) {
   return site + '/' + String(media).replace(/^\/+/, '').split('/').map(encodeURIComponent).join('/');
 }
 
+function validateYouTube(item, errs) { // YouTube Shorts: вертикальное видео до 3 минут, заголовок обязателен
+  if (item.type !== 'SHORT') errs.push('для YouTube type должен быть SHORT');
+  if (typeof item.media !== 'string' || !isVideo(item.media)) errs.push('для YouTube нужен один файл .mp4 или .mov');
+  else if (!/^https:\/\//i.test(item.media) && (/^[a-z][a-z0-9+.-]*:/i.test(item.media) || item.media.split('/').includes('..'))) errs.push('media: путь внутри репозитория (assets/…) или ссылка https://');
+  const title = item.title ?? '';
+  if (typeof title !== 'string' || !title.trim()) errs.push('для YouTube нужен title (заголовок)');
+  else if ([...title].length > 100 || /[<>]/.test(title)) errs.push('title: до 100 символов, без < и >');
+  if (typeof (item.caption ?? '') !== 'string' || [...(item.caption || '')].length > 5000 || /[<>]/.test(item.caption || '')) errs.push('описание YouTube: до 5000 символов, без < и >');
+  if (item.tags !== undefined && (!Array.isArray(item.tags) || item.tags.join(',').length > 450)) errs.push('tags: список слов, всего до 450 символов');
+  if (item.account !== undefined && !/^[a-z]{2,10}$/.test(item.account)) errs.push('account: короткое имя аккаунта латиницей, например en');
+  if (Number.isNaN(Date.parse(item.publish_at))) errs.push('publish_at: время вида 2026-12-01T09:00:00Z');
+  return errs;
+}
+
 // Проверка записи очереди. Возвращает список проблем (пустой — всё в порядке).
 export function validate(item) {
   const errs = [];
   if (!item.id) errs.push('нет id');
   const threads = item.platform === 'threads';
+  if (item.platform === 'youtube') return validateYouTube(item, errs);
   if (item.platform !== 'instagram' && !threads) errs.push(`платформа «${item.platform}» пока не поддерживается`);
   const types = threads ? ['TEXT', 'IMAGE', 'VIDEO', 'CAROUSEL'] : ['REELS', 'IMAGE', 'CAROUSEL', 'STORY'];
   if (!types.includes(item.type)) errs.push(`type должен быть ${types.slice(0, -1).join(', ')} или ${types.at(-1)}${threads ? ' (для Threads)' : ''}`);
@@ -228,6 +244,68 @@ async function publishThreads(item, ctx) {
   return { media_id: pub.id, permalink };
 }
 
+// YouTube: доступ по постоянному ключу (refresh token) — каждый запуск получает временный ключ доступа.
+function ytClient({ fetchFn, clientId, clientSecret, refreshToken }) {
+  const secrets = [clientSecret, refreshToken].filter(Boolean);
+  let access = null;
+  const redact = s => [...secrets, access].filter(Boolean).reduce((t, x) => t.split(x).join('***'), String(s));
+  async function json(res, what) {
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || data.error) {
+      const e = data.error || {}; const msg = typeof e === 'string' ? `${e}${data.error_description ? ': ' + data.error_description : ''}` : (e.message || 'ошибка');
+      const reason = e.errors && e.errors[0] && e.errors[0].reason ? ` (${e.errors[0].reason})` : '';
+      throw new Error(redact(`YouTube ${what} ${res.status}: ${msg}${reason}`));
+    }
+    return data;
+  }
+  async function token() {
+    if (access) return access;
+    const res = await fetchFn('https://oauth2.googleapis.com/token', { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ client_id: clientId, client_secret: clientSecret, refresh_token: refreshToken, grant_type: 'refresh_token' }).toString() });
+    access = (await json(res, 'вход')).access_token; return access;
+  }
+  async function get(pathname, params) {
+    const res = await fetchFn('https://www.googleapis.com/youtube/v3' + pathname + '?' + new URLSearchParams(params), { headers: { authorization: 'Bearer ' + await token() } });
+    return json(res, 'API');
+  }
+  return { token, get, json, redact, get access() { return access; } };
+}
+
+async function publishYouTube(item, ctx) {
+  const yt = ctx.yt;
+  const files = await checkFiles(item, ctx);
+  if (files.bad) return { skipped: `файл пока не доступен по ссылке (${files.bad.status}): ${files.bad.url}` };
+  const title = item.title.trim();
+  if (!item.repeat) { // защита от повтора: такое же название среди последних загрузок канала
+    try {
+      const ch = await yt.get('/channels', { part: 'contentDetails', mine: 'true' });
+      const up = ch.items && ch.items[0] && ch.items[0].contentDetails.relatedPlaylists.uploads;
+      if (up) {
+        const list = await yt.get('/playlistItems', { part: 'snippet', playlistId: up, maxResults: '25' });
+        const same = (list.items || []).find(v => (v.snippet.title || '').trim() === title);
+        if (same) { const id = same.snippet.resourceId.videoId; return { media_id: id, permalink: `https://www.youtube.com/shorts/${id}`, duplicate: true }; }
+      }
+    } catch (e) { ctx.log(`⚠️  ${item.id}: не удалось проверить последние видео канала на повтор (${e.message}), загружаю`); }
+  }
+  // файл: из репозитория (бот работает в его копии), иначе скачиваем по ссылке
+  let bytes = null;
+  if (!/^https:\/\//i.test(item.media)) bytes = await readFile(path.join(ctx.repoRoot, item.media)).catch(() => null);
+  if (!bytes) { const r = await ctx.fetchFn(files.urls[0]); if (!r.ok) throw new Error(`не удалось скачать видео (${r.status})`); bytes = Buffer.from(await r.arrayBuffer()); }
+  const privacy = item.privacy || 'public';
+  const meta = { snippet: { title, description: item.caption || '', tags: item.tags || [], categoryId: item.category || '22' },
+    status: { privacyStatus: privacy, selfDeclaredMadeForKids: false, containsSyntheticMedia: item.ai !== false } };
+  const init = await ctx.fetchFn('https://www.googleapis.com/upload/youtube/v3/videos?uploadType=resumable&part=snippet,status', { method: 'POST',
+    headers: { authorization: 'Bearer ' + await yt.token(), 'content-type': 'application/json; charset=UTF-8', 'x-upload-content-type': 'video/mp4', 'x-upload-content-length': String(bytes.length) },
+    body: JSON.stringify(meta) });
+  if (!init.ok) await yt.json(init, 'загрузка');
+  const loc = init.headers.get('location');
+  if (!loc) throw new Error('YouTube не вернул адрес для загрузки файла');
+  const done = await yt.json(await ctx.fetchFn(loc, { method: 'PUT', headers: { 'content-type': 'video/mp4' }, body: bytes }), 'загрузка файла');
+  const got = done.status && done.status.privacyStatus;
+  const note = got && got !== privacy ? `YouTube выставил доступ «${got}» вместо «${privacy}»: видимо, API-проект ещё не прошёл проверку YouTube` : null;
+  return { media_id: done.id, permalink: `https://www.youtube.com/shorts/${done.id}`, note };
+}
+
 // Токен Threads живёт 60 дней. Пока он действует, его можно продлевать запросом — бот делает это сам.
 // Возвращает, сколько дней осталось (null — узнать не удалось), и предупреждение, если пора действовать вручную.
 async function threadsTokenCare({ api, log, now, renew }) {
@@ -307,21 +385,27 @@ export async function main({
   const api = igClient(token);
   const threads = thClient((env.THREADS_ACCESS_TOKEN || '').trim());
   // Аккаунты: main — основной; дополнительные (например en) — по секретам с суффиксом _EN.
-  const accounts = { main: { name: 'main', label: 'основной', api, igId, threads, sfx: '' } };
+  const ytFor = sfx => {
+    const rt = (env['YOUTUBE_REFRESH_TOKEN' + sfx] || '').trim();
+    const id = (env['YOUTUBE_CLIENT_ID' + sfx] || env.YOUTUBE_CLIENT_ID || '').trim(), sec = (env['YOUTUBE_CLIENT_SECRET' + sfx] || env.YOUTUBE_CLIENT_SECRET || '').trim();
+    return rt && id && sec ? ytClient({ fetchFn, clientId: id, clientSecret: sec, refreshToken: rt }) : null;
+  };
+  const accounts = { main: { name: 'main', label: 'основной', api, igId, threads, yt: ytFor(''), sfx: '' } };
   for (const name of ['en']) {
     const sfx = '_' + name.toUpperCase();
     const id = (env['INSTAGRAM_ACCOUNT_ID' + sfx] || '').trim();
     const thT = (env['THREADS_ACCESS_TOKEN' + sfx] || '').trim();
-    if (!id && !thT) continue;
+    const ytAcc = ytFor(sfx);
+    if (!id && !thT && !ytAcc) continue;
     if (id && !/^\d{4,20}$/.test(id)) { // ошибка в секретах второго аккаунта не должна останавливать основной
       log(`⚠️  INSTAGRAM_ACCOUNT_ID${sfx} должен состоять только из цифр, а в секрете ${id.length} символов — аккаунт ${name.toUpperCase()} пропускаю. ` +
         (id.length > 40 ? 'Похоже, туда попал маркер: маркер кладут в INSTAGRAM_ACCESS_TOKEN' + sfx + ', а сюда — ID аккаунта.' : ''));
       continue;
     }
     const igT = (env['INSTAGRAM_ACCESS_TOKEN' + sfx] || '').trim() || token;
-    accounts[name] = { name, label: name.toUpperCase(), api: id ? (igT === token ? api : igClient(igT)) : null, igId: id || null, threads: thClient(thT), sfx, igLogin: /^IG/.test(igT) };
+    accounts[name] = { name, label: name.toUpperCase(), api: id ? (igT === token ? api : igClient(igT)) : null, igId: id || null, threads: thClient(thT), yt: ytAcc, sfx, igLogin: /^IG/.test(igT) };
   }
-  const clients = Object.values(accounts).flatMap(a => [a.api, a.threads]).filter(Boolean);
+  const clients = Object.values(accounts).flatMap(a => [a.api, a.threads, a.yt]).filter(Boolean);
   const redact = s => clients.reduce((t, a) => a.redact(t), s);
   const summary = { published: [], failed: [], missed: [], waiting: [], skipped: [] };
 
@@ -387,7 +471,16 @@ export async function main({
         if (left !== null) log(`Аккаунт ${a.label}: токен Threads действует ещё ${Math.floor(left)} дн.`);
       }
     }
-    return { ok: true, username: acc.username, threadsUsername, extra, ...summary };
+    const youtube = {};
+    for (const a of Object.values(accounts)) {
+      if (!a.yt) { log(`YouTube (${a.label}): секрет YOUTUBE_REFRESH_TOKEN${a.sfx} не задан — Shorts выключены`); continue; }
+      try {
+        const ch = await a.yt.get('/channels', { part: 'snippet', mine: 'true' });
+        youtube[a.name] = ch.items && ch.items[0] ? ch.items[0].snippet.title : null;
+        log(youtube[a.name] ? `YouTube (${a.label}): доступ есть, канал «${youtube[a.name]}»` : `⚠️  YouTube (${a.label}): вход есть, но канала у этого Google-аккаунта нет`);
+      } catch (e) { log(`❌ YouTube (${a.label}): ${a.yt.redact(e.message)}`); log('Что проверить: включён YouTube Data API v3; ключ выдан с правами youtube.upload и youtube.readonly; экран согласия в рабочем режиме (в тестовом ключ живёт 7 дней).'); }
+    }
+    return { ok: true, username: acc.username, threadsUsername, extra, youtube, ...summary };
   }
 
   const queue = JSON.parse(await readFile(queuePath, 'utf8'));
@@ -396,7 +489,7 @@ export async function main({
   const maxLate = (Number(env.MAX_LATE_HOURS) || 48) * HOUR;
   const save = () => writeFile(queuePath, JSON.stringify(queue, null, 2) + '\n');
   // ожидание обработки видео: до ~5 минут на пост (3 поста × 5 мин укладываются в лимит задания)
-  const ctx = { api, threads, igId, fetchFn, sleep, log, site: env.SITE_URL || SITE, pollMs: Number(env.POLL_MS) || 5000, maxPolls: Number(env.MAX_POLLS) || 60 };
+  const ctx = { api, threads, igId, fetchFn, sleep, log, repoRoot: env.REPO_ROOT || path.join(path.dirname(fileURLToPath(import.meta.url)), '..'), site: env.SITE_URL || SITE, pollMs: Number(env.POLL_MS) || 5000, maxPolls: Number(env.MAX_POLLS) || 60 };
 
   if (mode === 'publish') { // токены «входа через Instagram» живут 60 дней: продлеваем при каждой публикации
     for (const a of Object.values(accounts).filter(x => x.igLogin && x.api)) {
@@ -444,7 +537,8 @@ export async function main({
     const sfx = item.account && item.account !== 'main' ? '_' + item.account.toUpperCase() : '';
     const missing = !acc ? `аккаунт «${item.account}» не подключён (нет секретов с суффиксом ${sfx})`
       : item.platform === 'threads' && !acc.threads ? `секрет THREADS_ACCESS_TOKEN${sfx} не задан, записи для Threads ждут`
-      : item.platform !== 'threads' && !acc.igId ? `секрет INSTAGRAM_ACCOUNT_ID${sfx} не задан, записи для Instagram ждут` : null;
+      : item.platform === 'youtube' && !acc.yt ? `секреты YouTube (YOUTUBE_REFRESH_TOKEN${sfx}) не заданы, записи для YouTube ждут`
+      : item.platform === 'instagram' && !acc.igId ? `секрет INSTAGRAM_ACCOUNT_ID${sfx} не задан, записи для Instagram ждут` : null;
     if (missing) {
       summary.skipped.push(item.id);
       if (!saidMissing.has(missing)) log(`⏳ ${item.id}: ${missing}`);
@@ -454,14 +548,15 @@ export async function main({
     if (done >= maxPerRun) { summary.waiting.push(item.id); continue; }
 
     if (mode === 'dry-run') {
-      log(`🔎 вышло бы: ${item.id} (${item.platform === 'threads' ? 'Threads, ' : ''}${item.type}) → ${(await checkFiles(item, ctx)).text}`);
+      log(`🔎 вышло бы: ${item.id} (${item.platform === 'threads' ? 'Threads, ' : item.platform === 'youtube' ? 'YouTube, ' : ''}${item.type}) → ${(await checkFiles(item, ctx)).text}`);
       done++;
       continue;
     }
 
     try {
-      const ictx = { ...ctx, api: acc.api, igId: acc.igId, threads: acc.threads };
-      const r = await (item.platform === 'threads' ? publishThreads(item, ictx) : publishOne(item, ictx));
+      const ictx = { ...ctx, api: acc.api, igId: acc.igId, threads: acc.threads, yt: acc.yt };
+      const r = await (item.platform === 'threads' ? publishThreads(item, ictx) : item.platform === 'youtube' ? publishYouTube(item, ictx) : publishOne(item, ictx));
+      if (r.note) { item.note = r.note; log(`⚠️  ${item.id}: ${r.note}`); }
       if (r.skipped) { summary.skipped.push(item.id); log(`⏳ ${item.id}: ${r.skipped}`); continue; }
       item.status = 'published';
       item.media_id = r.media_id;

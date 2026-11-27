@@ -39,6 +39,11 @@ jobs:
           INSTAGRAM_ACCOUNT_ID_EN: ${{ secrets.INSTAGRAM_ACCOUNT_ID_EN }}
           INSTAGRAM_ACCESS_TOKEN_EN: ${{ secrets.INSTAGRAM_ACCESS_TOKEN_EN }}
           THREADS_ACCESS_TOKEN_EN: ${{ secrets.THREADS_ACCESS_TOKEN_EN }}
+          # YouTube Shorts (platform: youtube); без секретов эти записи ждут
+          YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
+          YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
+          YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
+          YOUTUBE_REFRESH_TOKEN_EN: ${{ secrets.YOUTUBE_REFRESH_TOKEN_EN }}
           MODE: ${{ inputs.mode || (github.event_name == 'push' && 'check') || 'publish' }}
         run: node social-bot/publish.mjs "$MODE"
       - name: Сохранить статусы очереди

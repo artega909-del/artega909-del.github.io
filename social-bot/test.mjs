@@ -16,11 +16,14 @@ function fakeFetch(handler, calls = []) {
   return async (url, init = {}) => {
     const method = init.method || 'GET';
     const u = new URL(url);
-    const params = Object.fromEntries(method === 'GET' ? u.searchParams : new URLSearchParams(init.body));
+    const b = init.body;
+    const params = method === 'GET' || method === 'HEAD' ? Object.fromEntries(u.searchParams)
+      : b instanceof URLSearchParams ? Object.fromEntries(b) : typeof b === 'string' ? (b.startsWith('{') ? JSON.parse(b) : Object.fromEntries(new URLSearchParams(b))) : { bytes: b ? b.length : 0 };
+    if (init.headers) params.__headers = init.headers;
     calls.push({ method, url: u.origin + u.pathname, params });
     const r = handler(method, u, params) || { status: 404, json: { error: { message: 'unhandled' } } };
     if (method === 'HEAD') return new Response(null, { status: r.status });
-    return new Response(JSON.stringify(r.json ?? {}), { status: r.status });
+    return new Response(JSON.stringify(r.json ?? {}), { status: r.status, headers: r.headers || {} });
   };
 }
 const post = (over = {}) => ({ id: 'p1', brand: 'salam', platform: 'instagram', type: 'REELS', media: 'assets/demo clip.mp4', caption: 'Привет #ai', publish_at: '2026-12-01T09:00:00Z', status: 'scheduled', ...over });
@@ -542,5 +545,63 @@ console.log('ok 27 карусель с видео-обложкой');
   assert.deepEqual(r2.s.failed, ['t1']); assert.equal(n2, 1);
 }
 console.log('ok 28 Threads: повтор публикации, если контейнер ещё не виден');
+
+// 29. YouTube Shorts: вход по refresh token, загрузка с метаданными, отметка ИИ, защита от повтора, ключи не в логах
+{
+  const RT = 'RT-SECRET-yt', CS = 'CS-SECRET-yt', AT = 'AT-access-yt';
+  const yEnv = { YOUTUBE_CLIENT_ID: 'cid', YOUTUBE_CLIENT_SECRET: CS, YOUTUBE_REFRESH_TOKEN: RT };
+  const mk = (o = {}) => (m, u, p) => {
+    if (m === 'HEAD') return { status: 200 };
+    if (u.host === 'artega909-del.github.io' && m === 'GET') return { status: 200, json: {} };
+    if (u.host === 'oauth2.googleapis.com') return o.badToken ? { status: 400, json: { error: 'invalid_grant', error_description: 'Token has been expired or revoked.' } } : { status: 200, json: { access_token: AT, expires_in: 3599 } };
+    if (u.pathname === '/youtube/v3/channels') return { status: 200, json: { items: [{ snippet: { title: 'Salam Motion' }, contentDetails: { relatedPlaylists: { uploads: 'UU1' } } }] } };
+    if (u.pathname === '/youtube/v3/playlistItems') return { status: 200, json: { items: o.recent || [] } };
+    if (u.pathname === '/upload/youtube/v3/videos' && m === 'POST') return { status: 200, json: {}, headers: { location: 'https://www.googleapis.com/upload/youtube/v3/videos?upload_id=U1' } };
+    if (u.pathname === '/upload/youtube/v3/videos' && m === 'PUT') return { status: 200, json: { id: 'VID1', status: { privacyStatus: o.forced || 'public' } } };
+    return okInstagram()(m, u, p);
+  };
+  const sh = (over = {}) => ({ id: 'y1', brand: 'salam', platform: 'youtube', type: 'SHORT', media: 'assets/demo clip.mp4', title: 'One phrase → a flower shop ad', caption: 'Made from one phrase. #shorts', tags: ['ai video'], publish_at: '2026-12-01T09:00:00Z', status: 'scheduled', ...over });
+  assert.deepEqual(validate(sh()), []);
+  assert.ok(validate(sh({ title: '' })).some(e => /title/.test(e)));
+  assert.ok(validate(sh({ media: 'assets/a.jpg' })).some(e => /mp4/.test(e)));
+  assert.ok(validate(sh({ type: 'REELS' })).some(e => /SHORT/.test(e)));
+  const calls = [];
+  const q = await writeQueue([sh()]);
+  const { s: r, logs } = await run('publish', q, fakeFetch(mk(), calls), yEnv);
+  assert.deepEqual(r.published, ['y1']);
+  const tok = calls.find(c => c.url === 'https://oauth2.googleapis.com/token');
+  assert.deepEqual([tok.params.grant_type, tok.params.refresh_token], ['refresh_token', RT]);
+  const init = calls.find(c => c.method === 'POST' && c.url.endsWith('/upload/youtube/v3/videos'));
+  assert.equal(init.params.snippet.title, 'One phrase → a flower shop ad'); assert.equal(init.params.status.privacyStatus, 'public');
+  assert.equal(init.params.status.containsSyntheticMedia, true); assert.equal(init.params.status.selfDeclaredMadeForKids, false);
+  assert.equal(init.params.__headers.authorization, 'Bearer ' + AT);
+  assert.ok(calls.find(c => c.method === 'PUT').params.bytes > 0, 'файл загружается');
+  const saved = (await readPosts(q))[0];
+  assert.deepEqual([saved.status, saved.permalink], ['published', 'https://www.youtube.com/shorts/VID1']);
+  assert.ok(![RT, CS, AT].some(x => logs.join('\n').includes(x) || JSON.stringify(saved).includes(x)));
+  // YouTube сделал видео приватным → пометка в записи
+  const q2 = await writeQueue([sh()], 'q2.json');
+  await run('publish', q2, fakeFetch(mk({ forced: 'private' })), yEnv);
+  assert.match((await readPosts(q2))[0].note, /private/);
+  // повтор: видео с таким названием уже есть — не загружаем
+  const calls3 = [];
+  const r3 = await run('publish', await writeQueue([sh()], 'q3.json'), fakeFetch(mk({ recent: [{ snippet: { title: 'One phrase → a flower shop ad', resourceId: { videoId: 'OLD' } } }] }), calls3), yEnv);
+  assert.deepEqual(r3.s.duplicates, ['y1']); assert.ok(!calls3.some(c => c.url.includes('/upload/')));
+  // ключ отозван — ошибка понятная, секреты скрыты
+  const q4 = await writeQueue([sh()], 'q4.json');
+  const r4 = await run('publish', q4, fakeFetch(mk({ badToken: true })), yEnv);
+  assert.deepEqual(r4.s.failed, ['y1']); const err = (await readPosts(q4))[0].error;
+  assert.match(err, /expired or revoked/); assert.ok(![RT, CS].some(x => err.includes(x)));
+  // без секретов — ждёт; второй аккаунт берёт YOUTUBE_REFRESH_TOKEN_EN
+  const r5 = await run('publish', await writeQueue([sh()], 'q5.json'), fakeFetch(mk()));
+  assert.deepEqual(r5.s.skipped, ['y1']); assert.match(r5.logs.join('\n'), /YOUTUBE_REFRESH_TOKEN\) не заданы/);
+  const calls6 = [];
+  const r6 = await run('publish', await writeQueue([sh({ account: 'en' })], 'q6.json'), fakeFetch(mk(), calls6), { YOUTUBE_CLIENT_ID: 'cid', YOUTUBE_CLIENT_SECRET: CS, YOUTUBE_REFRESH_TOKEN_EN: 'RT-EN' });
+  assert.deepEqual(r6.s.published, ['y1']); assert.equal(calls6.find(c => c.url.includes('oauth2')).params.refresh_token, 'RT-EN');
+  // check показывает канал
+  const r7 = await run('check', await writeQueue([]), fakeFetch(mk()), yEnv);
+  assert.equal(r7.s.youtube.main, 'Salam Motion');
+}
+console.log('ok 29 YouTube Shorts');
 
 console.log('\nВсе проверки пройдены');
