@@ -2040,8 +2040,11 @@
       "media": "assets/salam-reels-phrase-lemonade-en.mp4",
       "caption": "One phrase → script → a lemonade ad 🍋\nI typed: “I need a product video of an iced berry lemonade assembling itself in mid-air.”\nAI turned it into a second-by-second script — shots, camera, light — and then into the video. That's the idea behind Salam Motion.\n\nWant one for your business? Comment AD and I’ll show you how.\nInterface shown schematically. Script and video made with AI.\n\n#aivideo #aiads #smallbusiness #videomarketing #salammotion #beverage",
       "publish_at": "2026-11-28T17:10:00Z",
-      "status": "scheduled",
-      "cover_ms": 1500
+      "status": "published",
+      "cover_ms": 1500,
+      "media_id": "18001283204830153",
+      "permalink": "https://www.instagram.com/reel/DgSx2IBJvkf/",
+      "published_at": "2026-11-28T17:21:46.760Z"
     },
     {
       "id": "en-th-s-pod-lemonade",
@@ -2051,8 +2054,11 @@
       "type": "VIDEO",
       "caption": "One phrase → script → a lemonade ad 🍋\n\nI typed: “I need a product video of an iced berry lemonade assembling itself in mid-air.”\nAI wrote the script by the second and made the video. That's the idea behind Salam Motion.\n\nWant one? Reply AD.\nInterface shown schematically.",
       "publish_at": "2026-11-28T17:12:00Z",
-      "status": "scheduled",
-      "media": "assets/salam-reels-phrase-lemonade-en.mp4"
+      "status": "published",
+      "media": "assets/salam-reels-phrase-lemonade-en.mp4",
+      "media_id": "18037715918671470",
+      "permalink": "https://www.threads.com/@artega.videodesigner/post/DgSx7FPKuZy",
+      "published_at": "2026-11-28T17:22:24.479Z"
     },
     {
       "id": "en-ig-s-size-first",
