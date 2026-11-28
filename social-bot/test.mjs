@@ -630,7 +630,7 @@ console.log('ok 29 YouTube Shorts');
     { id: 'V1', title: 'Реклама шоколада из одной фразы', description: 'Описание', tags: ['ии'], thumbnail: 'th.jpg' },
     { id: 'V2', title: 'x'.repeat(101) },
     { id: 'NO', title: 'нет такого' },
-    { idHash: idHash('V2'), title: 'По отпечатку' },
+    { idHash: idHash('V2'), title: 'По отпечатку', ai: true },
     { idHash: '0000000000000000', title: 'чужое' },
     { id: 'V2', account: 'en', title: 'чужой аккаунт' }]));
   const calls = [];
@@ -638,7 +638,8 @@ console.log('ok 29 YouTube Shorts');
   process.exitCode = 0;
   assert.deepEqual(done, ['V1', idHash('V2')]);
   const put = calls.find(c => c.method === 'PUT');
-  assert.equal(calls.filter(c => c.method === 'PUT')[1].params.id, 'V2');
+  const put2 = calls.filter(c => c.method === 'PUT')[1].params;
+  assert.equal(put2.id, 'V2'); assert.deepEqual(put2.status, { privacyStatus: 'public', selfDeclaredMadeForKids: false, containsSyntheticMedia: true });
   assert.equal(put.params.snippet.title, 'Реклама шоколада из одной фразы'); assert.equal(put.params.snippet.categoryId, '22');
   assert.ok(calls.some(c => c.url.endsWith('/thumbnails/set')), 'превью загружено');
   const saved = JSON.parse(await readFile(ef, 'utf8'));
