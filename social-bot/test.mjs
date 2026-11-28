@@ -657,4 +657,52 @@ console.log('ok 29 YouTube Shorts');
 }
 console.log('ok 30 оформление видео YouTube');
 
+// 31. TikTok: черновик во «Входящие», ключ обновления меняется и сохраняется зашифрованным, без подключения — ждёт
+{
+  const { seal, unseal, chunksFor, tokenFile, auth } = await import('./tiktok.mjs');
+  const { mkdir } = await import('node:fs/promises');
+  const root = path.join(dir, 'ttroot'); await mkdir(path.join(root, 'social-bot'), { recursive: true }); await mkdir(path.join(root, 'assets'), { recursive: true });
+  await writeFile(path.join(root, 'assets', 'v.mp4'), Buffer.alloc(1234, 7));
+  const SEC = 'tt-client-SECRET-xyz', tEnv = { TIKTOK_CLIENT_KEY: 'ck', TIKTOK_CLIENT_SECRET: SEC, REPO_ROOT: root };
+  // шифрование: без секрета не читается
+  const box = seal({ a: 1 }, SEC); assert.deepEqual(unseal(box, SEC), { a: 1 }); assert.throws(() => unseal(box, 'other'));
+  assert.ok(!JSON.stringify(box).includes('"a"'));
+  assert.deepEqual(chunksFor(30e6), { chunk: 30e6, count: 1 }); assert.deepEqual(chunksFor(100 * 1048576 + 5), { chunk: 10485760, count: 10 });
+  // подключение по коду
+  let n = 0; const st = { polls: 0 };
+  const h = (method, u, p) => {
+    if (u.pathname === '/v2/oauth/token/') { n++; return p.grant_type === 'authorization_code' && p.redirect_uri.endsWith('/tiktok-callback.html')
+      ? { status: 200, json: { access_token: 'act.A1', expires_in: 7200, refresh_token: 'rft.R1', refresh_expires_in: 15552000, open_id: 'o1', scope: 'user.info.basic,video.upload' } }
+      : p.grant_type === 'refresh_token' && p.refresh_token === 'rft.R1' ? { status: 200, json: { access_token: 'act.A2', expires_in: 7200, refresh_token: 'rft.R2', refresh_expires_in: 15000000, open_id: 'o1', scope: 'video.upload' } }
+      : { status: 400, json: { error: 'invalid_grant', error_description: 'bad refresh' } }; }
+    if (u.pathname === '/v2/user/info/') return { status: 200, json: { data: { user: { display_name: 'Salam' } }, error: { code: 'ok' } } };
+    if (u.pathname === '/v2/post/publish/inbox/video/init/') return { status: 200, json: { data: { publish_id: 'v_inbox_file~1', upload_url: 'https://open-upload.tiktokapis.com/video/?upload_id=1' }, error: { code: 'ok' } } };
+    if (u.hostname === 'open-upload.tiktokapis.com') return { status: 201, json: {} };
+    if (u.pathname === '/v2/post/publish/status/fetch/') return { status: 200, json: { data: { status: ++st.polls < 2 ? 'PROCESSING_UPLOAD' : 'SEND_TO_USER_INBOX' }, error: { code: 'ok' } } };
+  };
+  const alogs = [];
+  await auth({ env: { ...tEnv, TIKTOK_CODE: 'CODE%2A1' }, fetchFn: fakeFetch(h), root, log: s => alogs.push(s) });
+  assert.match(alogs.join('\n'), /подключён: Salam/);
+  const raw = await readFile(tokenFile('main', root), 'utf8'); assert.ok(!raw.includes('rft.R1') && !raw.includes('act.A1'), 'токены только в зашифрованном виде');
+  // запись без подключения EN — ждёт; основная — публикуется
+  const tk = (o = {}) => ({ id: 't1', platform: 'tiktok', type: 'DRAFT', media: 'assets/v.mp4', caption: 'Подпись #ai', publish_at: new Date(Date.now() - 3600e3).toISOString(), status: 'scheduled', ...o });
+  const calls = [];
+  const q = await writeQueue([tk(), tk({ id: 't2', account: 'en' })], 'qt.json');
+  const later = { ...tEnv }; // через 3 часа доступ истёк — бот обновляет и сохраняет новый ключ
+  const r = await (async () => { const logs = []; const s = await main({ mode: 'publish', env: { ...env, ...later }, fetchFn: fakeFetch(h, calls), now: () => Date.now() + 3 * 3600e3, sleep: async () => {}, queuePath: q, log: x => logs.push(x) }); return { s, logs }; })();
+  assert.deepEqual(r.s.published, ['t1']); assert.ok(!r.s.published.includes('t2'));
+  const saved = await readPosts(q); assert.equal(saved[0].media_id, 'v_inbox_file~1'); assert.match(saved[0].note, /Входящих/); assert.equal(saved[1].status, 'scheduled');
+  const put = calls.find(c => c.method === 'PUT'); assert.equal(put.params.__headers['content-range'], 'bytes 0-1233/1234');
+  assert.equal(calls.find(c => c.url.endsWith('/inbox/video/init/')).params.source_info.video_size, 1234);
+  const st2 = unseal(JSON.parse(await readFile(tokenFile('main', root), 'utf8')), SEC); assert.equal(st2.refresh_token, 'rft.R2', 'новый ключ обновления сохранён');
+  assert.ok(!r.logs.join('\n').match(/rft\.|act\.A|tt-client-SECRET/));
+  // проверка (check) не обновляет токен и показывает срок
+  const before = await readFile(tokenFile('main', root), 'utf8'); const c2 = [];
+  const r2 = await run('check', await writeQueue([]), fakeFetch((m, u, p) => h(m, u, p) || okInstagram()(m, u, p), c2), tEnv);
+  assert.equal(typeof r2.s.tiktok.main, 'number'); assert.ok(!c2.some(c => c.url.endsWith('/oauth/token/'))); assert.equal(await readFile(tokenFile('main', root), 'utf8'), before);
+  // проверка записей
+  assert.ok(validate(tk({ type: 'REELS' })).some(e => /DRAFT/.test(e))); assert.ok(validate(tk({ media: 'a.jpg' })).length); assert.deepEqual(validate(tk()), []);
+}
+console.log('ok 31 TikTok');
+
 console.log('\nВсе проверки пройдены');

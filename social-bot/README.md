@@ -144,3 +144,22 @@ Workflow «YouTube — оформление загруженных видео» 
   доступ). Применённые записи получают отметку `applied` и повторно не трогаются.
 
 Для `apply` нужен refresh token с доступом `youtube.force-ssl` (для загрузки Shorts — ещё `youtube.upload`).
+
+## TikTok (черновики во «Входящие»)
+
+Пока приложение не прошло аудит TikTok, публиковать сразу в открытый доступ нельзя, поэтому бот отправляет ролик
+черновиком: автору приходит уведомление в TikTok, он вставляет подпись (поле `caption` записи), при желании добавляет
+звук и публикует. Запись: `"platform": "tiktok", "type": "DRAFT", "media": "assets/….mp4"`.
+
+Подключение:
+1. developers.tiktok.com → Manage apps → создать приложение (Web). Terms of Service URL — `https://artega909-del.github.io/terms.html`,
+   Privacy Policy URL — `https://artega909-del.github.io/privacy.html`.
+2. Добавить продукты Login Kit (Redirect URI `https://artega909-del.github.io/tiktok-callback.html`) и Content Posting API
+   (без Direct Post), права `user.info.basic` и `video.upload`.
+3. В GitHub Secrets: `TIKTOK_CLIENT_KEY` и `TIKTOK_CLIENT_SECRET` (раздел Credentials приложения).
+4. Открыть `tiktok-callback.html`, ввести client key, войти в TikTok, скопировать код и запустить workflow
+   «TikTok — подключение» с этим кодом.
+
+Ключ обновления TikTok живёт 180 дней и меняется при каждом обновлении, поэтому хранится не в секретах, а в
+`social-bot/tiktok-token.json` (для en — `tiktok-token-en.json`) в зашифрованном виде; бот сам перезаписывает файл.
+Если сменить `TIKTOK_CLIENT_SECRET`, файл перестанет читаться — подключите TikTok заново.
