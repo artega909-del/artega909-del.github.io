@@ -62,7 +62,7 @@ export async function report({ account = 'main', env = process.env, fetchFn = fe
 }
 
 // yt-edits.json: [{ "account": "main", "id": "<videoId>", "title": "...", "description": "...", "tags": [...],
-//   "categoryId": "22", "defaultLanguage": "ru", "thumbnail": "assets/...jpg", "privacy": "public" }]
+//   "categoryId": "22", "defaultLanguage": "ru", "thumbnail": "assets/...jpg", "privacy": "public", "ai": true }]
 // Видео с доступом по ссылке и приватные указываются не ссылкой, а отпечатком: "idHash" — первые 16 знаков
 // sha256 от ID видео (репозиторий публичный). Бот сам находит такое видео среди загрузок канала.
 export const idHash = id => createHash('sha256').update(id).digest('hex').slice(0, 16);
@@ -108,7 +108,11 @@ export async function apply({ account = 'main', env = process.env, fetchFn = fet
       Object.keys(snippet).forEach(k => snippet[k] === undefined && delete snippet[k]);
       const body = { id: vid, snippet };
       let parts = 'snippet';
-      if (e.privacy) { body.status = { privacyStatus: e.privacy, selfDeclaredMadeForKids: v.status.selfDeclaredMadeForKids ?? false }; parts += ',status'; }
+      if (e.privacy || e.ai !== undefined) { // "ai": true — отметка YouTube «изменённый или синтетический контент»
+        body.status = { privacyStatus: e.privacy || v.status.privacyStatus, selfDeclaredMadeForKids: v.status.selfDeclaredMadeForKids ?? false };
+        if (e.ai !== undefined) body.status.containsSyntheticMedia = !!e.ai;
+        parts += ',status';
+      }
       await yt.json(await fetchFn('https://www.googleapis.com/youtube/v3/videos?part=' + parts, {
         method: 'PUT', headers: { authorization: 'Bearer ' + token, 'content-type': 'application/json' }, body: JSON.stringify(body) }), 'правка видео');
       if (e.thumbnail) {
