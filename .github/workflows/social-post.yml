@@ -44,6 +44,9 @@ jobs:
           YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
           YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
           YOUTUBE_REFRESH_TOKEN_EN: ${{ secrets.YOUTUBE_REFRESH_TOKEN_EN }}
+          # TikTok (platform: tiktok) — черновики во «Входящие»; токены лежат зашифрованными в social-bot/tiktok-token*.json
+          TIKTOK_CLIENT_KEY: ${{ secrets.TIKTOK_CLIENT_KEY }}
+          TIKTOK_CLIENT_SECRET: ${{ secrets.TIKTOK_CLIENT_SECRET }}
           MODE: ${{ inputs.mode || (github.event_name == 'push' && 'check') || 'publish' }}
         run: node social-bot/publish.mjs "$MODE"
       - name: Сохранить статусы очереди
@@ -52,6 +55,7 @@ jobs:
           git config user.name "social-bot"
           git config user.email "social-bot@users.noreply.github.com"
           git add social-bot/queue.json
+          git add social-bot/tiktok-token*.json 2>/dev/null || true # TikTok меняет ключ обновления при каждом обновлении
           git diff --cached --quiet && exit 0
           git commit -m "social-bot: обновление статусов очереди"
           # если очередь правили во время запуска — подтягиваем изменения и пробуем ещё раз

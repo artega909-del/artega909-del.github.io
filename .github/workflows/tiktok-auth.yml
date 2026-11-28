@@ -1,0 +1,50 @@
+name: TikTok — подключение
+
+# Код берётся со страницы https://artega909-del.github.io/tiktok-callback.html после входа в TikTok.
+# Бот обменивает его на токены и сохраняет их в репозиторий в зашифрованном виде (ключ — секрет TIKTOK_CLIENT_SECRET).
+on:
+  workflow_dispatch:
+    inputs:
+      code:
+        description: 'Код со страницы подключения TikTok (действует несколько минут)'
+        required: true
+        type: string
+      account:
+        description: 'main — Salam Motion, en — Artega'
+        type: choice
+        options: [main, en]
+        default: main
+
+permissions:
+  contents: write
+
+concurrency:
+  group: social-post
+  cancel-in-progress: false
+
+jobs:
+  auth:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Обмен кода на токены
+        env:
+          TIKTOK_CLIENT_KEY: ${{ secrets.TIKTOK_CLIENT_KEY }}
+          TIKTOK_CLIENT_SECRET: ${{ secrets.TIKTOK_CLIENT_SECRET }}
+          TIKTOK_CODE: ${{ inputs.code }}
+        run: |
+          echo "::add-mask::$TIKTOK_CODE"
+          node social-bot/tiktok.mjs auth "${{ inputs.account }}"
+      - name: Сохранить зашифрованный токен
+        run: |
+          git config user.name "social-bot"
+          git config user.email "social-bot@users.noreply.github.com"
+          git add social-bot/tiktok-token*.json
+          git diff --cached --quiet && exit 0
+          git commit -q -m "social-bot: TikTok подключён (${{ inputs.account }}), токен зашифрован"
+          for i in 1 2 3; do git pull --rebase -q origin "$GITHUB_REF_NAME" && git push -q && exit 0; sleep $((i * 5)); done
+          echo "::error::Не удалось сохранить токен — подключите TikTok ещё раз"; exit 1

@@ -11,10 +11,14 @@
 // и при необходимости INSTAGRAM_ACCESS_TOKEN_EN (иначе берётся основной токен системного пользователя).
 // Токен «входа через Instagram» (начинается с IG) работает через graph.instagram.com и живёт 60 дней — бот его продлевает.
 // YouTube Shorts (platform: youtube): YOUTUBE_CLIENT_ID, YOUTUBE_CLIENT_SECRET и YOUTUBE_REFRESH_TOKEN (для en — YOUTUBE_REFRESH_TOKEN_EN).
+// TikTok (platform: tiktok, type DRAFT — черновик во «Входящие»): TIKTOK_CLIENT_KEY, TIKTOK_CLIENT_SECRET и зашифрованный
+// файл токена social-bot/tiktok-token[-en].json (создаётся workflow «TikTok — подключение», см. tiktok.mjs).
 // Токены не печатаются в логах и не попадают в файлы.
 import { readFile, writeFile } from 'node:fs/promises';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import path from 'node:path';
+import { existsSync } from 'node:fs';
+import { ttClient, publishTikTok, validateTikTok, tokenFile } from './tiktok.mjs';
 
 const SITE = 'https://artega909-del.github.io';
 const DEFAULT_QUEUE = path.join(path.dirname(fileURLToPath(import.meta.url)), 'queue.json');
@@ -48,6 +52,7 @@ export function validate(item) {
   if (!item.id) errs.push('нет id');
   const threads = item.platform === 'threads';
   if (item.platform === 'youtube') return validateYouTube(item, errs);
+  if (item.platform === 'tiktok') return validateTikTok(item, errs);
   if (item.platform !== 'instagram' && !threads) errs.push(`платформа «${item.platform}» пока не поддерживается`);
   const types = threads ? ['TEXT', 'IMAGE', 'VIDEO', 'CAROUSEL'] : ['REELS', 'IMAGE', 'CAROUSEL', 'STORY'];
   if (!types.includes(item.type)) errs.push(`type должен быть ${types.slice(0, -1).join(', ')} или ${types.at(-1)}${threads ? ' (для Threads)' : ''}`);
@@ -390,22 +395,25 @@ export async function main({
     const id = (env['YOUTUBE_CLIENT_ID' + sfx] || env.YOUTUBE_CLIENT_ID || '').trim(), sec = (env['YOUTUBE_CLIENT_SECRET' + sfx] || env.YOUTUBE_CLIENT_SECRET || '').trim();
     return rt && id && sec ? ytClient({ fetchFn, clientId: id, clientSecret: sec, refreshToken: rt }) : null;
   };
-  const accounts = { main: { name: 'main', label: 'основной', api, igId, threads, yt: ytFor(''), sfx: '' } };
+  const repoRoot = env.REPO_ROOT || path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
+  const ttKey = (env.TIKTOK_CLIENT_KEY || '').trim(), ttSecret = (env.TIKTOK_CLIENT_SECRET || '').trim();
+  const ttFor = name => (ttKey && ttSecret && existsSync(tokenFile(name, repoRoot)) ? ttClient({ fetchFn, clientKey: ttKey, clientSecret: ttSecret, file: tokenFile(name, repoRoot), now }) : null);
+  const accounts = { main: { name: 'main', label: 'основной', api, igId, threads, yt: ytFor(''), tt: ttFor('main'), sfx: '' } };
   for (const name of ['en']) {
     const sfx = '_' + name.toUpperCase();
     const id = (env['INSTAGRAM_ACCOUNT_ID' + sfx] || '').trim();
     const thT = (env['THREADS_ACCESS_TOKEN' + sfx] || '').trim();
-    const ytAcc = ytFor(sfx);
-    if (!id && !thT && !ytAcc) continue;
+    const ytAcc = ytFor(sfx), ttAcc = ttFor(name);
+    if (!id && !thT && !ytAcc && !ttAcc) continue;
     if (id && !/^\d{4,20}$/.test(id)) { // ошибка в секретах второго аккаунта не должна останавливать основной
       log(`⚠️  INSTAGRAM_ACCOUNT_ID${sfx} должен состоять только из цифр, а в секрете ${id.length} символов — аккаунт ${name.toUpperCase()} пропускаю. ` +
         (id.length > 40 ? 'Похоже, туда попал маркер: маркер кладут в INSTAGRAM_ACCESS_TOKEN' + sfx + ', а сюда — ID аккаунта.' : ''));
       continue;
     }
     const igT = (env['INSTAGRAM_ACCESS_TOKEN' + sfx] || '').trim() || token;
-    accounts[name] = { name, label: name.toUpperCase(), api: id ? (igT === token ? api : igClient(igT)) : null, igId: id || null, threads: thClient(thT), yt: ytAcc, sfx, igLogin: /^IG/.test(igT) };
+    accounts[name] = { name, label: name.toUpperCase(), api: id ? (igT === token ? api : igClient(igT)) : null, igId: id || null, threads: thClient(thT), yt: ytAcc, tt: ttAcc, sfx, igLogin: /^IG/.test(igT) };
   }
-  const clients = Object.values(accounts).flatMap(a => [a.api, a.threads, a.yt]).filter(Boolean);
+  const clients = Object.values(accounts).flatMap(a => [a.api, a.threads, a.yt, a.tt]).filter(Boolean);
   const redact = s => clients.reduce((t, a) => a.redact(t), s);
   const summary = { published: [], failed: [], missed: [], waiting: [], skipped: [] };
 
@@ -487,7 +495,16 @@ export async function main({
           `секрет ${sec.startsWith('GOCSPX-') ? 'начинается с GOCSPX-' : 'НЕ начинается с GOCSPX-'}, ${sec.length} символов${/["'\s]/.test(sec) ? ', есть кавычки или пробелы внутри' : ''}; ` +
           `refresh token ${rt.startsWith('1//') ? 'начинается с 1//' : 'НЕ начинается с 1//'}, ${rt.length} символов`); log('Что проверить: включён YouTube Data API v3; ключ выдан с правами youtube.upload и youtube.readonly; экран согласия в рабочем режиме (в тестовом ключ живёт 7 дней).'); }
     }
-    return { ok: true, username: acc.username, threadsUsername, extra, youtube, ...summary };
+    const tiktok = {};
+    for (const a of Object.values(accounts)) { // TikTok: только срок ключа, без обновления (check не сохраняет файлы)
+      if (!a.tt) { log(`TikTok (${a.label}): ${ttKey && ttSecret ? 'не подключён (нет файла токена)' : 'секреты TIKTOK_CLIENT_KEY и TIKTOK_CLIENT_SECRET не заданы'} — черновики выключены`); continue; }
+      try {
+        const st = await a.tt.load(); const d = Math.floor((st.refresh_expires_at - now()) / DAY);
+        tiktok[a.name] = d;
+        log(`TikTok (${a.label}): подключён, ключ обновления действует ещё ${d} дн.${d < 14 ? ' — скоро нужно подключить заново' : ''}`);
+      } catch (e) { log(`❌ TikTok (${a.label}): ${a.tt.redact(e.message)}`); }
+    }
+    return { ok: true, username: acc.username, threadsUsername, extra, youtube, tiktok, ...summary };
   }
 
   const queue = JSON.parse(await readFile(queuePath, 'utf8'));
@@ -496,7 +513,7 @@ export async function main({
   const maxLate = (Number(env.MAX_LATE_HOURS) || 48) * HOUR;
   const save = () => writeFile(queuePath, JSON.stringify(queue, null, 2) + '\n');
   // ожидание обработки видео: до ~5 минут на пост (3 поста × 5 мин укладываются в лимит задания)
-  const ctx = { api, threads, igId, fetchFn, sleep, log, repoRoot: env.REPO_ROOT || path.join(path.dirname(fileURLToPath(import.meta.url)), '..'), site: env.SITE_URL || SITE, pollMs: Number(env.POLL_MS) || 5000, maxPolls: Number(env.MAX_POLLS) || 60 };
+  const ctx = { api, threads, igId, fetchFn, sleep, log, repoRoot, site: env.SITE_URL || SITE, pollMs: Number(env.POLL_MS) || 5000, maxPolls: Number(env.MAX_POLLS) || 60 };
 
   if (mode === 'publish') { // токены «входа через Instagram» живут 60 дней: продлеваем при каждой публикации
     for (const a of Object.values(accounts).filter(x => x.igLogin && x.api)) {
@@ -545,6 +562,7 @@ export async function main({
     const missing = !acc ? `аккаунт «${item.account}» не подключён (нет секретов с суффиксом ${sfx})`
       : item.platform === 'threads' && !acc.threads ? `секрет THREADS_ACCESS_TOKEN${sfx} не задан, записи для Threads ждут`
       : item.platform === 'youtube' && !acc.yt ? `секреты YouTube (YOUTUBE_REFRESH_TOKEN${sfx}) не заданы, записи для YouTube ждут`
+      : item.platform === 'tiktok' && !acc.tt ? `TikTok${sfx ? ' ' + sfx.slice(1) : ''} не подключён (секреты TIKTOK_CLIENT_KEY/TIKTOK_CLIENT_SECRET и файл токена), записи для TikTok ждут`
       : item.platform === 'instagram' && !acc.igId ? `секрет INSTAGRAM_ACCOUNT_ID${sfx} не задан, записи для Instagram ждут` : null;
     if (missing) {
       summary.skipped.push(item.id);
@@ -555,14 +573,15 @@ export async function main({
     if (done >= maxPerRun) { summary.waiting.push(item.id); continue; }
 
     if (mode === 'dry-run') {
-      log(`🔎 вышло бы: ${item.id} (${item.platform === 'threads' ? 'Threads, ' : item.platform === 'youtube' ? 'YouTube, ' : ''}${item.type}) → ${(await checkFiles(item, ctx)).text}`);
+      log(`🔎 вышло бы: ${item.id} (${item.platform === 'threads' ? 'Threads, ' : item.platform === 'youtube' ? 'YouTube, ' : item.platform === 'tiktok' ? 'TikTok, ' : ''}${item.type}) → ${(await checkFiles(item, ctx)).text}`);
       done++;
       continue;
     }
 
     try {
-      const ictx = { ...ctx, api: acc.api, igId: acc.igId, threads: acc.threads, yt: acc.yt };
-      const r = await (item.platform === 'threads' ? publishThreads(item, ictx) : item.platform === 'youtube' ? publishYouTube(item, ictx) : publishOne(item, ictx));
+      const ictx = { ...ctx, api: acc.api, igId: acc.igId, threads: acc.threads, yt: acc.yt, tt: acc.tt };
+      const r = await (item.platform === 'threads' ? publishThreads(item, ictx) : item.platform === 'youtube' ? publishYouTube(item, ictx)
+        : item.platform === 'tiktok' ? publishTikTok(item, ictx) : publishOne(item, ictx));
       if (r.note) { item.note = r.note; log(`⚠️  ${item.id}: ${r.note}`); }
       if (r.skipped) { summary.skipped.push(item.id); log(`⏳ ${item.id}: ${r.skipped}`); continue; }
       item.status = 'published';
