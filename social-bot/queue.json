@@ -912,7 +912,10 @@
       "media": "assets/social/stories/1128-am-sovet-par.jpg",
       "caption": "",
       "publish_at": "2026-11-28T05:00:00Z",
-      "status": "scheduled"
+      "status": "published",
+      "media_id": "17968550004235669",
+      "permalink": "https://www.instagram.com/stories/salammotion/4040148552155768049",
+      "published_at": "2026-11-28T05:21:13.693Z"
     },
     {
       "id": "story-1128-pm-plastik",
@@ -971,7 +974,10 @@
       "type": "TEXT",
       "caption": "Первая версия нашей рекламы кофейни была скучной.\n\nВсе кадры с одной высоты. Чашка в одном клипе белая, в другом — чёрная. В кадре почти ничего не происходило.\n\nНейросеть не меняли — переписали промпты: у каждого клипа своя камера, одна строка деталей на весь ролик и действие по секундам.\n\nСталкивались с таким? Расскажите в ответах.",
       "publish_at": "2026-11-28T05:10:00Z",
-      "status": "scheduled"
+      "status": "published",
+      "media_id": "18118352378592365",
+      "permalink": "https://www.threads.com/@art_motion909/post/DgRfc-5Dg2x",
+      "published_at": "2026-11-28T05:21:31.259Z"
     },
     {
       "id": "th-1129-text-kamera",
