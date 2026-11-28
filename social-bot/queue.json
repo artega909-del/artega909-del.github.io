@@ -2576,7 +2576,10 @@
         "реклама для бизнеса"
       ],
       "publish_at": "2026-11-28T16:05:00Z",
-      "status": "scheduled"
+      "status": "published",
+      "media_id": "sh0eaaNbxm0",
+      "permalink": "https://www.youtube.com/shorts/sh0eaaNbxm0",
+      "published_at": "2026-11-28T16:57:39.995Z"
     },
     {
       "id": "yt-ru-sm-flowers",
